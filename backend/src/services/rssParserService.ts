@@ -48,7 +48,7 @@ export const rssParserService = {
       // Robust image extraction
       let imageUrl = feed.image?.url;
       if (!imageUrl && feed.itunes?.image) {
-        imageUrl = typeof feed.itunes.image === 'string' ? feed.itunes.image : feed.itunes.image.href;
+        imageUrl = typeof feed.itunes.image === 'string' ? feed.itunes.image : (feed.itunes.image as any).href;
       }
 
       // Robust author extraction
