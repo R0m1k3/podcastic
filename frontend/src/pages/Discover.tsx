@@ -65,6 +65,7 @@ export default function Discover() {
       await subscribeMutation.mutateAsync(podcast);
       // Show success toast (you might want to add a toast library)
       alert(`"${podcast.title}" ajouté à vos abonnements !`);
+      queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to subscribe';
       alert(`Erreur : ${errorMessage}`);
@@ -81,7 +82,7 @@ export default function Discover() {
     setRssSuccess(null);
     try {
       const result = await podcastService.subscribe(rssUrl.trim());
-      setRssSuccess(`"${result.podcast.title}" ajouté à vos abonnements !`);
+      setRssSuccess(`"${result.podcast.title}" — ${result.message === 'Déjà abonné' ? 'Déjà dans vos abonnements' : 'ajouté à vos abonnements !'}`);
       setRssUrl('');
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
     } catch (error: any) {

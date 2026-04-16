@@ -73,20 +73,15 @@ export const subscribe = async (req: Request, res: Response) => {
       podcastId: podcast._id,
     });
 
-    if (existingSubscription) {
-      return res.status(409).json({ message: 'Already subscribed to this podcast' });
-    }
+    if (!existingSubscription) {
+      const subscription = new UserSubscription({
+        userId: req.user.id,
+        podcastId: podcast._id,
+        await subscription.save();
+      }
 
-    // Create subscription
-    const subscription = new UserSubscription({
-      userId: req.user.id,
-      podcastId: podcast._id,
-    });
-
-    await subscription.save();
-
-    res.status(201).json({
-      message: 'Subscribed successfully',
+    res.status(200).json({
+      message: existingSubscription ? 'Déjà abonné' : 'Abonnement réussi',
       podcast: podcast.toJSON(),
     });
   } catch (error) {
@@ -98,7 +93,7 @@ export const subscribe = async (req: Request, res: Response) => {
     }
 
     console.error('Subscribe error:', error);
-    res.status(500).json({ message: 'Failed to subscribe' });
+    res.status(500).json({ message: "Impossible de s'abonner" });
   }
 };
 
@@ -230,25 +225,21 @@ export const subscribeFromDiscovery = async (req: Request, res: Response) => {
       podcastId: podcast._id,
     });
 
-    if (existingSubscription) {
-      return res.status(409).json({ message: 'Already subscribed to this podcast' });
+    if (!existingSubscription) {
+      const subscription = new UserSubscription({
+        userId: req.user.id,
+        podcastId: podcast._id,
+      });
+      await subscription.save();
     }
 
-    // Create subscription
-    const subscription = new UserSubscription({
-      userId: req.user.id,
-      podcastId: podcast._id,
-    });
-
-    await subscription.save();
-
-    res.status(201).json({
-      message: 'Subscribed successfully',
+    res.status(200).json({
+      message: existingSubscription ? 'Déjà abonné' : 'Abonnement réussi',
       podcast: podcast.toJSON(),
     });
   } catch (error: any) {
     console.error('Subscribe from discovery error:', error);
-    res.status(500).json({ message: 'Failed to subscribe' });
+    res.status(500).json({ message: "Impossible de s'abonner" });
   }
 };
 
