@@ -122,7 +122,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
       isExpanded
         ? 'inset-0 rounded-none'
         : 'bottom-6 left-1/2 -translate-x-1/2 w-[96%] max-w-5xl rounded-[2rem] h-[88px]'
-    } premium-glass border-white/10 shadow-2xl overflow-hidden flex flex-col`}>
+    } premium-glass border-[var(--border-color)] shadow-2xl overflow-hidden flex flex-col`}>
 
       <audio
         ref={audioRef}
@@ -139,63 +139,63 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
 
         {/* Artwork + info */}
         <div className="flex items-center gap-3 min-w-0 flex-1 max-w-[280px]">
-          <div className="w-13 h-13 w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0 shadow-lg">
+          <div className="w-12 h-12 rounded-xl overflow-hidden border border-[var(--border-color)] shrink-0 shadow-lg">
             {(episode.imageUrl || podcast?.imageUrl)
               ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
-              : <div className="w-full h-full bg-gradient-to-br from-accent-indigo to-accent-violet flex items-center justify-center text-xl">🎙️</div>
+              : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-xl">🎙️</div>
             }
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white truncate leading-tight">{episode.title}</p>
-            <p className="text-[10px] text-slate-500 font-bold truncate uppercase tracking-wider">{podcast?.title || ''}</p>
+            <p className="text-sm font-bold truncate leading-tight">{episode.title}</p>
+            <p className="text-[10px] text-[var(--text-secondary)] font-bold truncate uppercase tracking-wider">{podcast?.title || ''}</p>
           </div>
         </div>
 
         {/* Controls + progress */}
         <div className="flex-1 flex flex-col items-center gap-1.5">
           <div className="flex items-center gap-5">
-            <button onClick={() => handleSeek(-30)} className="group flex flex-col items-center gap-0.5 text-slate-500 hover:text-white transition-colors">
+            <button onClick={() => handleSeek(-30)} className="group flex flex-col items-center gap-0.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
               <RotateCcw className="w-4 h-4" />
               <span className="text-[8px] font-black">30</span>
             </button>
             <button onClick={handlePlayPause}
-              className="w-11 h-11 rounded-full bg-white text-obsidian flex items-center justify-center shadow-glow-indigo hover:scale-105 active:scale-95 transition-transform">
+              className="w-11 h-11 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] flex items-center justify-center shadow-glow-indigo hover:scale-105 active:scale-95 transition-transform">
               {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
             </button>
-            <button onClick={() => handleSeek(30)} className="group flex flex-col items-center gap-0.5 text-slate-500 hover:text-white transition-colors">
+            <button onClick={() => handleSeek(30)} className="group flex flex-col items-center gap-0.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
               <RotateCw className="w-4 h-4" />
               <span className="text-[8px] font-black">30</span>
             </button>
           </div>
           <div className="w-full max-w-lg flex items-center gap-2">
-            <span className="text-[9px] text-slate-600 tabular-nums w-8 text-right">{formatTime(currentTime)}</span>
+            <span className="text-[9px] text-[var(--text-secondary)] tabular-nums w-8 text-right">{formatTime(currentTime)}</span>
             <div className="relative flex-1 h-1 group cursor-pointer">
               <input type="range" min="0" max={duration || 0} value={currentTime}
                 onChange={handleProgressChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-              <div className="w-full h-full bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-accent-indigo to-accent-cyan rounded-full transition-all duration-100"
+              <div className="w-full h-full bg-[var(--text-primary)]/10 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full transition-all duration-100"
                   style={{ width: `${progress}%` }} />
               </div>
             </div>
-            <span className="text-[9px] text-slate-600 tabular-nums w-8">{formatTime(duration)}</span>
+            <span className="text-[9px] text-[var(--text-secondary)] tabular-nums w-8">{formatTime(duration)}</span>
           </div>
         </div>
 
         {/* Right actions */}
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={changeSpeed} className="px-2 py-1 rounded-lg bg-white/5 text-[10px] font-black text-slate-500 hover:text-white transition-all uppercase tracking-tighter w-10">
+          <button onClick={changeSpeed} className="px-2 py-1 rounded-lg bg-[var(--bg-secondary)] text-[10px] font-black text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-all uppercase tracking-tighter w-10">
             {playbackSpeed}x
           </button>
-          <button onClick={toggleMute} className="p-2 text-slate-500 hover:text-white transition-colors">
+          <button onClick={toggleMute} className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors">
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
           <button onClick={() => setIsExpanded(true)}
-            className="p-2 rounded-xl bg-white/5 text-slate-500 hover:text-white hover:bg-white/10 transition-all">
+            className="p-2 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 transition-all">
             <Maximize2 className="w-4 h-4" />
           </button>
           <button onClick={onClose}
-            className="p-2 rounded-xl bg-white/5 text-slate-500 hover:text-accent-rose hover:bg-accent-rose/10 transition-all">
+            className="p-2 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-accent-rose hover:bg-accent-rose/10 transition-all">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -207,31 +207,31 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
           {/* Top bar */}
           <div className="flex items-center justify-between mb-10">
             <button onClick={() => setIsExpanded(false)}
-              className="p-3 rounded-2xl bg-white/5 text-slate-400 hover:text-white transition-all">
+              className="p-3 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-all">
               <ChevronDown className="w-5 h-5" />
             </button>
-            <p className="text-[10px] font-black text-accent-indigo uppercase tracking-[0.3em]">En cours de lecture</p>
+            <p className="text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-[0.3em]">En cours de lecture</p>
             <button onClick={onClose}
-              className="p-3 rounded-2xl bg-white/5 text-slate-400 hover:text-accent-rose transition-all">
+              className="p-3 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-accent-rose transition-all">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-12 items-center flex-1">
             {/* Artwork */}
-            <div className="w-64 h-64 lg:w-80 lg:h-80 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 shrink-0">
+            <div className="w-64 h-64 lg:w-80 lg:h-80 rounded-[2.5rem] overflow-hidden shadow-2xl border border-[var(--border-color)] shrink-0">
               {(episode.imageUrl || podcast?.imageUrl)
                 ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
-                : <div className="w-full h-full bg-gradient-to-br from-accent-indigo to-accent-violet flex items-center justify-center text-7xl">🎙️</div>
+                : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-7xl">🎙️</div>
               }
             </div>
 
             {/* Info + controls */}
             <div className="flex flex-col gap-8 flex-1 w-full max-w-lg">
               <div>
-                <p className="text-xs font-black text-accent-indigo uppercase tracking-widest mb-2">{podcast?.title}</p>
-                <h2 className="text-3xl lg:text-4xl font-display font-black text-white leading-tight mb-3">{episode.title}</h2>
-                <p className="text-sm text-slate-500 leading-relaxed line-clamp-3">{episode.description}</p>
+                <p className="text-xs font-black text-[var(--accent-primary)] uppercase tracking-widest mb-2">{podcast?.title}</p>
+                <h2 className="text-3xl lg:text-4xl font-display font-black leading-tight mb-3">{episode.title}</h2>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-3">{episode.description}</p>
               </div>
 
               {/* Progress */}
@@ -240,12 +240,12 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
                   <input type="range" min="0" max={duration || 0} value={currentTime}
                     onChange={handleProgressChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                  <div className="w-full h-full bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-accent-indigo to-accent-cyan rounded-full"
+                  <div className="w-full h-full bg-[var(--text-primary)]/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full"
                       style={{ width: `${progress}%` }} />
                   </div>
                 </div>
-                <div className="flex justify-between text-xs text-slate-500 tabular-nums">
+                <div className="flex justify-between text-xs text-[var(--text-secondary)] tabular-nums">
                   <span>{formatTime(currentTime)}</span>
                   <span>{formatTime(duration)}</span>
                 </div>
@@ -254,18 +254,18 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
               {/* Controls */}
               <div className="flex items-center justify-center gap-8">
                 <button onClick={() => handleSeek(-30)}
-                  className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors group">
+                  className="flex flex-col items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors group">
                   <RotateCcw className="w-6 h-6 group-hover:scale-110 transition-transform" />
                   <span className="text-[9px] font-black">-30s</span>
                 </button>
 
                 <button onClick={handlePlayPause}
-                  className="w-20 h-20 rounded-full bg-white text-obsidian flex items-center justify-center shadow-glow-indigo hover:scale-105 active:scale-95 transition-transform">
+                  className="w-20 h-20 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] flex items-center justify-center shadow-glow-indigo hover:scale-105 active:scale-95 transition-transform">
                   {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
                 </button>
 
                 <button onClick={() => handleSeek(30)}
-                  className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors group">
+                  className="flex flex-col items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors group">
                   <RotateCw className="w-6 h-6 group-hover:scale-110 transition-transform" />
                   <span className="text-[9px] font-black">+30s</span>
                 </button>
@@ -273,15 +273,15 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
 
               {/* Volume */}
               <div className="flex items-center gap-4">
-                <button onClick={changeSpeed} className="px-3 py-1.5 rounded-xl bg-white/5 text-xs font-black text-slate-400 hover:text-white transition-all uppercase tracking-widest">
+                <button onClick={changeSpeed} className="px-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] text-xs font-black text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-all uppercase tracking-widest">
                   {playbackSpeed}x Speed
                 </button>
-                <button onClick={toggleMute} className="text-slate-400 hover:text-white transition-colors shrink-0">
+                <button onClick={toggleMute} className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors shrink-0">
                   {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                 </button>
                 <input type="range" min="0" max="1" step="0.05" value={isMuted ? 0 : volume}
                   onChange={handleVolumeChange}
-                  className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-white" />
+                  className="flex-1 h-1 bg-[var(--text-primary)]/10 rounded-full appearance-none cursor-pointer accent-[var(--accent-primary)]" />
               </div>
             </div>
           </div>

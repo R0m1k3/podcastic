@@ -291,7 +291,8 @@ export const subscribeFromDiscovery = async (req: Request, res: Response) => {
 export const getTrendingPodcasts = async (req: Request, res: Response) => {
   try {
     const limit = Number(req.query.limit) || 20;
-    const trending = await podcastIndexService.getTrendingPodcasts(limit);
+    const genre = req.query.genre as string;
+    const trending = await podcastIndexService.getTrendingPodcasts(limit, genre);
     res.json({ source: 'itunes', podcasts: trending, count: trending.length });
   } catch (error: any) {
     console.error('Trending podcasts error:', error.message);

@@ -77,9 +77,11 @@ export const podcastIndexService = {
       .filter((r): r is SearchResult => r !== null);
   },
 
-  getTrendingPodcasts: async (limit: number = 20): Promise<SearchResult[]> => {
-    // iTunes official top podcasts RSS (France)
+  getTrendingPodcasts: async (limit: number = 20, genreId?: string): Promise<SearchResult[]> => {
+    // iTunes official top podcasts RSS
+    // Format: https://itunes.apple.com/fr/rss/toppodcasts/limit=X/genre=Y/json
     const cap = Math.min(limit, 50);
+    const genrePath = genreId ? `/genre=${genreId}` : '';
     const rssResponse = await axios.get<{
       feed: {
         entry: Array<{
@@ -89,7 +91,7 @@ export const podcastIndexService = {
           'im:image': Array<{ label: string; attributes: { height: string } }>;
         }>;
       };
-    }>(`https://itunes.apple.com/fr/rss/toppodcasts/limit=${cap}/json`, {
+    }>(`https://itunes.apple.com/fr/rss/toppodcasts/limit=${cap}${genrePath}/json`, {
       timeout: 10000,
     });
 

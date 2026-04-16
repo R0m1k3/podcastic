@@ -30,9 +30,9 @@ export const discoveryService = {
     return response.data;
   },
 
-  getTrendingPodcasts: async (limit: number = 20): Promise<DiscoveryResponse> => {
+  getTrendingPodcasts: async (limit: number = 20, genre?: string): Promise<DiscoveryResponse> => {
     const response = await api.get('/podcasts/trending', {
-      params: { limit },
+      params: { limit, genre },
     });
     return response.data;
   },

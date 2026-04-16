@@ -69,16 +69,16 @@ export default function Dashboard() {
       <main className="">
         {/* Welcome Section / Hero */}
         <div className="premium-glass rounded-[3rem] p-8 lg:p-12 mb-12 relative overflow-hidden group">
-           <div className="absolute top-0 right-0 w-64 h-64 bg-accent-indigo/10 blur-[80px] -mr-32 -mt-32 group-hover:bg-accent-indigo/20 transition-all duration-700" />
+           <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--accent-glow)] blur-[80px] -mr-32 -mt-32 group-hover:bg-[var(--accent-primary)]/20 transition-all duration-700" />
            <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-indigo/10 border border-accent-indigo/20 text-[10px] font-black text-accent-indigo uppercase tracking-widest mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-glow)] border border-[var(--border-color)] text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest mb-4">
                  <Sparkles className="w-3 h-3" />
                  Podcastic Premium
               </div>
-              <h2 className="text-4xl lg:text-5xl font-display font-black text-white mb-4 tracking-tight leading-tight max-w-2xl">
+              <h2 className="text-4xl lg:text-5xl font-display font-black mb-4 tracking-tight leading-tight max-w-2xl">
                  Découvrez les nouveautés de votre univers audio.
               </h2>
-              <p className="text-slate-400 text-lg mb-8 max-w-xl leading-relaxed">
+              <p className="text-[var(--text-secondary)] text-lg mb-8 max-w-xl leading-relaxed">
                  Vous avez {episodesData?.count || 0} nouveaux épisodes qui n'attendent que vous. Prêt pour une immersion ?
               </p>
               <div className="flex flex-wrap gap-4">
@@ -96,7 +96,7 @@ export default function Dashboard() {
                        Découvrir
                     </button>
                  )}
-                 <button className="px-6 py-3 rounded-2xl bg-white/5 text-slate-300 font-bold text-sm hover:bg-white/10 transition-all border border-white/5">
+                 <button className="px-6 py-3 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-bold text-sm hover:bg-[var(--accent-primary)]/10 transition-all border border-[var(--border-color)]">
                     Parcourir les tendances
                  </button>
               </div>
@@ -107,10 +107,10 @@ export default function Dashboard() {
         {episodesInProgress.length > 0 && (
           <div className="mb-12 animate-fade-in">
              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo shadow-glow-indigo">
+                <div className="w-10 h-10 rounded-xl bg-[var(--accent-glow)] flex items-center justify-center text-[var(--accent-primary)] shadow-glow-indigo">
                    <Play className="w-5 h-5 fill-current" />
                 </div>
-                <h3 className="text-2xl font-display font-black text-white">Continuer l'écoute</h3>
+                <h3 className="text-2xl font-display font-black">Continuer l'écoute</h3>
              </div>
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {episodesInProgress.map((episode) => (
@@ -127,12 +127,12 @@ export default function Dashboard() {
         {/* Latest Episodes Section */}
         <div className="flex items-center justify-between mb-8">
            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-accent-cyan/10 flex items-center justify-center text-accent-cyan">
+              <div className="w-10 h-10 rounded-xl bg-[var(--accent-glow)] flex items-center justify-center text-[var(--accent-primary)]">
                  <Clock className="w-5 h-5" />
               </div>
-              <h3 className="text-2xl font-display font-black text-white">Récemment Publiés</h3>
+              <h3 className="text-2xl font-display font-black">Récemment Publiés</h3>
            </div>
-           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 py-1 rounded-lg border border-white/5">{episodesData?.episodes?.length || 0} EPISODES</span>
+           <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest px-3 py-1 rounded-lg border border-[var(--border-color)]">{episodesData?.episodes?.length || 0} EPISODES</span>
         </div>
 
         {episodesLoading ? (

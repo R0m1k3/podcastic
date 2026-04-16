@@ -93,51 +93,51 @@ export default function Library() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 mb-10">
         <div className="premium-glass p-5 rounded-[1.5rem] flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[var(--accent-glow)] flex items-center justify-center text-[var(--accent-primary)] shrink-0">
             <BookOpen className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Abonnements</p>
-            <h3 className="text-2xl font-display font-black text-white">{podcasts.length}</h3>
+            <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Abonnements</p>
+            <h3 className="text-2xl font-display font-black">{podcasts.length}</h3>
           </div>
         </div>
-        <Link to="/add" className="premium-glass p-5 rounded-[1.5rem] flex items-center gap-4 group hover:bg-accent-indigo/5 transition-all">
-          <div className="w-10 h-10 rounded-xl bg-accent-indigo flex items-center justify-center text-white shadow-glow-indigo group-hover:scale-110 transition-transform shrink-0">
+        <Link to="/add" className="premium-glass p-5 rounded-[1.5rem] flex items-center gap-4 group hover:bg-[var(--accent-primary)]/5 transition-all">
+          <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)] flex items-center justify-center text-white shadow-glow-indigo group-hover:scale-110 transition-transform shrink-0">
             <Rss className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Action</p>
-            <h3 className="text-base font-bold text-white">Ajouter un podcast</h3>
+            <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Action</p>
+            <h3 className="text-base font-bold">Ajouter un podcast</h3>
           </div>
         </Link>
       </div>
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-32">
-          <div className="w-16 h-16 rounded-full border-4 border-accent-indigo/20 border-t-accent-indigo animate-spin mb-6" />
-          <p className="text-slate-400 font-medium animate-pulse">Chargement de votre univers...</p>
+          <div className="w-16 h-16 rounded-full border-4 border-[var(--border-color)] border-t-[var(--accent-primary)] animate-spin mb-6" />
+          <p className="text-[var(--text-secondary)] font-medium animate-pulse text-[10px] uppercase tracking-widest">Chargement de votre univers...</p>
         </div>
       ) : podcasts.length === 0 ? (
         <div className="premium-glass py-24 px-12 rounded-[3.5rem] text-center max-w-2xl mx-auto">
-          <div className="w-24 h-24 rounded-[2rem] bg-white/[0.03] flex items-center justify-center text-4xl mx-auto mb-8 border border-white/5">🕳️</div>
-          <h2 className="text-3xl font-display font-black text-white mb-4">Bibliothèque vide</h2>
-          <p className="text-slate-400 mb-10 leading-relaxed">Commencez votre voyage audio en ajoutant vos podcasts préférés dès maintenant.</p>
+          <div className="w-24 h-24 rounded-[2rem] bg-[var(--bg-secondary)] flex items-center justify-center text-4xl mx-auto mb-8 border border-[var(--border-color)]">🕳️</div>
+          <h2 className="text-3xl font-display font-black mb-4">Bibliothèque vide</h2>
+          <p className="text-[var(--text-secondary)] mb-10 leading-relaxed">Commencez votre voyage audio en ajoutant vos podcasts préférés dès maintenant.</p>
           <Link to="/add" className="neon-button inline-flex items-center gap-3">
             <Rss className="w-5 h-5" />
             Découvrir des podcasts
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 pb-10">
           {podcasts.map((podcast) => (
-            <div key={podcast._id} className="group premium-glass rounded-[2.5rem] p-6 hover:bg-white/[0.05] transition-all duration-500 border-white/5 hover:border-white/10 flex flex-col h-full">
+            <div key={podcast._id} className="group premium-glass rounded-[2.5rem] p-6 hover:bg-[var(--bg-secondary)] transition-all duration-500 flex flex-col h-full border-[var(--border-color)]">
               <div className="flex gap-6 mb-6">
                 <div className="relative shrink-0">
-                  <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-2xl border border-white/10 group-hover:scale-105 transition-transform duration-500">
+                  <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-2xl border border-[var(--border-color)] group-hover:scale-105 transition-transform duration-500">
                     {podcast.imageUrl ? (
                       <img src={podcast.imageUrl} alt={podcast.title} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-accent-indigo to-accent-violet flex items-center justify-center text-3xl">🎙️</div>
+                      <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-3xl">🎙️</div>
                     )}
                   </div>
                   <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-white text-obsidian flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all">
@@ -147,18 +147,18 @@ export default function Library() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-lg font-bold text-white truncate leading-tight group-hover:text-accent-indigo transition-colors">
+                    <h3 className="text-lg font-bold truncate leading-tight group-hover:text-[var(--accent-primary)] transition-colors">
                       {podcast.title}
                     </h3>
                   </div>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">{podcast.author || 'Artiste Inconnu'}</p>
+                  <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-3">{podcast.author || 'Artiste Inconnu'}</p>
                   
                   <div className="flex flex-wrap gap-2">
-                    <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-slate-400 uppercase tracking-tighter">
+                    <span className="px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-tighter">
                        {podcast.episodeCount} EPISODES
                     </span>
                     {podcast.language && (
-                      <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-slate-400 uppercase">
+                      <span className="px-2.5 py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[9px] font-black text-[var(--text-secondary)] uppercase">
                         {podcast.language}
                       </span>
                     )}
@@ -188,10 +188,10 @@ export default function Library() {
                       </button>
                   </div>
                 ) : podcast.lastEpisodeTitle && (
-                  <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 mb-6 group-hover:bg-white/[0.04] transition-colors">
-                    <p className="text-[10px] font-bold text-accent-indigo uppercase tracking-[0.2em] mb-2">Dernier épisode</p>
-                    <p className="text-sm font-bold text-slate-200 line-clamp-1 mb-1">{podcast.lastEpisodeTitle}</p>
-                    <p className="text-[10px] font-medium text-slate-500 italic">
+                  <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-4 mb-6 group-hover:bg-[var(--accent-primary)]/5 transition-colors">
+                    <p className="text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-[0.2em] mb-2">Dernier épisode</p>
+                    <p className="text-sm font-bold line-clamp-1 mb-1">{podcast.lastEpisodeTitle}</p>
+                    <p className="text-[10px] font-medium text-[var(--text-secondary)] italic">
                       {new Date(podcast.lastEpisodeDate!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                   </div>
@@ -199,16 +199,16 @@ export default function Library() {
               </div>
 
               {/* Actions Footer */}
-              <div className="flex items-center justify-between pt-6 border-t border-white/5 mt-auto">
+              <div className="flex items-center justify-between pt-6 border-t border-[var(--border-color)] mt-auto">
                  {confirmDeleteId === (podcast.subscriptionId || podcast._id) ? (
                     <div className="flex items-center gap-3 w-full animate-fade-in">
                        <button onClick={handleConfirmUnsubscribe} className="flex-1 py-2 bg-accent-rose text-white rounded-xl text-[11px] font-black uppercase hover:bg-accent-rose/80">Confirmer</button>
-                       <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-2 bg-white/5 text-slate-400 rounded-xl text-[11px] font-black uppercase hover:bg-white/10">Annuler</button>
+                       <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-2 bg-[var(--bg-secondary)] text-[var(--text-secondary)] rounded-xl text-[11px] font-black uppercase hover:bg-[var(--bg-primary)]">Annuler</button>
                     </div>
                  ) : (
                     <button
                       onClick={() => setConfirmDeleteId(podcast.subscriptionId || podcast._id)}
-                      className="ml-auto flex items-center gap-2 text-[10px] font-bold text-slate-600 hover:text-accent-rose transition-all uppercase tracking-widest"
+                      className="ml-auto flex items-center gap-2 text-[10px] font-bold text-[var(--text-secondary)] hover:text-accent-rose transition-all uppercase tracking-widest"
                     >
                       <Trash2 className="w-3 h-3" />
                       Désabonner
