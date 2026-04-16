@@ -42,7 +42,7 @@ export default function Library() {
           if (!old || !old.podcasts) return old;
           // Optimistically filter by subscriptionId or _id as fallback
           const filtered = old.podcasts.filter((p: any) => 
-            String(p.subscriptionId || p._id) !== String(id)
+            String(p.subscriptionId || p._id) !== String(podcastId)
           );
           return { ...old, podcasts: filtered, count: filtered.length };
         }
@@ -208,7 +208,7 @@ export default function Library() {
                   </div>
 
                 {/* Unsubscribe button */}
-                {confirmDeleteId === podcast._id ? (
+                {confirmDeleteId === (podcast.subscriptionId || podcast._id) ? (
                   <div className="flex items-center gap-2 mt-auto pt-3 border-t border-light-100">
                     <span className="text-xs text-light-600 flex-1">Confirmer le désabonnement ?</span>
                     <button
@@ -244,14 +244,6 @@ export default function Library() {
           </div>
         )}
       </main>
-
-      {/* Confirm modal overlay (backdrop click to cancel) */}
-      {confirmDeleteId && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40"
-          onClick={() => setConfirmDeleteId(null)}
-        />
-      )}
     </div>
   );
 }
