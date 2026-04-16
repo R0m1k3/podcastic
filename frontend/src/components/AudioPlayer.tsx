@@ -129,7 +129,14 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
   }
 
   return (
-    <div className="fixed inset-0 bg-gradient-light z-50 overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-white z-[100] overflow-y-auto animate-fade-in"
+      onClick={(e) => {
+        // Close if clicking the backdrop itself
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="min-h-full gradient-light">
       {/* Header */}
       <div className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-light-200">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -273,7 +280,13 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
           onEnded={() => setIsPlaying(false)}
+          onError={(e) => {
+            const target = e.target as HTMLAudioElement;
+            console.error('Audio playback error:', target.error);
+            alert("Erreur de lecture audio. Le lien est peut-être mort ou bloqué.");
+          }}
           crossOrigin="anonymous"
+          autoPlay
         />
       </div>
     </div>

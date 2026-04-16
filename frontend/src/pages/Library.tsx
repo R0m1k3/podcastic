@@ -53,12 +53,13 @@ export default function Library() {
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
       queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     },
-    onError: (error: any) => {
+    onError: (error: any, podcastId) => {
+      console.error(`[Unsubscribe FAILED] Podcast ID: ${podcastId}`, error);
       // Rollback: re-fetch the real data from server if the mutation failed
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
       
       const errorMessage = error.response?.data?.message || 'Erreur inconnue';
-      alert(`Erreur lors du désabonnement : ${errorMessage}`);
+      alert(`Erreur lors du désabonnement (ID: ${podcastId}) : ${errorMessage}`);
     },
   });
 
@@ -73,11 +74,13 @@ export default function Library() {
   };
 
   const handleUnsubscribeRequest = (podcastId: string) => {
+    console.log("[UI] Demande de désabonnement reçue pour l'ID:", podcastId);
     setConfirmDeleteId(podcastId);
   };
 
   const handleConfirmUnsubscribe = () => {
     if (confirmDeleteId) {
+      console.log("[UI] Confirmation du désabonnement pour l'ID:", confirmDeleteId);
       unsubscribeMutation.mutate(confirmDeleteId);
     }
   };
