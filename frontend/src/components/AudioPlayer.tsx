@@ -35,6 +35,21 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
   const [isExpanded, setIsExpanded] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Refs for stable tracking without re-renders
+  const currentTimeRef = useRef(0);
+  const episodeIdRef = useRef<string | null>(null);
+  const userIdRef = useRef<string | null>(null);
+
+  // Sync refs with state
+  useEffect(() => {
+    currentTimeRef.current = currentTime;
+  }, [currentTime]);
+
+  useEffect(() => {
+    episodeIdRef.current = episode?._id || null;
+    userIdRef.current = userId || null;
+  }, [episode, userId]);
 
   const podcast = typeof episode?.podcastId === 'object' ? episode.podcastId : null;
 
@@ -52,18 +67,26 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
     localStorage.setItem('podcastic-speed', playbackSpeed.toString());
   }, [volume, playbackSpeed]);
 
-  // Save progress periodically
+  // Save progress periodically and on unmount
   useEffect(() => {
     if (!episode || !userId) return;
-    const interval = setInterval(async () => {
-      if (isPlaying) {
-        try {
-          await episodeService.saveProgress(episode._id, Math.floor(currentTime), false);
-        } catch {}
+
+    // Save every 20 seconds only if playing
+    const interval = setInterval(() => {
+      if (isPlaying && episodeIdRef.current) {
+        episodeService.saveProgress(episodeIdRef.current, Math.floor(currentTimeRef.current), false).catch(() => {});
       }
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [episode, userId, currentTime, isPlaying]);
+    }, 20000);
+
+    // Cleanup: SAVE FINAL PROGRESS ON UNMOUNT OR EPISODE CHANGE
+    return () => {
+      clearInterval(interval);
+      if (episodeIdRef.current && userIdRef.current) {
+        console.log(`[AudioPlayer] Final save for ${episodeIdRef.current} at ${Math.floor(currentTimeRef.current)}s`);
+        episodeService.saveProgress(episodeIdRef.current, Math.floor(currentTimeRef.current), false).catch(() => {});
+      }
+    };
+  }, [episode?._id, userId, isPlaying]); // Restart if episode or isPlaying changes to maintain correct interval behavior
 
   // Load previous progress
   useEffect(() => {
