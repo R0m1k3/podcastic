@@ -60,7 +60,7 @@ export default function Navigation() {
       </nav>
 
       {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-6 left-6 right-6 h-20 premium-glass lg:hidden z-50 flex items-center justify-around px-4 rounded-[var(--radius-card)] shadow-2xl border border-[var(--border-color)]">
+      <nav className="fixed bottom-6 left-4 right-4 sm:left-6 sm:right-6 lg:hidden z-50 h-20 premium-glass flex items-center justify-around px-2 sm:px-4 rounded-[var(--radius-card)] shadow-2xl border border-[var(--border-color)] max-w-lg mx-auto">
         {navItems.map((item) => {
           const MobileIcon = item.icon;
           const active = isActive(item.path);

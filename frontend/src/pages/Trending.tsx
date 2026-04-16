@@ -155,30 +155,34 @@ export default function Trending() {
       <main className="">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent-rose/10 flex items-center justify-center text-accent-rose">
-              <Flame className="w-6 h-6 animate-pulse" />
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-accent-rose/10 flex items-center justify-center text-accent-rose shrink-0">
+              <Flame className="w-5 h-5 md:w-6 md:h-6 animate-pulse" />
             </div>
-            <div>
-               <h2 className="text-2xl font-display font-black">Top Podcasts</h2>
-               <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Mis à jour en temps réel</p>
+            <div className="min-w-0">
+               <h2 className="text-xl md:text-2xl font-display font-black truncate">Top Podcasts</h2>
+               <p className="text-[9px] md:text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Mis à jour en temps réel</p>
             </div>
           </div>
 
           {/* Genre Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
-             {GENRES.map(genre => (
-               <button
-                 key={genre.id}
-                 onClick={() => setSelectedGenre(genre.id)}
-                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
-                   selectedGenre === genre.id 
-                    ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-glow-indigo' 
-                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--accent-primary)]'
-                 }`}
-               >
-                 {genre.label}
-               </button>
-             ))}
+          <div className="w-full min-w-0 overflow-hidden">
+            <div className="flex items-center gap-2 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
+               <div className="flex items-center gap-2 flex-nowrap">
+                 {GENRES.map(genre => (
+                   <button
+                     key={genre.id}
+                     onClick={() => setSelectedGenre(genre.id)}
+                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
+                       selectedGenre === genre.id 
+                        ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-glow-indigo' 
+                        : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--accent-primary)]'
+                     }`}
+                   >
+                     {genre.label}
+                   </button>
+                 ))}
+               </div>
+            </div>
           </div>
         </div>
 
@@ -189,7 +193,7 @@ export default function Trending() {
           </div>
         ) : podcasts.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-24">
               {podcasts.map((podcast, index) => (
                 <div key={`${skip}-${podcast.id}`} className="group premium-card premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500 border border-[var(--border-color)]">
                   <div className="relative aspect-square overflow-hidden bg-black/5">

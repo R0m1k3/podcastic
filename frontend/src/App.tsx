@@ -104,7 +104,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <Navigation />
-      <main className="flex-1 lg:ml-80 lg:mr-8 pb-40 pt-8 px-4 lg:px-0">
+      <main className="flex-1 min-w-0 w-full lg:ml-80 lg:mr-8 pb-40 pt-8 px-4 sm:px-6 lg:px-0 overflow-x-hidden">
         <div className="reveal">
           {children}
         </div>

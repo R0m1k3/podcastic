@@ -20,7 +20,7 @@ export default function Header({ title, subtitle, user, onLogout }: HeaderProps)
           <div className="inline-block px-3 py-1 rounded-full bg-[var(--accent-glow)] border border-[var(--border-color)] text-[10px] font-bold text-[var(--accent-primary)] uppercase tracking-widest mb-3">
              {subtitle || "Exploration Audio"}
           </div>
-          <h1 className="text-4xl lg:text-5xl font-display font-extrabold tracking-tight text-balance leading-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-extrabold tracking-tight text-balance leading-tight">
             {title}
           </h1>
         </div>
