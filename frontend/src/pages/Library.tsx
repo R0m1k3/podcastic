@@ -31,15 +31,31 @@ export default function Library() {
 
   const unsubscribeMutation = useMutation({
     mutationFn: (podcastId: string) => podcastService.unsubscribe(podcastId),
-    onSuccess: () => {
-      // Invalidate subscriptions and latest episodes so dashboard refreshes too
-      queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
+    onMutate: async (podcastId: string) => {
+      // Cancel outgoing refetches to avoid overwriting our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['podcasts', 'subscriptions'] });
+
+      // Optimistic update: remove the podcast from the local cache immediately
+      queryClient.setQueryData(
+        ['podcasts', 'subscriptions'],
+        (old: any) => {
+          if (!old) return old;
+          const filtered = old.podcasts.filter((p: any) => p._id !== podcastId);
+          return { podcasts: filtered, count: filtered.length };
+        }
+      );
+
       setConfirmDeleteId(null);
     },
-    onError: (error: any) => {
+    onSuccess: () => {
+      // Sync the server state after success
+      queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
+    },
+    onError: (error: any, podcastId, context) => {
+      // Rollback: re-fetch the real data from server if the mutation failed
+      queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
       alert(`Erreur : ${error.response?.data?.message || 'Impossible de se désabonner'}`);
-      setConfirmDeleteId(null);
     },
   });
 
