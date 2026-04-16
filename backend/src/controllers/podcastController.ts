@@ -197,7 +197,7 @@ export const subscribeFromDiscovery = async (req: Request, res: Response) => {
     // Check if podcast already in database
     let podcast = await Podcast.findOne({ rssUrl });
 
-    // If not in database, try to fetch and create it
+    // If not in database, create it from RSS
     if (!podcast) {
       try {
         const result = await rssParserService.createPodcastFromRss(rssUrl, {
@@ -207,21 +207,21 @@ export const subscribeFromDiscovery = async (req: Request, res: Response) => {
           imageUrl: imageUrl,
           episodes: [],
         });
-        podcast = result.podcast;
+        // Refetch as a proper Mongoose document (result.podcast is a plain object)
+        podcast = await Podcast.findById(result.podcast._id);
       } catch (error: any) {
-        // If podcast creation fails, create minimal entry
         if (error.message.includes('already in database')) {
           podcast = await Podcast.findOne({ rssUrl });
         } else {
           return res.status(400).json({
-            message: `Failed to fetch podcast: ${error.message}`,
+            message: `Impossible de récupérer le podcast : ${error.message}`,
           });
         }
       }
     }
 
     if (!podcast) {
-      return res.status(400).json({ message: 'Failed to add podcast' });
+      return res.status(400).json({ message: "Impossible d'ajouter le podcast" });
     }
 
     // Check if already subscribed
