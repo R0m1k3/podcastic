@@ -29,7 +29,13 @@ export const getUserSubscriptions = async (req: Request, res: Response) => {
       .populate('podcastId')
       .sort({ subscribedAt: -1 });
 
-    const podcasts = subscriptions.map((sub) => sub.podcastId);
+    const podcasts = subscriptions.map((sub) => {
+      const podcastObj = (sub.podcastId as any).toJSON();
+      return {
+        ...podcastObj,
+        subscriptionId: sub._id.toString(),
+      };
+    });
 
     res.json({ podcasts, count: podcasts.length });
   } catch (error) {
@@ -107,21 +113,31 @@ export const unsubscribe = async (req: Request, res: Response) => {
 
     const { podcastId } = req.params;
 
-    // Log for debugging on the server
-    console.log(`[Unsubscribe] User ${req.user.id} attempting to unsubscribe from podcast ${podcastId}`);
+    // Log the request
+    console.log(`[Unsubscribe] User ${req.user.id} attempting to remove: ${podcastId}`);
 
-    const subscription = await UserSubscription.findOneAndDelete({
+    // Method 1: Try deletion by Subscription ID (New robust method)
+    let subscription = await UserSubscription.findOneAndDelete({
+      _id: new mongoose.Types.ObjectId(podcastId),
       userId: new mongoose.Types.ObjectId(req.user.id),
-      podcastId: new mongoose.Types.ObjectId(podcastId),
     });
 
+    // Method 2: Fallback to Podcast ID if Method 1 found nothing (Old compatibility method)
     if (!subscription) {
-      console.warn(`[Unsubscribe] No subscription found for user ${req.user.id} and podcast ${podcastId}`);
+      console.log(`[Unsubscribe] Not found by Subscription ID, trying by Podcast ID: ${podcastId}`);
+      subscription = await UserSubscription.findOneAndDelete({
+        userId: new mongoose.Types.ObjectId(req.user.id),
+        podcastId: new mongoose.Types.ObjectId(podcastId),
+      });
+    }
+
+    if (!subscription) {
+      console.warn(`[Unsubscribe] No subscription record found for deletion.`);
       return res.status(404).json({ message: 'Subscription not found' });
     }
 
-    console.log(`[Unsubscribe] Successfully removed subscription for user ${req.user.id}`);
-    res.json({ message: 'Unsubscribed successfully' });
+    console.log(`[Unsubscribe] Successfully removed subscription ${subscription._id}`);
+    res.json({ message: 'Unsubscribed successfully', deletedId: subscription._id });
   } catch (error) {
     console.error('Unsubscribe error:', error);
     res.status(500).json({ message: 'Failed to unsubscribe' });

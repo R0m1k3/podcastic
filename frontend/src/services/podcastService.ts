@@ -13,6 +13,7 @@ export interface Podcast {
   lastEpisodeTitle?: string;
   lastEpisodeDate?: string;
   lastFetched: string;
+  subscriptionId?: string;
 }
 
 export interface PodcastResponse {

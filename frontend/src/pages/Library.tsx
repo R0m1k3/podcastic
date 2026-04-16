@@ -40,8 +40,10 @@ export default function Library() {
         ['podcasts', 'subscriptions'],
         (old: any) => {
           if (!old || !old.podcasts) return old;
-          // Ensure we compare strings to avoid type issues
-          const filtered = old.podcasts.filter((p: any) => String(p._id) !== String(podcastId));
+          // Optimistically filter by subscriptionId or _id as fallback
+          const filtered = old.podcasts.filter((p: any) => 
+            String(p.subscriptionId || p._id) !== String(id)
+          );
           return { ...old, podcasts: filtered, count: filtered.length };
         }
       );
@@ -73,9 +75,9 @@ export default function Library() {
     }
   };
 
-  const handleUnsubscribeRequest = (podcastId: string) => {
-    console.log("[UI] Demande de désabonnement reçue pour l'ID:", podcastId);
-    setConfirmDeleteId(podcastId);
+  const handleUnsubscribeRequest = (id: string) => {
+    console.log("[UI] Demande de désabonnement reçue pour l'ID (Sub/Pod):", id);
+    setConfirmDeleteId(id);
   };
 
   const handleConfirmUnsubscribe = () => {
@@ -230,7 +232,7 @@ export default function Library() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => handleUnsubscribeRequest(podcast._id)}
+                    onClick={() => handleUnsubscribeRequest(podcast.subscriptionId || podcast._id)}
                     className="mt-auto pt-3 border-t border-light-100 flex items-center gap-2 text-sm text-light-500 hover:text-red-600 transition-colors w-full"
                   >
                     <Trash2 className="w-4 h-4" />
