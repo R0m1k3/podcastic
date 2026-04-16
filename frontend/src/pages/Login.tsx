@@ -47,31 +47,33 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-obsidian flex items-center justify-center px-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden font-sans">
       {/* Background Auras */}
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.15),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(6,182,212,0.15),transparent_40%)]" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-indigo/5 blur-[120px] rounded-full animate-aura" />
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_20%,var(--accent-glow),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(6,182,212,0.1),transparent_40%)]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--accent-glow)] blur-[120px] rounded-full animate-aura" />
 
       <div className="w-full max-w-lg relative z-10 reveal">
         {/* Logo & Header */}
         <div className="text-center mb-10">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-accent-indigo to-accent-rose flex items-center justify-center text-4xl mx-auto mb-6 shadow-glow-indigo transform hover:scale-110 transition-transform duration-500">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-4xl mx-auto mb-6 shadow-glow-indigo transform hover:scale-110 transition-transform duration-500">
             🎙️
           </div>
-          <h1 className="text-5xl font-display font-black text-white mb-3 tracking-tighter">PODCASTIC</h1>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black text-accent-indigo uppercase tracking-[0.2em]">
+          <h1 className="text-5xl font-display font-black mb-3 tracking-tighter">PODCASTIC</h1>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-[0.2em]">
              <Sparkles className="w-3 h-3" />
              Expérience Audio Premium
           </div>
         </div>
 
         {/* Form Card */}
-        <div className="premium-glass p-8 lg:p-12 rounded-[3rem] shadow-2xl border-white/10">
-          <div className="flex p-1.5 rounded-2xl bg-white/[0.03] border border-white/5 mb-10">
+        <div className="premium-glass p-8 lg:p-12 rounded-[3rem] shadow-2xl">
+          <div className="flex p-1.5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)] mb-10">
             <button
               onClick={() => { setIsLogin(true); setError(null); }}
               className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                isLogin ? 'bg-white text-obsidian shadow-lg' : 'text-slate-500 hover:text-slate-300'
+                isLogin 
+                  ? 'bg-[var(--accent-primary)] text-white shadow-lg' 
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               Connexion
@@ -79,7 +81,9 @@ export default function Login() {
             <button
               onClick={() => { setIsLogin(false); setError(null); }}
               className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                !isLogin ? 'bg-white text-obsidian shadow-lg' : 'text-slate-500 hover:text-slate-300'
+                !isLogin 
+                  ? 'bg-[var(--accent-primary)] text-white shadow-lg' 
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               Inscription
@@ -89,7 +93,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <div className="relative group">
-                <UserIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-accent-indigo transition-colors" />
+                <UserIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)] group-focus-within:text-[var(--accent-primary)] transition-colors" />
                 <input
                   type="text"
                   name="username"
@@ -103,7 +107,7 @@ export default function Login() {
             )}
 
             <div className="relative group">
-              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-accent-indigo transition-colors" />
+              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)] group-focus-within:text-[var(--accent-primary)] transition-colors" />
               <input
                 type="email"
                 name="email"
@@ -116,7 +120,7 @@ export default function Login() {
             </div>
 
             <div className="relative group">
-              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-accent-indigo transition-colors" />
+              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)] group-focus-within:text-[var(--accent-primary)] transition-colors" />
               <input
                 type="password"
                 name="password"
@@ -152,7 +156,7 @@ export default function Login() {
         </div>
 
         {/* Footer */}
-        <p className="mt-8 text-center text-[10px] font-bold text-slate-600 uppercase tracking-[0.3em]">
+        <p className="mt-8 text-center text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.3em]">
            Podcastic High-Fidelity Audio © 2026
         </p>
       </div>

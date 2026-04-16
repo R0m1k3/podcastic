@@ -109,7 +109,7 @@ export default function EpisodeDetails({ episode, isOpen, onClose, onPlay }: Epi
            <div className="space-y-6">
               <h3 className="text-xl font-display font-black">À propos de cet épisode</h3>
               <div 
-                className="prose prose-invert max-w-none text-[var(--text-secondary)] leading-relaxed text-lg"
+                className="prose dark:prose-invert max-w-none text-[var(--text-secondary)] leading-relaxed text-lg"
                 dangerouslySetInnerHTML={{ __html: episode.description }}
               />
            </div>
