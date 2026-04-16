@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Flame, PlusCircle, BookOpen, Music2, Search, Library } from 'lucide-react';
+import { Home, Flame, PlusCircle, BookOpen, Library } from 'lucide-react';
 
 export default function Navigation() {
   const location = useLocation();
@@ -7,10 +7,10 @@ export default function Navigation() {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: Home, color: 'text-accent-indigo' },
-    { path: '/trending', label: 'Trending', icon: Flame, color: 'text-accent-rose' },
-    { path: '/library', label: 'Library', icon: Library, color: 'text-accent-cyan' },
-    { path: '/add', label: 'Add Podcast', icon: PlusCircle, color: 'text-accent-violet' },
+    { path: '/dashboard', label: 'Tableau de bord', icon: Home, color: 'text-accent-indigo' },
+    { path: '/trending', label: 'Tendances', icon: Flame, color: 'text-accent-rose' },
+    { path: '/library', label: 'Bibliothèque', icon: Library, color: 'text-accent-cyan' },
+    { path: '/add', label: 'Ajouter', icon: PlusCircle, color: 'text-accent-violet' },
   ];
 
   return (
@@ -44,7 +44,7 @@ export default function Navigation() {
                 }`}
               >
                 {active && (
-                  <div className={`absolute left-0 w-1.5 h-6 rounded-full bg-accent-indigo shadow-[0_0_12px_rgba(99,102,241,0.8)]`} />
+                  <div className="absolute left-0 w-1.5 h-6 rounded-full bg-accent-indigo shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
                 )}
                 <ActiveIcon className={`w-5 h-5 transition-transform group-hover:scale-110 ${active ? 'text-accent-indigo' : ''}`} />
                 <span className="text-sm font-semibold tracking-wide">{item.label}</span>
@@ -53,16 +53,9 @@ export default function Navigation() {
           })}
         </div>
 
-        {/* Footer info/stats */}
-        <div className="mt-auto pt-6 border-t border-white/5 space-y-4">
-           <div className="p-4 rounded-3xl bg-white/[0.03] border border-white/[0.05]">
-             <p className="text-[10px] text-slate-500 font-bold uppercase mb-2">My Stats</p>
-             <div className="flex justify-between items-end">
-                <span className="text-2xl font-display font-extrabold text-white">2.4k</span>
-                <span className="text-[10px] text-accent-indigo font-bold">Mins Listened</span>
-             </div>
-           </div>
-           <p className="px-2 text-[10px] text-slate-600 font-medium">Podcastic Premium © 2026</p>
+        {/* Footer */}
+        <div className="mt-auto pt-6 border-t border-white/5">
+           <p className="px-2 text-[10px] text-slate-600 font-medium">Podcastic © 2026</p>
         </div>
       </nav>
 

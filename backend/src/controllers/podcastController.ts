@@ -243,15 +243,11 @@ export const subscribeFromDiscovery = async (req: Request, res: Response) => {
     // Check if podcast already in database
     let podcast = await Podcast.findOne({ rssUrl });
 
-    // If not in database, create it from RSS
+    // If not in database, create it from RSS (parse feed for real episodes)
     if (!podcast) {
       try {
-        const result = await rssParserService.createPodcastFromRss(rssUrl, {
-          title: title || 'Unknown Podcast',
-          author: author || '',
-          imageUrl: imageUrl,
-        });
-        // Refetch as a proper Mongoose document
+        const result = await rssParserService.createPodcastFromRss(rssUrl);
+        // Refetch as a proper Mongoose document (result.podcast is a plain object)
         podcast = await Podcast.findById(result.podcast._id);
       } catch (error: any) {
         if (error.message.includes('already in database')) {
