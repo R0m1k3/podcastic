@@ -7,10 +7,24 @@ import EpisodeCard from '../components/EpisodeCard';
 import AudioPlayer from '../components/AudioPlayer';
 import { Sparkles, Play, Clock, TrendingUp } from 'lucide-react';
 
+import EpisodeCard from '../components/EpisodeCard';
+import EpisodeDetails from '../components/EpisodeDetails';
+
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
+  const [detailsEpisode, setDetailsEpisode] = useState<Episode | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [skip, setSkip] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const LIMIT = 32;
+
+  const handleOpenDetails = (episode: Episode) => {
+    setDetailsEpisode(episode);
+    setIsDetailsOpen(true);
+  };
 
   // Load user
   useEffect(() => {
@@ -28,13 +42,36 @@ export default function Dashboard() {
     loadUser();
   }, []);
 
-  // Fetch latest episodes
-  const { data: episodesData, isLoading: episodesLoading } = useQuery({
-    queryKey: ['episodes', 'latest'],
-    queryFn: () => episodeService.getLatestEpisodes(30),
+  // Fetch episodes with pagination
+  const { data: episodesData, isLoading: episodesLoading, isFetching: episodesFetching } = useQuery({
+    queryKey: ['episodes', 'latest', skip],
+    queryFn: () => episodeService.getLatestEpisodes(LIMIT, skip),
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    if (episodesData?.episodes) {
+      if (skip === 0) {
+        setEpisodes(episodesData.episodes);
+      } else {
+        setEpisodes(prev => {
+          // Prevent duplicates
+          const newEpisodes = episodesData.episodes.filter(
+            (newEp: any) => !prev.some(oldEp => oldEp._id === newEp._id)
+          );
+          return [...prev, ...newEpisodes];
+        });
+      }
+      setHasMore(episodesData.episodes.length === LIMIT);
+    }
+  }, [episodesData, skip]);
+
+  const loadMore = () => {
+    if (hasMore && !episodesFetching) {
+      setSkip(prev => prev + LIMIT);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -46,13 +83,13 @@ export default function Dashboard() {
     }
   };
 
-  // Extract episodes in progress
-  const episodesInProgress = episodesData?.episodes?.filter(e => e.progress && !e.progress.isCompleted) || [];
+  // Extract episodes in progress (using all loaded episodes)
+  const episodesInProgress = episodes?.filter(e => e.progress && !e.progress.isCompleted) || [];
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-4 border-white/5 border-t-accent-indigo animate-spin" />
+        <div className="w-12 h-12 rounded-full border-4 border-[var(--border-color)] border-t-[var(--accent-primary)] animate-spin" />
       </div>
     );
   }
@@ -79,7 +116,7 @@ export default function Dashboard() {
                  Découvrez les nouveautés de votre univers audio.
               </h2>
               <p className="text-[var(--text-secondary)] text-lg mb-8 max-w-xl leading-relaxed">
-                 Vous avez {episodesData?.count || 0} nouveaux épisodes qui n'attendent que vous. Prêt pour une immersion ?
+                 Vous avez des nouveaux épisodes qui n'attendent que vous. Prêt pour une immersion ?
               </p>
               <div className="flex flex-wrap gap-4">
                  {episodesInProgress.length > 0 ? (
@@ -96,9 +133,9 @@ export default function Dashboard() {
                        Découvrir
                     </button>
                  )}
-                 <button className="px-6 py-3 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-bold text-sm hover:bg-[var(--accent-primary)]/10 transition-all border border-[var(--border-color)]">
+                 <Link to="/trending" className="px-6 py-3 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-bold text-sm hover:bg-[var(--accent-primary)]/10 transition-all border border-[var(--border-color)] flex items-center justify-center">
                     Parcourir les tendances
-                 </button>
+                 </Link>
               </div>
            </div>
         </div>
@@ -113,11 +150,12 @@ export default function Dashboard() {
                 <h3 className="text-2xl font-display font-black">Continuer l'écoute</h3>
              </div>
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {episodesInProgress.map((episode) => (
+                {episodesInProgress.slice(0, 4).map((episode) => (
                   <EpisodeCard
                     key={`progress-${episode._id}`}
                     episode={episode}
                     onPlay={setSelectedEpisode}
+                    onDetails={handleOpenDetails}
                   />
                 ))}
              </div>
@@ -132,25 +170,41 @@ export default function Dashboard() {
               </div>
               <h3 className="text-2xl font-display font-black">Récemment Publiés</h3>
            </div>
-           <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest px-3 py-1 rounded-lg border border-[var(--border-color)]">{episodesData?.episodes?.length || 0} EPISODES</span>
+           <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest px-3 py-1 rounded-lg border border-[var(--border-color)]">{episodes.length} CHARGÉS</span>
         </div>
 
-        {episodesLoading ? (
+        {episodesLoading && skip === 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="premium-glass rounded-[2rem] h-80 animate-pulse bg-white/[0.02]" />
             ))}
           </div>
-        ) : episodesData?.episodes && episodesData.episodes.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {episodesData.episodes.map((episode) => (
-              <EpisodeCard
-                key={episode._id}
-                episode={episode}
-                onPlay={setSelectedEpisode}
-              />
-            ))}
-          </div>
+        ) : episodes.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-16">
+              {episodes.map((episode) => (
+                <EpisodeCard
+                  key={`${skip}-${episode._id}`}
+                  episode={episode}
+                  onPlay={setSelectedEpisode}
+                  onDetails={handleOpenDetails}
+                />
+              ))}
+            </div>
+            
+            {hasMore && (
+              <div className="flex justify-center pb-20">
+                <button
+                  onClick={loadMore}
+                  disabled={episodesFetching}
+                  className="px-10 py-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[var(--accent-primary)]/10 hover:border-[var(--accent-primary)] transition-all flex items-center gap-3"
+                >
+                  {episodesFetching ? <Loader className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
+                  {episodesFetching ? 'Chargement...' : 'Charger la suite'}
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="premium-glass p-16 rounded-[3rem] text-center max-w-2xl mx-auto border-dashed border-white/10">
             <div className="text-4xl mb-6 opacity-40">🧘</div>
@@ -158,10 +212,18 @@ export default function Dashboard() {
             <p className="text-slate-500 text-sm leading-relaxed mb-8">
               Vous n'avez pas encore d'épisodes ici. Abonnez-vous à vos podcasts favoris pour commencer votre collection.
             </p>
-            <button className="neon-button">Explorer les podcasts</button>
+            <Link to="/trending" className="neon-button">Explorer les podcasts</Link>
           </div>
         )}
       </main>
+
+      {/* Episode Slide-over Details */}
+      <EpisodeDetails 
+        episode={detailsEpisode}
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+        onPlay={setSelectedEpisode}
+      />
 
       {/* Audio Player Management */}
       {selectedEpisode && (

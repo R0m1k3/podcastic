@@ -59,14 +59,18 @@ export const podcastIndexService = {
     query: string,
     limit: number = 20,
   ): Promise<SearchResult[]> => {
+    const term = query.trim();
+    if (!term) return [];
+
     const response = await axios.get<ItunesSearchResponse>(
       'https://itunes.apple.com/search',
       {
         params: {
-          term: query,
+          term,
           media: 'podcast',
           entity: 'podcast',
-          limit: Math.min(limit, 50),
+          country: 'FR', // Prioritize French store
+          limit: Math.max(limit, 50), // Get more results to find the best match
         },
         timeout: 10000,
       }

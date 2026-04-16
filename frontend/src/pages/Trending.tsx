@@ -42,16 +42,48 @@ export default function Trending() {
     loadUser();
   }, []);
 
-  const { data: trendingData, isLoading } = useQuery({
-    queryKey: ['discover', 'trending', selectedGenre],
-    queryFn: () => discoveryService.getTrendingPodcasts(30, selectedGenre),
-    staleTime: 30 * 60 * 1000,
-  });
-
   const { data: subsData } = useQuery({
     queryKey: ['podcasts', 'subscriptions'],
     queryFn: () => podcastService.getUserSubscriptions(),
   });
+
+  const [skip, setSkip] = useState(0);
+  const [podcasts, setPodcasts] = useState<any[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const LIMIT = 30;
+
+  const { data: trendingData, isLoading, isFetching } = useQuery({
+    queryKey: ['discover', 'trending', selectedGenre, skip],
+    queryFn: () => discoveryService.getTrendingPodcasts(LIMIT, selectedGenre),
+    staleTime: 30 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (trendingData?.podcasts) {
+      if (skip === 0) {
+        setPodcasts(trendingData.podcasts);
+      } else {
+        setPodcasts(prev => {
+          const newItems = trendingData.podcasts.filter(
+            (p: any) => !prev.some(old => old.id === p.id)
+          );
+          return [...prev, ...newItems];
+        });
+      }
+      setHasMore(trendingData.podcasts.length === LIMIT);
+    }
+  }, [trendingData, skip]);
+
+  // Reset skip when genre changes
+  useEffect(() => {
+    setSkip(0);
+  }, [selectedGenre]);
+
+  const loadMore = () => {
+    if (hasMore && !isFetching) {
+      setSkip(prev => prev + LIMIT);
+    }
+  };
 
   const isSubscribed = (rssUrl: string) => {
     return subsData?.podcasts.some(p => p.rssUrl === rssUrl);
@@ -132,69 +164,84 @@ export default function Trending() {
           </div>
         </div>
 
-        {isLoading ? (
+        {isLoading && skip === 0 ? (
           <div className="flex flex-col items-center justify-center py-32">
              <div className="w-12 h-12 rounded-full border-4 border-[var(--border-color)] border-t-[var(--accent-primary)] animate-spin mb-4" />
              <p className="text-[var(--text-secondary)] font-bold uppercase tracking-widest text-[10px]">Analyse des tendances...</p>
           </div>
-        ) : trendingData?.podcasts && trendingData.podcasts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {trendingData.podcasts.map((podcast, index) => (
-              <div key={podcast.id} className="group premium-glass rounded-[2.5rem] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500">
-                <div className="relative aspect-[16/10] overflow-hidden">
-                   {podcast.imageUrl ? (
-                     <img
-                       src={podcast.imageUrl}
-                       alt={podcast.title}
-                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                     />
-                   ) : (
-                     <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-800 dark:to-obsididan flex items-center justify-center text-4xl">🎙️</div>
-                   )}
-                   <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-black text-white uppercase tracking-widest">
-                      Rank #{index + 1}
-                   </div>
-                   <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-transparent to-transparent opacity-60" />
-                </div>
+        ) : podcasts.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+              {podcasts.map((podcast, index) => (
+                <div key={`${skip}-${podcast.id}`} className="group premium-glass rounded-[2.5rem] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500">
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                     {podcast.imageUrl ? (
+                       <img
+                         src={podcast.imageUrl}
+                         alt={podcast.title}
+                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                       />
+                     ) : (
+                       <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-800 dark:to-obsididan flex items-center justify-center text-4xl">🎙️</div>
+                     )}
+                     <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-black text-white uppercase tracking-widest">
+                        Rank #{index + 1}
+                     </div>
+                     <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-transparent to-transparent opacity-60" />
+                  </div>
 
-                <div className="p-6 flex-1 flex flex-col">
-                  <h3 className="text-lg font-bold mb-2 line-clamp-2 leading-tight group-hover:text-[var(--accent-primary)] transition-colors">
-                    {podcast.title}
-                  </h3>
-                  {podcast.author && (
-                    <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4 truncate">{podcast.author}</p>
-                  )}
-                  <p className="text-xs text-[var(--text-secondary)] line-clamp-3 mb-6 leading-relaxed flex-1 opacity-80">
-                    {podcast.description}
-                  </p>
-                  
-                  <button
-                    onClick={() => handleSubscribe(podcast)}
-                    disabled={subscribingId === podcast.id || subscribeMutation.isPending || isSubscribed(podcast.rssUrl)}
-                    className={`w-full py-3.5 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all duration-300 flex items-center justify-center gap-2 ${
-                      isSubscribed(podcast.rssUrl)
-                        ? 'bg-[var(--accent-secondary)]/10 text-[var(--accent-secondary)] border border-[var(--accent-secondary)]/20 cursor-default'
-                        : 'bg-[var(--text-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-primary)] hover:text-white shadow-lg active:scale-95'
-                    }`}
-                  >
-                    {subscribingId === podcast.id ? (
-                      <Loader className="w-4 h-4 animate-spin" />
-                    ) : isSubscribed(podcast.rssUrl) ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        À l'écoute
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4" />
-                        S'abonner
-                      </>
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h3 className="text-lg font-bold mb-2 line-clamp-2 leading-tight group-hover:text-[var(--accent-primary)] transition-colors">
+                      {podcast.title}
+                    </h3>
+                    {podcast.author && (
+                      <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4 truncate">{podcast.author}</p>
                     )}
-                  </button>
+                    <p className="text-xs text-[var(--text-secondary)] line-clamp-3 mb-6 leading-relaxed flex-1 opacity-80">
+                      {podcast.description}
+                    </p>
+                    
+                    <button
+                      onClick={() => handleSubscribe(podcast)}
+                      disabled={subscribingId === podcast.id || subscribeMutation.isPending || isSubscribed(podcast.rssUrl)}
+                      className={`w-full py-3.5 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all duration-300 flex items-center justify-center gap-2 ${
+                        isSubscribed(podcast.rssUrl)
+                          ? 'bg-[var(--accent-secondary)]/10 text-[var(--accent-secondary)] border border-[var(--accent-secondary)]/20 cursor-default'
+                          : 'bg-[var(--text-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-primary)] hover:text-white shadow-lg active:scale-95'
+                      }`}
+                    >
+                      {subscribingId === podcast.id ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : isSubscribed(podcast.rssUrl) ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          À l'écoute
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4" />
+                          S'abonner
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {hasMore && (
+              <div className="flex justify-center pb-32">
+                 <button 
+                  onClick={loadMore}
+                  disabled={isFetching}
+                  className="px-10 py-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[var(--accent-primary)]/10 hover:border-[var(--accent-primary)] transition-all flex items-center gap-3"
+                 >
+                    {isFetching ? <Loader className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />}
+                    {isFetching ? 'Chargement...' : 'Charger la suite'}
+                 </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
            <div className="premium-glass p-20 rounded-[3rem] text-center">
               <Sparkles className="w-12 h-12 text-slate-700 mx-auto mb-6" />
