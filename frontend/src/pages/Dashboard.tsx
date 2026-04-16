@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { episodeService, Episode } from '../services/episodeService';
 import { authService } from '../services/authService';
 import Header from '../components/Header';
 import EpisodeCard from '../components/EpisodeCard';
-import AudioPlayer from '../components/AudioPlayer';
-import { Sparkles, Play, Clock, TrendingUp } from 'lucide-react';
-
-import EpisodeCard from '../components/EpisodeCard';
 import EpisodeDetails from '../components/EpisodeDetails';
+import AudioPlayer from '../components/AudioPlayer';
+import { Sparkles, Play, Clock, TrendingUp, Loader, RefreshCcw } from 'lucide-react';
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
