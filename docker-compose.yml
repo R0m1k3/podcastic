@@ -5,8 +5,6 @@ services:
     image: mongo:latest
     container_name: podcastic-mongodb
     restart: unless-stopped
-    ports:
-      - "27017:27017"
     volumes:
       - mongodb_data:/data/db
     networks:
@@ -16,18 +14,17 @@ services:
     image: redis:7-alpine
     container_name: podcastic-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - podcastic
 
   backend:
-    image: node:20-alpine
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: podcastic-backend
     restart: unless-stopped
-    working_dir: /app
     ports:
       - "5000:5000"
     environment:
@@ -39,9 +36,6 @@ services:
       JWT_REFRESH_EXPIRES_IN: 30d
       PODCAST_INDEX_API_KEY: ${PODCAST_INDEX_API_KEY:-}
       PODCAST_INDEX_API_SECRET: ${PODCAST_INDEX_API_SECRET:-}
-    volumes:
-      - ./backend:/app
-    command: sh -c "npm install && npm run build && node dist/index.js"
     depends_on:
       - mongodb
       - redis
@@ -49,17 +43,13 @@ services:
       - podcastic
 
   frontend:
-    image: node:20-alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: podcastic-frontend
     restart: unless-stopped
-    working_dir: /app
     ports:
       - "3579:3579"
-    environment:
-      VITE_API_URL: http://localhost:5000/api
-    volumes:
-      - ./frontend:/app
-    command: sh -c "npm install && npm run build && npm install -g serve && serve -s dist -l 3579"
     depends_on:
       - backend
     networks:
