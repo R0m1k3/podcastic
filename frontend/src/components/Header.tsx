@@ -47,7 +47,7 @@ export default function Header({ title, subtitle, user, onLogout }: HeaderProps)
                   onClick={onLogout}
                   className="px-4 py-2 text-sm text-light-600 hover:text-light-900 transition-colors"
                 >
-                  Logout
+                  Déconnexion
                 </button>
               )}
             </div>

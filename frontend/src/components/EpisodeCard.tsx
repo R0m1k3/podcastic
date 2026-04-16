@@ -8,7 +8,7 @@ interface EpisodeCardProps {
 
 export default function EpisodeCard({ episode, onPlay }: EpisodeCardProps) {
   const podcast = typeof episode.podcastId === 'object' ? episode.podcastId : null;
-  const pubDate = new Date(episode.pubDate).toLocaleDateString('en-US', {
+  const pubDate = new Date(episode.pubDate).toLocaleDateString('fr-FR', {
     month: 'short',
     day: 'numeric',
   });
@@ -45,7 +45,7 @@ export default function EpisodeCard({ episode, onPlay }: EpisodeCardProps) {
 
         {/* Podcast Title */}
         <p className="text-xs font-semibold text-light-500 uppercase tracking-wider mb-1">
-          {podcast?.author || 'Unknown'}
+          {podcast?.author || 'Inconnu'}
         </p>
 
         {/* Episode Title */}

@@ -39,7 +39,7 @@ export default function Login() {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred');
+      setError(err.response?.data?.message || 'Une erreur s\'est produite');
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export default function Login() {
             🎙️
           </div>
           <h1 className="text-4xl font-bold text-light-900 mb-2">Podcastic</h1>
-          <p className="text-light-600">Your podcast streaming companion</p>
+          <p className="text-light-600">Votre compagnon de streaming de podcasts</p>
         </div>
 
         {/* Form Card */}
@@ -78,7 +78,7 @@ export default function Login() {
                   }`}
                   onClick={() => setIsLogin(true)}
                 >
-                  Sign In
+                  Se connecter
                 </button>
                 <button
                   className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
@@ -88,7 +88,7 @@ export default function Login() {
                   }`}
                   onClick={() => setIsLogin(false)}
                 >
-                  Create Account
+                  Créer un compte
                 </button>
               </div>
             </button>
@@ -99,7 +99,7 @@ export default function Login() {
               <input
                 type="text"
                 name="username"
-                placeholder="Username"
+                placeholder="Nom d'utilisateur"
                 value={formData.username}
                 onChange={handleChange}
                 required={!isLogin}
@@ -110,7 +110,7 @@ export default function Login() {
             <input
               type="email"
               name="email"
-              placeholder="Email address"
+              placeholder="Adresse e-mail"
               value={formData.email}
               onChange={handleChange}
               required
@@ -120,7 +120,7 @@ export default function Login() {
             <input
               type="password"
               name="password"
-              placeholder="Password"
+              placeholder="Mot de passe"
               value={formData.password}
               onChange={handleChange}
               required
@@ -141,12 +141,12 @@ export default function Login() {
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="spinner border-white"></div>
-                  {isLogin ? 'Signing in...' : 'Creating account...'}
+                  {isLogin ? 'Connexion en cours...' : 'Création du compte...'}
                 </div>
               ) : isLogin ? (
-                'Sign In'
+                'Se connecter'
               ) : (
-                'Create Account'
+                'Créer un compte'
               )}
             </button>
           </form>
@@ -155,8 +155,8 @@ export default function Login() {
         {/* Footer */}
         <p className="text-center text-sm text-light-600">
           {isLogin
-            ? "Don't have an account? Click Create Account above"
-            : 'Already have an account? Click Sign In above'}
+            ? "Pas de compte ? Cliquez sur Créer un compte ci-dessus"
+            : 'Déjà un compte ? Cliquez sur Se connecter ci-dessus'}
         </p>
       </div>
     </div>

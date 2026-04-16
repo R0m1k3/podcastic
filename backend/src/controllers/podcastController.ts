@@ -12,8 +12,8 @@ const subscribeSchema = z.object({
 
 const searchSchema = z.object({
   q: z.string().min(2, 'Query must be at least 2 characters'),
-  limit: z.number().int().min(1).max(50).optional().default(20),
-  offset: z.number().int().min(0).optional().default(0),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(20),
+  offset: z.coerce.number().int().min(0).optional().default(0),
 });
 
 export const getUserSubscriptions = async (req: Request, res: Response) => {
@@ -49,11 +49,28 @@ export const subscribe = async (req: Request, res: Response) => {
     let podcast = await Podcast.findOne({ rssUrl });
 
     if (!podcast) {
-      // For now, create a basic podcast entry
-      // In production, you'd fetch from PodcastIndex API or parse the RSS feed
-      return res.status(400).json({
-        message: 'Podcast not found. Please use a valid RSS URL.',
-      });
+      try {
+        const result = await rssParserService.createPodcastFromRss(rssUrl, {
+          title: 'Unknown Podcast',
+          description: '',
+          author: '',
+          imageUrl: undefined,
+          episodes: [],
+        });
+        podcast = result.podcast;
+      } catch (error: any) {
+        if (error.message.includes('already in database')) {
+          podcast = await Podcast.findOne({ rssUrl });
+        } else {
+          return res.status(400).json({
+            message: `Impossible de récupérer le podcast : ${error.message}`,
+          });
+        }
+      }
+    }
+
+    if (!podcast) {
+      return res.status(400).json({ message: 'Impossible d\'ajouter le podcast' });
     }
 
     // Check if already subscribed

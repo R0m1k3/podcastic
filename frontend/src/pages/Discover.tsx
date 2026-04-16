@@ -60,10 +60,10 @@ export default function Discover() {
       setSubscribingId(podcast.id);
       await subscribeMutation.mutateAsync(podcast);
       // Show success toast (you might want to add a toast library)
-      alert(`Added "${podcast.title}" to your subscriptions!`);
+      alert(`"${podcast.title}" ajouté à vos abonnements !`);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to subscribe';
-      alert(`Error: ${errorMessage}`);
+      alert(`Erreur : ${errorMessage}`);
     } finally {
       setSubscribingId(null);
     }
@@ -86,7 +86,7 @@ export default function Discover() {
     <div className="min-h-screen bg-light-50">
       <Header
         title="Discover"
-        subtitle="Find and subscribe to podcasts"
+        subtitle="Trouvez et abonnez-vous à des podcasts"
         user={user}
         onLogout={handleLogout}
       />
@@ -98,7 +98,7 @@ export default function Discover() {
             <Search className="absolute left-4 top-3.5 w-5 h-5 text-light-400" />
             <input
               type="text"
-              placeholder="Search podcasts, authors, topics..."
+              placeholder="Rechercher des podcasts, auteurs, sujets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-3 rounded-xl border border-light-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-lg"
@@ -116,7 +116,7 @@ export default function Discover() {
                 : 'bg-light-200 text-light-700 hover:bg-light-300'
             }`}
           >
-            🔥 Trending
+            🔥 Tendances
           </button>
           <button
             onClick={() => setSelectedTab('search')}
@@ -127,7 +127,7 @@ export default function Discover() {
                 : 'bg-light-200 text-light-700 hover:bg-light-300'
             }`}
           >
-            🔍 Search Results
+            🔍 Résultats de recherche
           </button>
         </div>
 
@@ -136,7 +136,7 @@ export default function Discover() {
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-3" />
-              <p className="text-light-600">Loading podcasts...</p>
+              <p className="text-light-600">Chargement des podcasts...</p>
             </div>
           </div>
         ) : displayData && displayData.length > 0 ? (
@@ -171,7 +171,7 @@ export default function Discover() {
                   <div className="flex items-center justify-between">
                     <div className="flex gap-2 text-xs text-light-500">
                       {podcast.episodeCount && (
-                        <span>{podcast.episodeCount} episodes</span>
+                        <span>{podcast.episodeCount} épisodes</span>
                       )}
                       {podcast.language && <span>{podcast.language}</span>}
                     </div>
@@ -184,12 +184,12 @@ export default function Discover() {
                       {subscribingId === podcast.id ? (
                         <>
                           <Loader className="w-4 h-4 animate-spin" />
-                          Adding...
+                          Ajout...
                         </>
                       ) : (
                         <>
                           <Plus className="w-4 h-4" />
-                          Add
+                          Ajouter
                         </>
                       )}
                     </button>
@@ -202,12 +202,12 @@ export default function Discover() {
           <div className="text-center py-20">
             <p className="text-light-600 text-lg mb-2">
               {selectedTab === 'search' && searchQuery.length < 2
-                ? 'Type at least 2 characters to search'
-                : 'No podcasts found'}
+                ? 'Tapez au moins 2 caractères pour rechercher'
+                : 'Aucun podcast trouvé'}
             </p>
             {selectedTab === 'search' && (
               <p className="text-light-500">
-                Try searching for podcast titles, authors, or topics
+                Essayez de rechercher des titres, auteurs ou sujets
               </p>
             )}
           </div>
@@ -217,7 +217,7 @@ export default function Discover() {
         {(searchResults || trendingData) && (
           <div className="mt-8 text-center text-sm text-light-500">
             <p>
-              Powered by{' '}
+              Propulsé par{' '}
               <a
                 href="https://podcastindex.org"
                 target="_blank"

@@ -28,7 +28,7 @@ export default function Navigation() {
             }`}
           >
             <Home className="w-5 h-5" />
-            <span className="font-medium">Dashboard</span>
+            <span className="font-medium">Tableau de bord</span>
           </Link>
 
           <Link
@@ -40,7 +40,7 @@ export default function Navigation() {
             }`}
           >
             <Compass className="w-5 h-5" />
-            <span className="font-medium">Discover</span>
+            <span className="font-medium">Découvrir</span>
           </Link>
         </div>
       </div>

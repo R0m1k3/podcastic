@@ -133,7 +133,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
       {/* Header */}
       <div className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-light-200">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-light-900">Now Playing</h2>
+          <h2 className="text-xl font-bold text-light-900">En cours de lecture</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-light-100 rounded-lg transition-colors"
@@ -163,7 +163,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
         {/* Info */}
         <div className="text-center mb-8">
           <p className="text-sm font-semibold text-light-500 uppercase mb-2">
-            {podcast?.author || 'Unknown Podcast'}
+            {podcast?.author || 'Podcast inconnu'}
           </p>
           <h1 className="text-4xl font-bold text-light-900 mb-3">{episode.title}</h1>
           <p className="text-light-600 line-clamp-3">{episode.description}</p>
@@ -195,7 +195,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
               }
             }}
             className="p-3 hover:bg-light-100 rounded-full transition-colors"
-            title="Rewind 15s"
+            title="Reculer de 15s"
           >
             <SkipBack className="w-6 h-6" />
           </button>
@@ -220,7 +220,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
               }
             }}
             className="p-3 hover:bg-light-100 rounded-full transition-colors"
-            title="Skip 30s"
+            title="Avancer de 30s"
           >
             <SkipForward className="w-6 h-6" />
           </button>
@@ -230,7 +230,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
         <div className="grid grid-cols-2 gap-6">
           {/* Playback Speed */}
           <div className="card">
-            <h3 className="text-sm font-semibold text-light-900 mb-3">Speed</h3>
+            <h3 className="text-sm font-semibold text-light-900 mb-3">Vitesse</h3>
             <div className="flex gap-2">
               {[0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
                 <button

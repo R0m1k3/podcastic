@@ -50,7 +50,7 @@ export default function Dashboard() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-light">
         <div className="text-center">
           <div className="w-16 h-16 rounded-full border-4 border-light-200 border-t-blue-500 animate-spin mx-auto mb-4"></div>
-          <p className="text-light-600">Loading your podcasts...</p>
+          <p className="text-light-600">Chargement de vos podcasts...</p>
         </div>
       </div>
     );
@@ -60,7 +60,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-light-50">
       <Header
         title="Podcastic"
-        subtitle="Your podcast companion"
+        subtitle="Votre compagnon de podcasts"
         user={user}
         onLogout={handleLogout}
       />
@@ -69,10 +69,10 @@ export default function Dashboard() {
         {/* Welcome Section */}
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-light-900 mb-2">
-            Welcome back, {user?.username}! 👋
+            Bon retour, {user?.username} ! 👋
           </h2>
           <p className="text-light-600">
-            {episodesData?.count || 0} new episodes from your subscriptions
+            {episodesData?.count || 0} nouveaux épisodes de vos abonnements
           </p>
         </div>
 
@@ -81,12 +81,12 @@ export default function Dashboard() {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="w-12 h-12 rounded-full border-4 border-light-200 border-t-blue-500 animate-spin mx-auto mb-3"></div>
-              <p className="text-light-600">Loading episodes...</p>
+              <p className="text-light-600">Chargement des épisodes...</p>
             </div>
           </div>
         ) : episodesData?.episodes && episodesData.episodes.length > 0 ? (
           <div>
-            <h3 className="text-2xl font-bold text-light-900 mb-6">Latest Episodes</h3>
+            <h3 className="text-2xl font-bold text-light-900 mb-6">Derniers épisodes</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {episodesData.episodes.map((episode) => (
                 <EpisodeCard
@@ -99,9 +99,9 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-light-600 text-lg mb-4">No episodes yet</p>
+            <p className="text-light-600 text-lg mb-4">Aucun épisode pour l'instant</p>
             <p className="text-light-500">
-              Subscribe to podcasts to see episodes in your dashboard
+              Abonnez-vous à des podcasts pour voir les épisodes dans votre tableau de bord
             </p>
           </div>
         )}
