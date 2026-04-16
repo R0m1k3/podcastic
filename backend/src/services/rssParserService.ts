@@ -45,11 +45,25 @@ export const rssParserService = {
         throw new Error('Invalid RSS feed - missing title');
       }
 
+      // Robust image extraction
+      let imageUrl = feed.image?.url;
+      if (!imageUrl && feed.itunes?.image) {
+        imageUrl = typeof feed.itunes.image === 'string' ? feed.itunes.image : feed.itunes.image.href;
+      }
+
+      // Robust author extraction
+      const author = feed.author || feed.creator || feed.itunes?.author || (feed as any).managingEditor || '';
+
+      // Robust description extraction
+      const description = feed.description || feed.itunes?.summary || feed.itunes?.subtitle || (feed as any).content || '';
+
+      console.log(`[RSS Parser] Meta Extracted for "${feed.title}": Author: ${author}, Image: ${!!imageUrl}`);
+
       return {
         title: feed.title,
-        description: feed.description || feed.itunes?.summary || feed.itunes?.subtitle || '',
-        author: feed.author || feed.creator || feed.itunes?.author || '',
-        imageUrl: feed.image?.url || feed.itunes?.image,
+        description: description,
+        author: author,
+        imageUrl: imageUrl,
         language: feed.language?.split('-')[0].toLowerCase() || '',
         episodes: feed.items || [],
       };
@@ -123,7 +137,7 @@ export const rssParserService = {
   extractImageUrl: (item: any, podcastImage?: string): string | undefined => {
     // Try iTunes image first
     if (item.itunes?.image) {
-      return item.itunes.image;
+      return typeof item.itunes.image === 'string' ? item.itunes.image : item.itunes.image.href;
     }
 
     // Try media content
