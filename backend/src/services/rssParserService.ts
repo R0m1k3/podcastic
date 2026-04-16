@@ -137,7 +137,7 @@ export const rssParserService = {
   extractImageUrl: (item: any, podcastImage?: string): string | undefined => {
     // Try iTunes image first
     if (item.itunes?.image) {
-      return typeof item.itunes.image === 'string' ? item.itunes.image : item.itunes.image.href;
+      return typeof item.itunes.image === 'string' ? item.itunes.image : (item.itunes.image as any).href;
     }
 
     // Try media content
