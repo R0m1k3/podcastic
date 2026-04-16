@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { discoveryService, DiscoveryPodcast } from '../services/discoveryService';
 import { podcastService } from '../services/podcastService';
 import Header from '../components/Header';
-import { Search, Plus, Loader } from 'lucide-react';
+import { Search, Plus, Loader, Rss } from 'lucide-react';
 import { authService } from '../services/authService';
 
 export default function Discover() {
@@ -12,6 +12,10 @@ export default function Discover() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState<'search' | 'trending'>('trending');
   const [subscribingId, setSubscribingId] = useState<string | null>(null);
+  const [rssUrl, setRssUrl] = useState('');
+  const [rssLoading, setRssLoading] = useState(false);
+  const [rssError, setRssError] = useState<string | null>(null);
+  const [rssSuccess, setRssSuccess] = useState<string | null>(null);
 
   // Load user
   useState(() => {
@@ -69,6 +73,24 @@ export default function Discover() {
     }
   };
 
+  const handleRssSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rssUrl.trim()) return;
+    setRssLoading(true);
+    setRssError(null);
+    setRssSuccess(null);
+    try {
+      const result = await podcastService.subscribe(rssUrl.trim());
+      setRssSuccess(`"${result.podcast.title}" ajouté à vos abonnements !`);
+      setRssUrl('');
+      queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
+    } catch (error: any) {
+      setRssError(error.response?.data?.message || 'Impossible d\'ajouter ce podcast');
+    } finally {
+      setRssLoading(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await authService.logout();
@@ -104,6 +126,33 @@ export default function Discover() {
               className="w-full pl-12 pr-4 py-3 rounded-xl border border-light-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-lg"
             />
           </div>
+        </div>
+
+        {/* RSS URL Section */}
+        <div className="mb-12 card">
+          <div className="flex items-center gap-2 mb-3">
+            <Rss className="w-5 h-5 text-orange-500" />
+            <h3 className="text-sm font-bold text-light-900 uppercase tracking-wider">Ajouter via URL RSS</h3>
+          </div>
+          <form onSubmit={handleRssSubscribe} className="flex gap-3">
+            <input
+              type="url"
+              placeholder="https://feeds.example.com/podcast.rss"
+              value={rssUrl}
+              onChange={(e) => { setRssUrl(e.target.value); setRssError(null); setRssSuccess(null); }}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-light-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={rssLoading || !rssUrl.trim()}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              {rssLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {rssLoading ? 'Ajout...' : 'Ajouter'}
+            </button>
+          </form>
+          {rssError && <p className="mt-2 text-sm text-red-600">{rssError}</p>}
+          {rssSuccess && <p className="mt-2 text-sm text-green-600">{rssSuccess}</p>}
         </div>
 
         {/* Tabs */}
