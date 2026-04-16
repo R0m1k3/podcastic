@@ -4,7 +4,7 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /frontend
 
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY frontend/ ./
 
@@ -18,7 +18,7 @@ FROM node:20-alpine AS backend-builder
 WORKDIR /app
 
 COPY backend/package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY backend/tsconfig.json ./
 COPY backend/src ./src
@@ -32,7 +32,7 @@ WORKDIR /app
 
 # Copy backend production deps
 COPY backend/package*.json ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy compiled backend
 COPY --from=backend-builder /app/dist ./dist
