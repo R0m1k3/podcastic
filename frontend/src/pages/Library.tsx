@@ -63,6 +63,12 @@ export default function Library() {
     },
   });
 
+  const handleConfirmUnsubscribe = () => {
+    if (confirmDeleteId) {
+      unsubscribeMutation.mutate(confirmDeleteId);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await authService.logout();
