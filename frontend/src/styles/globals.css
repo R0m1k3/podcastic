@@ -40,17 +40,32 @@
 
   /* ── Explicit Dark Theme (for nesting/inversion) ── */
   .dark-theme {
-    --bg-primary: #080d1a;
-    --bg-secondary: rgba(255, 255, 255, 0.025);
+    --bg-primary: #000000; /* Solid Black */
+    --bg-secondary: #0a0a0a;
     --text-primary: #ffffff;
     --text-secondary: #94a3b8;
     --accent-primary: #6366f1;
     --accent-secondary: #06b6d4;
-    --accent-glow: rgba(99, 102, 241, 0.35);
-    --border-color: rgba(255, 255, 255, 0.07);
-    --input-bg: rgba(255, 255, 255, 0.03);
-    --shadow-premium: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.1);
-    --shadow-hover: 0 35px 80px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2);
+    --accent-glow: rgba(99, 102, 241, 0.4);
+    --border-color: rgba(255, 255, 255, 0.15);
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --shadow-premium: 0 30px 100px rgba(0, 0, 0, 0.9), 0 0 1px rgba(255, 255, 255, 0.2);
+    --glass-blur: none; /* No transparency for the player */
+  }
+
+  /* Explicit light override for dark mode player inversion */
+  .light-theme {
+    --bg-primary: #ffffff; /* Solid White */
+    --bg-secondary: #f8fafc;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --accent-primary: #6366f1;
+    --accent-secondary: #06b6d4;
+    --accent-glow: rgba(99, 102, 241, 0.15);
+    --border-color: #e2e8f0;
+    --input-bg: #f1f5f9;
+    --shadow-premium: 0 20px 60px rgba(0, 0, 0, 0.1), 0 0 1px rgba(0, 0, 0, 0.05);
+    --glass-blur: none;
   }
 }
 

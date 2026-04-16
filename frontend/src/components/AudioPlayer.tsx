@@ -33,6 +33,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
   const [playbackSpeed, setPlaybackSpeed] = useState(() => parseFloat(localStorage.getItem('podcastic-speed') || '1'));
   const [isMuted, setIsMuted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isResuming, setIsResuming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const podcast = typeof episode?.podcastId === 'object' ? episode.podcastId : null;
@@ -67,11 +68,17 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
   // Load previous progress
   useEffect(() => {
     if (!episode || !userId) return;
+    setIsResuming(true);
     episodeService.getProgress(episode._id).then((r) => {
       if (r.progress?.position && audioRef.current) {
+        console.log(`[AudioPlayer] Resuming at ${r.progress.position}s`);
         audioRef.current.currentTime = r.progress.position;
+        setCurrentTime(r.progress.position);
       }
-    }).catch(() => {});
+      setIsResuming(false);
+    }).catch(() => {
+      setIsResuming(false);
+    });
   }, [episode, userId]);
 
   const handlePlayPause = () => {
@@ -167,7 +174,11 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
           </div>
           <div className="min-w-0">
             <p className="text-sm font-bold truncate leading-tight">{episode.title}</p>
-            <p className="text-[10px] text-[var(--text-secondary)] font-bold truncate uppercase tracking-wider">{podcast?.title || ''}</p>
+            {isResuming ? (
+               <p className="text-[9px] text-[var(--accent-primary)] font-black uppercase animate-pulse">Reprise de lecture...</p>
+            ) : (
+               <p className="text-[10px] text-[var(--text-secondary)] font-bold truncate uppercase tracking-wider">{podcast?.title || ''}</p>
+            )}
           </div>
         </div>
 

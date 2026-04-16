@@ -1,6 +1,7 @@
 import React from 'react';
 import { Episode } from '../services/episodeService';
-import { Play, Calendar } from 'lucide-react';
+import { Play, Calendar, Activity } from 'lucide-react';
+import { useAudio } from '../context/AudioContext';
 
 interface EpisodeCardProps {
   episode: Episode;
@@ -9,6 +10,8 @@ interface EpisodeCardProps {
 }
 
 export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardProps) {
+  const { currentEpisode, isPlaying } = useAudio();
+  const isCurrent = currentEpisode?._id === episode._id;
   const podcast = typeof episode.podcastId === 'object' ? episode.podcastId : null;
   const pubDate = new Date(episode.pubDate).toLocaleDateString('fr-FR', {
     month: 'short',
@@ -57,9 +60,17 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
           </div>
         </div>
         
-        {/* Duration Badge */}
-        <div className="absolute bottom-3 right-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-black text-white uppercase tracking-widest">
-           {durationMinutes} MIN
+        {/* Duration/Status Badge */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-2">
+           {isCurrent && (
+             <div className="px-2 py-1 rounded-lg bg-[var(--accent-primary)] border border-[var(--accent-primary)]/20 text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-1.5 shadow-glow-indigo animate-pulse">
+                <Activity className="w-3 h-3" />
+                {isPlaying ? "EN COURS" : "EN PAUSE"}
+             </div>
+           )}
+           <div className="px-2 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-black text-white uppercase tracking-widest">
+              {durationMinutes} MIN
+           </div>
         </div>
       </div>
 

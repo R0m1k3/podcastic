@@ -286,18 +286,18 @@ export default function AddPodcast() {
               </div>
             ))}
           </div>
-        ) : searchType === 'episodes' && episodeResults?.episodes && episodeResults.episodes.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
-             {episodeResults.episodes.map((episode) => (
-                <EpisodeCard 
-                  key={episode._id} 
-                  episode={episode} 
-                  onPlay={playEpisode} 
-                  onDetails={handleOpenDetails}
-                />
-             ))}
+        ) : searchType === 'episodes' && episodeResults?.episodes ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
+            {episodeResults.episodes.map((episode) => (
+              <EpisodeCard 
+                key={episode._id}
+                episode={episode}
+                onPlay={playEpisode}
+                onDetails={handleOpenDetails}
+              />
+            ))}
           </div>
-        ) : searchQuery.length >= 2 ? (
+        ) : searchQuery.length >= 2 && !isSearching && !isSearchingEpisodes ? (
           <div className="premium-glass p-20 rounded-[var(--radius-panel)] text-center max-w-lg mx-auto">
             <Globe className="w-12 h-12 text-slate-700 mx-auto mb-6" />
             <p className="font-bold uppercase tracking-widest text-sm mb-2">Aucun résultat sur iTunes FR</p>
