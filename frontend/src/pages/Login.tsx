@@ -66,7 +66,7 @@ export default function Login() {
         </div>
 
         {/* Form Card */}
-        <div className="premium-glass p-8 lg:p-12 rounded-[3rem] shadow-2xl">
+        <div className="premium-glass p-8 lg:p-12 rounded-[var(--radius-panel)] shadow-2xl">
           <div className="flex p-1.5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)] mb-10">
             <button
               onClick={() => { setIsLogin(true); setError(null); }}

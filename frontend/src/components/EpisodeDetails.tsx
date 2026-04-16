@@ -116,7 +116,7 @@ export default function EpisodeDetails({ episode, isOpen, onClose, onPlay }: Epi
 
            {/* Podcast Info */}
            {podcast && (
-              <div className="mt-16 p-8 rounded-[2rem] bg-[var(--bg-secondary)] border border-[var(--border-color)] group hover:border-[var(--accent-primary)] transition-all">
+              <div className="mt-16 p-8 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] border border-[var(--border-color)] group hover:border-[var(--accent-primary)] transition-all">
                  <div className="flex items-center gap-6">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-xl border border-[var(--border-color)]">
                        <img src={podcast.imageUrl} alt={podcast.title} className="w-full h-full object-cover" />

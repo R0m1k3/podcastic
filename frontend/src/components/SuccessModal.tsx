@@ -29,7 +29,7 @@ export default function SuccessModal({
       />
 
       {/* Modal Content */}
-      <div className="relative premium-glass rounded-[3.5rem] w-full max-w-sm overflow-hidden animate-slide-up shadow-2xl border-[var(--border-color)]">
+      <div className="relative premium-glass rounded-[var(--radius-panel)] w-full max-w-sm overflow-hidden animate-slide-up shadow-2xl border-[var(--border-color)]">
         {/* Decorative Aura */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-[var(--accent-glow)] blur-[60px] rounded-full" />
         

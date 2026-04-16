@@ -16,6 +16,8 @@
     --glass-blur: blur(24px) saturate(180%);
     --shadow-premium: 0 8px 40px rgba(0, 0, 0, 0.4);
     --input-bg: rgba(255, 255, 255, 0.03);
+    --radius-card: 1.5rem;   /* 24px */
+    --radius-panel: 2rem;    /* 32px */
   }
 
   /* ── Premium Gold (Light Theme) ── */
@@ -30,6 +32,8 @@
     --border-color: rgba(197, 160, 40, 0.15);
     --glass-blur: blur(20px) saturate(120%);
     --shadow-premium: 0 12px 48px rgba(0, 0, 0, 0.08);
+    --radius-card: 1.5rem;
+    --radius-panel: 2rem;
     --input-bg: #ffffff;
   }
 }

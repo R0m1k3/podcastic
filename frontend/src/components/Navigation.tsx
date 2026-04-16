@@ -16,10 +16,10 @@ export default function Navigation() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <nav className="fixed left-6 top-6 bottom-6 w-72 h-auto premium-glass z-50 p-6 hidden lg:flex flex-col gap-8 rounded-[2.5rem] border border-[var(--border-color)]">
+      <nav className="fixed left-6 top-6 bottom-6 w-72 h-auto premium-glass z-50 p-6 hidden lg:flex flex-col gap-8 rounded-[var(--radius-panel)] border border-[var(--border-color)]">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-4 group">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-2xl shadow-glow-indigo transition-transform group-hover:scale-110">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-2xl shadow-glow-indigo transition-transform group-hover:scale-110">
             🎙️
           </div>
           <div className="flex flex-col">
@@ -37,7 +37,7 @@ export default function Navigation() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`group relative flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${
+                className={`group relative flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-300 ${
                   active
                     ? 'bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] shadow-sm'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
@@ -60,7 +60,7 @@ export default function Navigation() {
       </nav>
 
       {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-6 left-6 right-6 h-20 premium-glass lg:hidden z-50 flex items-center justify-around px-4 rounded-[2rem] shadow-2xl border border-[var(--border-color)]">
+      <nav className="fixed bottom-6 left-6 right-6 h-20 premium-glass lg:hidden z-50 flex items-center justify-around px-4 rounded-[var(--radius-card)] shadow-2xl border border-[var(--border-color)]">
         {navItems.map((item) => {
           const MobileIcon = item.icon;
           const active = isActive(item.path);

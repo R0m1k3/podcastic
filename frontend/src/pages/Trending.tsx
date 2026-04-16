@@ -173,7 +173,7 @@ export default function Trending() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
               {podcasts.map((podcast, index) => (
-                <div key={`${skip}-${podcast.id}`} className="group premium-glass rounded-[2.5rem] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500">
+                <div key={`${skip}-${podcast.id}`} className="group premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500">
                   <div className="relative aspect-[16/10] overflow-hidden">
                      {podcast.imageUrl ? (
                        <img

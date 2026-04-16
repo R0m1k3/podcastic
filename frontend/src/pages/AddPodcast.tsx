@@ -126,7 +126,7 @@ export default function AddPodcast() {
 
       <main className="max-w-5xl mx-auto">
         {/* RSS Input Area */}
-        <div className="premium-glass p-8 rounded-[3rem] mb-12 relative overflow-hidden">
+        <div className="premium-glass p-8 rounded-[var(--radius-panel)] mb-12 relative overflow-hidden">
            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent-primary)]/5 blur-[50px]" />
            <div className="relative z-10">
               <div className="flex items-center gap-3 mb-6">
@@ -208,7 +208,7 @@ export default function AddPodcast() {
         ) : searchType === 'podcasts' && searchResults?.podcasts && searchResults.podcasts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
             {searchResults.podcasts.map((podcast) => (
-              <div key={podcast.id} className="group premium-glass rounded-[2.5rem] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500">
+              <div key={podcast.id} className="group premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500">
                 <div className="relative aspect-[16/10] overflow-hidden">
                    {podcast.imageUrl ? (
                      <img src={podcast.imageUrl} alt={podcast.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -249,7 +249,7 @@ export default function AddPodcast() {
              ))}
           </div>
         ) : searchQuery.length >= 2 ? (
-          <div className="premium-glass p-20 rounded-[3rem] text-center max-w-lg mx-auto">
+          <div className="premium-glass p-20 rounded-[var(--radius-panel)] text-center max-w-lg mx-auto">
             <Globe className="w-12 h-12 text-slate-700 mx-auto mb-6" />
             <p className="font-bold uppercase tracking-widest text-sm mb-2">Aucun résultat sur iTunes FR</p>
             <p className="text-[var(--text-secondary)] text-xs">Vérifiez l'orthographe ou essayez un nom d'auteur.</p>

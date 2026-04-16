@@ -104,7 +104,7 @@ export default function Dashboard() {
 
       <main className="">
         {/* Welcome Section / Hero */}
-        <div className="premium-glass rounded-[3rem] p-8 lg:p-12 mb-12 relative overflow-hidden group">
+        <div className="premium-glass rounded-[var(--radius-panel)] p-8 lg:p-12 mb-12 relative overflow-hidden group">
            <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--accent-glow)] blur-[80px] -mr-32 -mt-32 group-hover:bg-[var(--accent-primary)]/20 transition-all duration-700" />
            <div className="relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-glow)] border border-[var(--border-color)] text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest mb-4">
@@ -205,7 +205,7 @@ export default function Dashboard() {
             )}
           </>
         ) : (
-          <div className="premium-glass p-16 rounded-[3rem] text-center max-w-2xl mx-auto border-dashed border-white/10">
+          <div className="premium-glass p-16 rounded-[var(--radius-panel)] text-center max-w-2xl mx-auto border-dashed border-white/10">
             <div className="text-4xl mb-6 opacity-40">🧘</div>
             <p className="text-white font-bold text-lg mb-2">Silence radio...</p>
             <p className="text-slate-500 text-sm leading-relaxed mb-8">

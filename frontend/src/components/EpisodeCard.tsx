@@ -32,11 +32,11 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
 
   return (
     <div 
-      className="group premium-glass rounded-[2rem] p-4 hover:bg-[var(--bg-secondary)] transition-all duration-500 border border-[var(--border-color)] hover:border-[var(--accent-primary)]/30 flex flex-col h-full cursor-pointer relative"
+      className="group premium-glass rounded-[var(--radius-card)] p-4 hover:bg-[var(--bg-secondary)] transition-all duration-500 border border-[var(--border-color)] hover:border-[var(--accent-primary)]/30 flex flex-col h-full cursor-pointer relative"
       onClick={handleDetailsClick}
     >
       {/* Visual Header */}
-      <div className="relative aspect-square rounded-2xl overflow-hidden mb-5 shadow-xl border border-[var(--border-color)]">
+      <div className="relative aspect-square rounded-xl overflow-hidden mb-5 shadow-xl border border-[var(--border-color)]">
         {(episode.imageUrl || podcast?.imageUrl) ? (
           <img
             src={episode.imageUrl || podcast!.imageUrl}
