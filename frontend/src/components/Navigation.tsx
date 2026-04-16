@@ -7,10 +7,10 @@ export default function Navigation() {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/trending', label: 'Trending', icon: Flame },
-    { path: '/library', label: 'Library', icon: Library },
-    { path: '/add', label: 'Add Podcast', icon: PlusCircle },
+    { path: '/dashboard', label: 'Tableau de bord', icon: Home },
+    { path: '/trending', label: 'Tendances', icon: Flame },
+    { path: '/library', label: 'Bibliothèque', icon: Library },
+    { path: '/add', label: 'Ajouter', icon: PlusCircle },
   ];
 
   return (

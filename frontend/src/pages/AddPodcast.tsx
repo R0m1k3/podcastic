@@ -7,6 +7,7 @@ import Header from '../components/Header';
 import EpisodeCard from '../components/EpisodeCard';
 import EpisodeDetails from '../components/EpisodeDetails';
 import AudioPlayer from '../components/AudioPlayer';
+import AlertModal, { AlertType } from '../components/AlertModal';
 import { Search, Plus, Loader, Rss, Check, Globe, Sparkles, PlusCircle, LayoutGrid, ListMusic } from 'lucide-react';
 import { authService } from '../services/authService';
 import SuccessModal from '../components/SuccessModal';
@@ -19,7 +20,20 @@ export default function AddPodcast() {
   const [subscribingId, setSubscribingId] = useState<string | null>(null);
   const [rssUrl, setRssUrl] = useState('');
   const [rssLoading, setRssLoading] = useState(false);
-  const [rssError, setRssError] = useState<string | null>(null);
+  
+  // Alert states
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error'
+  });
+
   const [rssSuccess, setRssSuccess] = useState<string | null>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [detailsEpisode, setDetailsEpisode] = useState<Episode | null>(null);
@@ -101,7 +115,6 @@ export default function AddPodcast() {
     e.preventDefault();
     if (!rssUrl.trim()) return;
     setRssLoading(true);
-    setRssError(null);
     setRssSuccess(null);
     try {
       const result = await podcastService.subscribe(rssUrl.trim());
@@ -109,7 +122,12 @@ export default function AddPodcast() {
       setRssUrl('');
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
     } catch (error: any) {
-      setRssError(error.response?.data?.message || 'Impossible d\'ajouter ce podcast');
+      setAlertConfig({
+        isOpen: true,
+        title: "Échec de l'ajout",
+        message: error.response?.data?.message || "Impossible d'ajouter ce podcast. Vérifiez que l'URL du flux RSS est correcte et accessible.",
+        type: 'error'
+      });
     } finally {
       setRssLoading(false);
     }
@@ -141,7 +159,7 @@ export default function AddPodcast() {
                     type="url"
                     placeholder="URL du flux RSS (ex: https://feed.podbean.com/...)"
                     value={rssUrl}
-                    onChange={(e) => { setRssUrl(e.target.value); setRssError(null); setRssSuccess(null); }}
+                    onChange={(e) => { setRssUrl(e.target.value); setRssSuccess(null); }}
                     className="input-premium flex-1"
                  />
                  <button
@@ -154,8 +172,7 @@ export default function AddPodcast() {
                  </button>
               </form>
               
-              {rssError && <p className="mt-4 text-xs font-bold text-accent-rose">⚠️ {rssError}</p>}
-              {rssSuccess && <p className="mt-4 text-xs font-bold text-accent-cyan">✨ {rssSuccess}</p>}
+              {rssSuccess && <p className="mt-4 text-xs font-bold text-accent-cyan animate-fade-in">✨ {rssSuccess}</p>}
            </div>
         </div>
 
@@ -268,6 +285,14 @@ export default function AddPodcast() {
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
         onPlay={setSelectedEpisode}
+      />
+
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
       />
 
       {selectedEpisode && (

@@ -5,11 +5,25 @@ import { authService } from '../services/authService';
 import Header from '../components/Header';
 import { BookOpen, Trash2, Loader, Rss, Play, RefreshCw, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import AlertModal, { AlertType } from '../components/AlertModal';
 
 export default function Library() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  
+  // Alert states
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error'
+  });
 
   useEffect(() => {
     const loadUser = async () => {
@@ -51,7 +65,12 @@ export default function Library() {
     },
     onError: (error: any) => {
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
-      alert('Erreur lors du désabonnement');
+      setAlertConfig({
+        isOpen: true,
+        title: "Erreur de désabonnement",
+        message: "Une erreur est survenue lors de la tentative de désabonnement. Veuillez réessayer plus tard.",
+        type: 'error'
+      });
     },
   });
 
@@ -92,7 +111,7 @@ export default function Library() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 mb-10">
-        <div className="premium-glass p-5 rounded-[1.5rem] flex items-center gap-4">
+        <div className="premium-glass p-5 rounded-[var(--radius-card)] flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-[var(--accent-glow)] flex items-center justify-center text-[var(--accent-primary)] shrink-0">
             <BookOpen className="w-5 h-5" />
           </div>
@@ -101,7 +120,7 @@ export default function Library() {
             <h3 className="text-2xl font-display font-black">{podcasts.length}</h3>
           </div>
         </div>
-        <Link to="/add" className="premium-glass p-5 rounded-[1.5rem] flex items-center gap-4 group hover:bg-[var(--accent-primary)]/5 transition-all">
+        <Link to="/add" className="premium-glass p-5 rounded-[var(--radius-card)] flex items-center gap-4 group hover:bg-[var(--accent-primary)]/5 transition-all">
           <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)] flex items-center justify-center text-white shadow-glow-indigo group-hover:scale-110 transition-transform shrink-0">
             <Rss className="w-5 h-5" />
           </div>
@@ -118,8 +137,8 @@ export default function Library() {
           <p className="text-[var(--text-secondary)] font-medium animate-pulse text-[10px] uppercase tracking-widest">Chargement de votre univers...</p>
         </div>
       ) : podcasts.length === 0 ? (
-        <div className="premium-glass py-24 px-12 rounded-[3.5rem] text-center max-w-2xl mx-auto">
-          <div className="w-24 h-24 rounded-[2rem] bg-[var(--bg-secondary)] flex items-center justify-center text-4xl mx-auto mb-8 border border-[var(--border-color)]">🕳️</div>
+        <div className="premium-glass py-24 px-12 rounded-[var(--radius-panel)] text-center max-w-2xl mx-auto">
+          <div className="w-24 h-24 rounded-[var(--radius-card)] bg-[var(--bg-secondary)] flex items-center justify-center text-4xl mx-auto mb-8 border border-[var(--border-color)]">🕳️</div>
           <h2 className="text-3xl font-display font-black mb-4">Bibliothèque vide</h2>
           <p className="text-[var(--text-secondary)] mb-10 leading-relaxed">Commencez votre voyage audio en ajoutant vos podcasts préférés dès maintenant.</p>
           <Link to="/add" className="neon-button inline-flex items-center gap-3">
@@ -130,7 +149,7 @@ export default function Library() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 pb-10">
           {podcasts.map((podcast) => (
-            <div key={podcast._id} className="group premium-glass rounded-[2.5rem] p-6 hover:bg-[var(--bg-secondary)] transition-all duration-500 flex flex-col h-full border-[var(--border-color)]">
+            <div key={podcast._id} className="group premium-glass rounded-[var(--radius-card)] p-6 hover:bg-[var(--bg-secondary)] transition-all duration-500 flex flex-col h-full border-[var(--border-color)]">
               <div className="flex gap-6 mb-6">
                 <div className="relative shrink-0">
                   <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-2xl border border-[var(--border-color)] group-hover:scale-105 transition-transform duration-500">
@@ -219,6 +238,14 @@ export default function Library() {
           ))}
         </div>
       )}
+
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

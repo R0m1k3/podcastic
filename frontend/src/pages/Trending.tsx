@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import { Loader, Plus, Flame, Check, Sparkles, TrendingUp } from 'lucide-react';
 import { authService } from '../services/authService';
 import SuccessModal from '../components/SuccessModal';
+import AlertModal, { AlertType } from '../components/AlertModal';
 
 export default function Trending() {
   const queryClient = useQueryClient();
@@ -16,6 +17,19 @@ export default function Trending() {
   // Modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successPodcast, setSuccessPodcast] = useState<any>(null);
+
+  // Alert state
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error'
+  });
 
   const GENRES = [
     { id: '', label: 'Tout' },
@@ -98,7 +112,16 @@ export default function Trending() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     },
+    onError: (error: any) => {
+      setAlertConfig({
+        isOpen: true,
+        title: "Échec de l'abonnement",
+        message: error.response?.data?.message || "Une erreur est survenue. Le flux de ce podcast est peut-être temporairement inaccessible.",
+        type: 'error'
+      });
+    }
   });
 
   const handleSubscribe = async (podcast: DiscoveryPodcast) => {
@@ -109,7 +132,12 @@ export default function Trending() {
       setShowSuccessModal(true);
       queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     } catch (error: any) {
-      console.error(error);
+      setAlertConfig({
+        isOpen: true,
+        title: "Action impossible",
+        message: "Une erreur critique est survenue lors de la tentative d'abonnement.",
+        type: 'error'
+      });
     } finally {
       setSubscribingId(null);
     }
@@ -256,6 +284,14 @@ export default function Trending() {
         podcastTitle={successPodcast?.title || ""}
         podcastAuthor={successPodcast?.author || ""}
         podcastImage={successPodcast?.imageUrl || ""}
+      />
+
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
