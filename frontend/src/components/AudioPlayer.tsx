@@ -289,6 +289,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
           autoPlay
         />
       </div>
+     </div>
     </div>
   );
 }
