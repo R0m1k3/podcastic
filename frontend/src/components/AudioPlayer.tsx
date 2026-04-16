@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Episode } from '../services/episodeService';
 import { episodeService } from '../services/episodeService';
+import { useAudio } from '../context/AudioContext';
 import {
   Play,
   Pause,
@@ -22,8 +23,8 @@ interface AudioPlayerProps {
 }
 
 export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerProps) {
+  const { isPlaying, setIsPlaying, togglePlay } = useAudio();
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(() => parseFloat(localStorage.getItem('podcastic-volume') || '1'));
@@ -75,7 +76,6 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
     if (!audioRef.current) return;
     if (isPlaying) audioRef.current.pause();
     else audioRef.current.play();
-    setIsPlaying(!isPlaying);
   };
 
   const changeSpeed = () => {
@@ -132,6 +132,8 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
         src={episode.audioUrl}
         onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
         onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
         onEnded={() => setIsPlaying(false)}
         onError={() => setError("Impossible de charger ce fichier audio. Le lien est peut-être expiré ou protégé.")}
         autoPlay
