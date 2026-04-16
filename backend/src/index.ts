@@ -1,13 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { connectDB } from './config/database';
 import { initRedis, closeRedis } from './config/redis';
-import { authenticate, optional } from './middleware/auth';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/authRoutes';
 import podcastRoutes from './routes/podcastRoutes';
 import episodeRoutes from './routes/episodeRoutes';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -48,8 +52,19 @@ app.use('/api/auth', authRoutes);
 app.use('/api/podcasts', podcastRoutes);
 app.use('/api/episodes', episodeRoutes);
 
-// 404 handler
-app.use(notFoundHandler);
+// Serve frontend static files in production
+const frontendDist = path.join(__dirname, '..', 'public');
+app.use(express.static(frontendDist));
+
+// SPA fallback — return index.html for any non-API route
+app.get('*', (req, res) => {
+  const indexFile = path.join(frontendDist, 'index.html');
+  res.sendFile(indexFile, (err) => {
+    if (err) {
+      res.status(404).json({ success: false, message: 'Not found' });
+    }
+  });
+});
 
 // Error handler (must be last)
 app.use(errorHandler);

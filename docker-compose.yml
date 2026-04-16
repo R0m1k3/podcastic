@@ -19,16 +19,17 @@ services:
     networks:
       - podcastic
 
-  backend:
+  app:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
-    container_name: podcastic-backend
+    container_name: podcastic
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "3579:3579"
     environment:
       NODE_ENV: production
+      PORT: 3579
       MONGODB_URI: mongodb://mongodb:27017/podcastic
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
@@ -39,19 +40,6 @@ services:
     depends_on:
       - mongodb
       - redis
-    networks:
-      - podcastic
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: podcastic-frontend
-    restart: unless-stopped
-    ports:
-      - "3579:3579"
-    depends_on:
-      - backend
     networks:
       - podcastic
 
