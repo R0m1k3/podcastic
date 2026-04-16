@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { discoveryService, DiscoveryPodcast } from '../services/discoveryService';
+import { podcastService } from '../services/podcastService';
 import Header from '../components/Header';
-import { Loader, Plus, Flame } from 'lucide-react';
+import { Loader, Plus, Flame, Check } from 'lucide-react';
 import { authService } from '../services/authService';
 
 export default function Trending() {
@@ -27,6 +28,15 @@ export default function Trending() {
     queryFn: () => discoveryService.getTrendingPodcasts(30),
     staleTime: 30 * 60 * 1000,
   });
+
+  const { data: subsData } = useQuery({
+    queryKey: ['podcasts', 'subscriptions'],
+    queryFn: () => podcastService.getUserSubscriptions(),
+  });
+
+  const isSubscribed = (rssUrl: string) => {
+    return subsData?.podcasts.some(p => p.rssUrl === rssUrl);
+  };
 
   const subscribeMutation = useMutation({
     mutationFn: (podcast: DiscoveryPodcast) =>
@@ -112,13 +122,22 @@ export default function Trending() {
                   <div className="flex items-center justify-between">
                     <button
                       onClick={() => handleSubscribe(podcast)}
-                      disabled={subscribingId === podcast.id || subscribeMutation.isPending}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                      disabled={subscribingId === podcast.id || subscribeMutation.isPending || isSubscribed(podcast.rssUrl)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium ${
+                        isSubscribed(podcast.rssUrl)
+                          ? 'bg-light-200 text-light-500 cursor-default'
+                          : 'bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed'
+                      }`}
                     >
                       {subscribingId === podcast.id ? (
                         <>
                           <Loader className="w-4 h-4 animate-spin" />
                           Ajout...
+                        </>
+                      ) : isSubscribed(podcast.rssUrl) ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Abonné
                         </>
                       ) : (
                         <>
