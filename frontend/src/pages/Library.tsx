@@ -231,13 +231,21 @@ export default function Library() {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => handleUnsubscribeRequest(podcast.subscriptionId || podcast._id)}
-                    className="mt-auto pt-3 border-t border-light-100 flex items-center gap-2 text-sm text-light-500 hover:text-red-600 transition-colors w-full"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Se désabonner
-                  </button>
+                  <div className="mt-auto">
+                    {podcast.episodeCount === 0 && (
+                      <p className="text-[10px] text-orange-500 font-medium mb-3 flex items-center gap-1">
+                        <Loader className="w-3 h-3 animate-spin" />
+                        Episodes en cours de synchronisation...
+                      </p>
+                    )}
+                    <button
+                      onClick={() => handleUnsubscribeRequest(podcast.subscriptionId || podcast._id)}
+                      className="pt-3 border-t border-light-100 flex items-center gap-2 text-sm text-light-500 hover:text-red-600 transition-colors w-full"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Se désabonner
+                    </button>
+                  </div>
                 )}
               </div>
             ))}

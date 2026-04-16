@@ -4,10 +4,17 @@ import { Episode } from '../models/Episode';
 import { getRedis } from '../config/redis';
 
 const parser = new Parser({
-  timeout: 20000, // 20 second timeout
+  timeout: 30000, // Increased to 30 seconds for complex feeds
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+  },
   customFields: {
     item: [
       ['media:content', 'mediaContent'],
+      ['itunes:summary', 'itunesSummary'],
+      ['itunes:subtitle', 'itunesSubtitle'],
+      ['itunes:duration', 'itunesDuration'],
       ['enclosure', 'enclosure'],
     ],
   },
@@ -40,10 +47,10 @@ export const rssParserService = {
 
       return {
         title: feed.title,
-        description: feed.description || '',
-        author: feed.author || feed.creator || '',
+        description: feed.description || feed.itunes?.summary || feed.itunes?.subtitle || '',
+        author: feed.author || feed.creator || feed.itunes?.author || '',
         imageUrl: feed.image?.url || feed.itunes?.image,
-        language: feed.language || 'en',
+        language: feed.language?.split('-')[0].toLowerCase() || '',
         episodes: feed.items || [],
       };
     } catch (error: any) {
@@ -66,9 +73,18 @@ export const rssParserService = {
       return item.mediaContent.url;
     }
 
-    // Try iTunes:duration for audio detection
+    // Try finding mp3 in link or guid
+    const mp3Regex = /\.mp3($|\?)/i;
+    if (item.link && mp3Regex.test(item.link)) {
+      return item.link;
+    }
+    if (item.guid && mp3Regex.test(item.guid)) {
+      return item.guid;
+    }
+
+    // Try finding mp3 in content:encoded
     if (item['content:encoded']) {
-      const match = item['content:encoded'].match(/href=["']([^"']*\.mp3)["']/);
+      const match = item['content:encoded'].match(/href=["']([^"']*\.mp3[^"']*)["']/);
       if (match) return match[1];
     }
 
