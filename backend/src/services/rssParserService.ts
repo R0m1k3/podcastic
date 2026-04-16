@@ -284,8 +284,11 @@ export const rssParserService = {
       podcast.lastFetched = new Date();
       
       if (episodes.length > 0) {
+        console.log(`[RSS Parser] Setting last episode for ${podcast.title}: ${episodes[0].title} (${episodes[0].pubDate})`);
         podcast.lastEpisodeTitle = episodes[0].title;
         podcast.lastEpisodeDate = episodes[0].pubDate;
+      } else {
+        console.warn(`[RSS Parser] No episodes found for ${podcast.title} during creation.`);
       }
       
       await podcast.save();

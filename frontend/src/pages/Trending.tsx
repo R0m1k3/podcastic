@@ -2,14 +2,17 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { discoveryService, DiscoveryPodcast } from '../services/discoveryService';
 import { podcastService } from '../services/podcastService';
-import Header from '../components/Header';
-import { Loader, Plus, Flame, Check } from 'lucide-react';
 import { authService } from '../services/authService';
+import SuccessModal from '../components/SuccessModal';
 
 export default function Trending() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [subscribingId, setSubscribingId] = useState<string | null>(null);
+  
+  // Modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successPodcast, setSuccessPodcast] = useState<any>(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -54,7 +57,8 @@ export default function Trending() {
     try {
       setSubscribingId(podcast.id);
       await subscribeMutation.mutateAsync(podcast);
-      alert(`"${podcast.title}" ajouté à vos abonnements !`);
+      setSuccessPodcast(podcast);
+      setShowSuccessModal(true);
       queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to subscribe';
@@ -157,6 +161,14 @@ export default function Trending() {
           </div>
         )}
       </main>
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        podcastTitle={successPodcast?.title || ""}
+        podcastAuthor={successPodcast?.author || ""}
+        podcastImage={successPodcast?.imageUrl || ""}
+      />
     </div>
   );
 }

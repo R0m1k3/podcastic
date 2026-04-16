@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { discoveryService, DiscoveryPodcast } from '../services/discoveryService';
 import { podcastService } from '../services/podcastService';
-import Header from '../components/Header';
-import { Search, Plus, Loader, Rss, Check } from 'lucide-react';
 import { authService } from '../services/authService';
+import SuccessModal from '../components/SuccessModal';
 
 export default function AddPodcast() {
   const queryClient = useQueryClient();
@@ -15,6 +14,10 @@ export default function AddPodcast() {
   const [rssLoading, setRssLoading] = useState(false);
   const [rssError, setRssError] = useState<string | null>(null);
   const [rssSuccess, setRssSuccess] = useState<string | null>(null);
+  
+  // Modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successPodcast, setSuccessPodcast] = useState<any>(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -60,7 +63,8 @@ export default function AddPodcast() {
     try {
       setSubscribingId(podcast.id);
       await subscribeMutation.mutateAsync(podcast);
-      alert(`"${podcast.title}" ajouté à vos abonnements !`);
+      setSuccessPodcast(podcast);
+      setShowSuccessModal(true);
       queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to subscribe';
@@ -228,6 +232,14 @@ export default function AddPodcast() {
         )}
 
       </main>
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        podcastTitle={successPodcast?.title || ""}
+        podcastAuthor={successPodcast?.author || ""}
+        podcastImage={successPodcast?.imageUrl || ""}
+      />
     </div>
   );
 }
