@@ -65,6 +65,20 @@ export default function Library() {
     },
   });
 
+  const syncMutation = useMutation({
+    mutationFn: (podcastId: string) => podcastService.syncPodcast(podcastId),
+    onSuccess: (data, podcastId) => {
+      console.log(`[Sync SUCCESS] Podcast ID: ${podcastId}`, data);
+      queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
+    },
+    onError: (error: any, podcastId) => {
+      console.error(`[Sync FAILED] Podcast ID: ${podcastId}`, error);
+      const errorMessage = error.response?.data?.message || 'Erreur de synchronisation';
+      alert(`Erreur : ${errorMessage}`);
+    },
+  });
+
   const handleLogout = async () => {
     try {
       await authService.logout();
@@ -233,10 +247,33 @@ export default function Library() {
                 ) : (
                   <div className="mt-auto">
                     {podcast.episodeCount === 0 && (
-                      <p className="text-[10px] text-orange-500 font-medium mb-3 flex items-center gap-1">
-                        <Loader className="w-3 h-3 animate-spin" />
-                        Episodes en cours de synchronisation...
-                      </p>
+                      <div className="mb-4">
+                        <p className="text-[10px] text-orange-500 font-semibold mb-2 flex items-center gap-1 uppercase tracking-wider">
+                          {syncMutation.isPending && syncMutation.variables === (podcast.subscriptionId || podcast._id) ? (
+                            <Loader className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                          )}
+                          Aucun épisode trouvé
+                        </p>
+                        <button
+                          onClick={() => syncMutation.mutate(podcast.subscriptionId || podcast._id)}
+                          disabled={syncMutation.isPending}
+                          className="w-full py-2 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all text-xs font-bold flex items-center justify-center gap-2 border border-orange-200/50"
+                        >
+                          {syncMutation.isPending && syncMutation.variables === (podcast.subscriptionId || podcast._id) ? (
+                             <>
+                               <Loader className="w-3 h-3 animate-spin" />
+                               Synchronisation...
+                             </>
+                          ) : (
+                             <>
+                               <Loader className="w-3 h-3" />
+                               Synchroniser maintenant
+                             </>
+                          )}
+                        </button>
+                      </div>
                     )}
                     <button
                       onClick={() => handleUnsubscribeRequest(podcast.subscriptionId || podcast._id)}

@@ -138,13 +138,24 @@ export const rssParserService = {
   /**
    * Parse episodes from RSS feed items
    */
-  parseEpisodes: (items: any[], podcastImage?: string): ParsedEpisode[] => {
-    return items
+  parseEpisodes: (items: any[], podcastImage?: string, rssUrl: string = ''): ParsedEpisode[] => {
+    const parsed = items
       .filter((item) => {
         const audioUrl = rssParserService.extractAudioUrl(item);
-        return !!audioUrl && !!item.title; // Must have both audio and title
-      })
-      .map((item) => ({
+        const hasTitle = !!item.title;
+        
+        if (!audioUrl || !hasTitle) {
+          // Log only a sample to avoid flooding, but enough to debug
+          if (items.indexOf(item) === 0) {
+            console.log(`[RSS Debug] Item check failed for "${item.title || 'Untitled'}": Audio: ${!!audioUrl}, RSS URL Sample: ${rssUrl.substring(0, 30)}...`);
+            if (!audioUrl) console.log(`[RSS Debug] Available keys for item: ${Object.keys(item).join(', ')}`);
+          }
+        }
+        
+        return !!audioUrl && hasTitle;
+      });
+
+    return parsed.map((item) => ({
         title: item.title || 'Untitled Episode',
         description: item.contentSnippet || item.description || '',
         audioUrl: rssParserService.extractAudioUrl(item) || '',
@@ -159,15 +170,20 @@ export const rssParserService = {
   /**
    * Fetch and sync podcast episodes
    */
-  syncPodcastEpisodes: async (podcastId: string, rssUrl: string) => {
+  syncPodcastEpisodes: async (podcastId: string, rssUrl: string, force: boolean = false) => {
     try {
       const redis = getRedis();
-
-      // Check cache first
       const cacheKey = `podcast:${podcastId}:sync`;
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
+
+      // Check cache unless forced
+      if (!force) {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          console.log(`[RSS Sync] Returning cached result for ${podcastId}`);
+          return JSON.parse(cached);
+        }
+      } else {
+        console.log(`[RSS Sync] Force sync requested for ${podcastId}`);
       }
 
       const podcast = await Podcast.findById(podcastId);
@@ -274,7 +290,7 @@ export const rssParserService = {
       await podcast.save();
 
       // Parse and create episodes
-      const episodes = rssParserService.parseEpisodes(feedData.episodes, feedData.imageUrl);
+      const episodes = rssParserService.parseEpisodes(feedData.episodes, feedData.imageUrl, rssUrl);
 
       for (const episodeData of episodes) {
         const episode = new Episode({

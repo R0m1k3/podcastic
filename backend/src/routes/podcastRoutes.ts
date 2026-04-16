@@ -3,6 +3,7 @@ import {
   getUserSubscriptions,
   subscribe,
   unsubscribe,
+  syncPodcast,
   searchPodcasts,
   getPodcast,
   discoverPodcasts,
@@ -18,6 +19,7 @@ router.get('/subscriptions', authenticate, getUserSubscriptions);
 router.post('/subscribe', authenticate, subscribe);
 router.post('/subscribe-discovery', authenticate, subscribeFromDiscovery);
 router.delete('/:podcastId/unsubscribe', authenticate, unsubscribe);
+router.post('/:podcastId/sync', authenticate, syncPodcast);
 
 // Public/discovery routes
 router.get('/discover', discoverPodcasts);

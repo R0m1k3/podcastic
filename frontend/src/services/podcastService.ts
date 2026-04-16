@@ -37,6 +37,11 @@ export const podcastService = {
     return response.data;
   },
 
+  syncPodcast: async (podcastId: string): Promise<any> => {
+    const response = await api.post(`/podcasts/${podcastId}/sync`);
+    return response.data;
+  },
+
   searchPodcasts: async (
     query: string,
     limit: number = 20,

@@ -56,6 +56,9 @@ export const subscribe = async (req: Request, res: Response) => {
     let podcast = await Podcast.findOne({ rssUrl });
 
     if (!podcast) {
+      // Parse RSS feed
+      const feedData = await rssParserService.parseFeed(rssUrl);
+      const episodes = rssParserService.parseEpisodes(feedData.items, feedData.image?.url || '', rssUrl);
       try {
         const result = await rssParserService.createPodcastFromRss(rssUrl);
         podcast = await Podcast.findById(result.podcast._id);
@@ -143,6 +146,29 @@ export const unsubscribe = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Unsubscribe error:', error);
     res.status(500).json({ message: 'Failed to unsubscribe' });
+  }
+};
+
+export const syncPodcast = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const { podcastId } = req.params;
+    const podcast = await Podcast.findById(podcastId);
+
+    if (!podcast) {
+      return res.status(404).json({ message: 'Podcast not found' });
+    }
+
+    console.log(`[Sync] Triggering manual sync for podcast: ${podcast.title} (${podcastId})`);
+    const result = await rssParserService.syncPodcastEpisodes(podcastId, podcast.rssUrl, true);
+
+    res.json(result);
+  } catch (error: any) {
+    console.error('Manual sync error:', error);
+    res.status(500).json({ message: error.message || 'Failed to sync podcast' });
   }
 };
 
