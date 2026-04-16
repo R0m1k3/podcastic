@@ -15,6 +15,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import AlertModal from './AlertModal';
+import { useTheme } from '../context/ThemeContext';
 
 interface AudioPlayerProps {
   episode: Episode | null;
@@ -24,6 +25,7 @@ interface AudioPlayerProps {
 
 export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerProps) {
   const { isPlaying, setIsPlaying, togglePlay } = useAudio();
+  const { theme } = useTheme();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -120,8 +122,10 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  const inverseTheme = theme === 'light' ? 'dark-theme' : 'light-theme';
+
   return (
-    <div className={`fixed z-[100] transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+    <div className={`fixed z-[100] transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${inverseTheme} ${
       isExpanded
         ? 'inset-0 rounded-none'
         : 'bottom-6 left-1/2 -translate-x-1/2 w-[96%] max-w-5xl rounded-[2rem] h-[88px]'

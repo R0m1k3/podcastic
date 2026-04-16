@@ -257,7 +257,7 @@ export default function AddPodcast() {
         ) : searchType === 'podcasts' && (searchQuery.length > 0 ? searchResults?.podcasts : trendingResults?.podcasts) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
             {(searchQuery.length > 0 ? searchResults?.podcasts : trendingResults?.podcasts).map((podcast: any) => (
-              <div key={podcast.id} className="group premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500 border-[var(--border-color)]">
+              <div key={podcast.id} className="group premium-card premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500 border-[var(--border-color)]">
                 <div className="relative aspect-[16/10] overflow-hidden">
                    {podcast.imageUrl ? (
                      <img src={podcast.imageUrl} alt={podcast.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />

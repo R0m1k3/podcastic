@@ -32,7 +32,7 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
 
   return (
     <div 
-      className="group premium-glass rounded-[var(--radius-card)] p-4 hover:bg-[var(--bg-secondary)] transition-all duration-500 border border-[var(--border-color)] hover:border-[var(--accent-primary)]/30 flex flex-col h-full cursor-pointer relative"
+      className="group premium-card premium-glass rounded-[var(--radius-card)] p-4 hover:bg-[var(--bg-secondary)] transition-all duration-500 border border-[var(--border-color)] hover:border-[var(--accent-primary)]/30 flex flex-col h-full cursor-pointer relative"
       onClick={handleDetailsClick}
     >
       {/* Visual Header */}
