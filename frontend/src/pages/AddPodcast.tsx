@@ -6,14 +6,16 @@ import { episodeService, Episode } from '../services/episodeService';
 import Header from '../components/Header';
 import EpisodeCard from '../components/EpisodeCard';
 import EpisodeDetails from '../components/EpisodeDetails';
-import AudioPlayer from '../components/AudioPlayer';
+import { useAudio } from '../context/AudioContext';
 import AlertModal, { AlertType } from '../components/AlertModal';
 import { Search, Plus, Loader, Rss, Check, Globe, Sparkles, PlusCircle, LayoutGrid, ListMusic } from 'lucide-react';
 import { authService } from '../services/authService';
 import SuccessModal from '../components/SuccessModal';
+import { GENRES } from '../constants';
 
 export default function AddPodcast() {
   const queryClient = useQueryClient();
+  const { playEpisode } = useAudio();
   const [user, setUser] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState<'podcasts' | 'episodes'>('podcasts');
@@ -35,9 +37,9 @@ export default function AddPodcast() {
   });
 
   const [rssSuccess, setRssSuccess] = useState<string | null>(null);
-  const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [detailsEpisode, setDetailsEpisode] = useState<Episode | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedGenre, setSelectedGenre] = useState<string>(GENRES[1].id); // Tech by default or first genre
   
   // Modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -74,6 +76,14 @@ export default function AddPodcast() {
       queryFn: () => episodeService.searchEpisodes(searchQuery, 40),
       enabled: searchQuery.length > 2 && searchType === 'episodes',
       staleTime: 2 * 60 * 1000,
+  });
+
+  // Trending discovery for the "Add" page when no search is active
+  const { data: trendingResults, isLoading: isTrendingLoading } = useQuery({
+    queryKey: ['discover', 'trending', selectedGenre],
+    queryFn: () => discoveryService.getTrendingPodcasts(18, selectedGenre),
+    enabled: searchQuery.length === 0 && searchType === 'podcasts',
+    staleTime: 30 * 60 * 1000,
   });
 
   const { data: subsData } = useQuery({
@@ -215,17 +225,39 @@ export default function AddPodcast() {
               />
               <Sparkles className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-500 group-focus-within:text-[var(--accent-primary)] transition-colors" />
            </div>
+
+           {/* Category Discovery Pills */}
+           {searchType === 'podcasts' && (
+             <div className="flex items-center gap-2 overflow-x-auto pb-4 mt-8 no-scrollbar">
+               {GENRES.map(genre => (
+                 <button
+                   key={genre.id}
+                   onClick={() => {
+                       setSelectedGenre(genre.id);
+                       setSearchQuery(''); 
+                   }}
+                   className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
+                     selectedGenre === genre.id && searchQuery === ''
+                      ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-glow-indigo' 
+                      : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--accent-primary)]'
+                   }`}
+                 >
+                   {genre.label || 'Explorer'}
+                 </button>
+               ))}
+             </div>
+           )}
         </div>
 
         {/* Dynamic Results Grid */}
-        {(isSearching || isSearchingEpisodes) ? (
+        {(isSearching || isSearchingEpisodes || isTrendingLoading) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-             {[1,2,3].map(i => <div key={i} className="premium-glass rounded-[2.5rem] h-64 animate-pulse" />)}
+             {[1,2,3,4,5,6].map(i => <div key={i} className="premium-glass rounded-[var(--radius-card)] h-64 animate-pulse opacity-50" />)}
           </div>
-        ) : searchType === 'podcasts' && searchResults?.podcasts && searchResults.podcasts.length > 0 ? (
+        ) : searchType === 'podcasts' && (searchQuery.length > 0 ? searchResults?.podcasts : trendingResults?.podcasts) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
-            {searchResults.podcasts.map((podcast) => (
-              <div key={podcast.id} className="group premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500">
+            {(searchQuery.length > 0 ? searchResults?.podcasts : trendingResults?.podcasts).map((podcast: any) => (
+              <div key={podcast.id} className="group premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500 border-[var(--border-color)]">
                 <div className="relative aspect-[16/10] overflow-hidden">
                    {podcast.imageUrl ? (
                      <img src={podcast.imageUrl} alt={podcast.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -260,7 +292,7 @@ export default function AddPodcast() {
                 <EpisodeCard 
                   key={episode._id} 
                   episode={episode} 
-                  onPlay={setSelectedEpisode} 
+                  onPlay={playEpisode} 
                   onDetails={handleOpenDetails}
                 />
              ))}
@@ -284,7 +316,7 @@ export default function AddPodcast() {
         episode={detailsEpisode}
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
-        onPlay={setSelectedEpisode}
+        onPlay={playEpisode}
       />
 
       <AlertModal
@@ -294,14 +326,6 @@ export default function AddPodcast() {
         type={alertConfig.type}
         onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
       />
-
-      {selectedEpisode && (
-        <AudioPlayer
-          episode={selectedEpisode}
-          onClose={() => setSelectedEpisode(null)}
-          userId={user?.id}
-        />
-      )}
 
       <SuccessModal
         isOpen={showSuccessModal}

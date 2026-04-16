@@ -6,12 +6,13 @@ import { authService } from '../services/authService';
 import Header from '../components/Header';
 import EpisodeCard from '../components/EpisodeCard';
 import EpisodeDetails from '../components/EpisodeDetails';
-import AudioPlayer from '../components/AudioPlayer';
+import { useAudio } from '../context/AudioContext';
+import AlertModal, { AlertType } from '../components/AlertModal';
 import { Sparkles, Play, Clock, TrendingUp, Loader, RefreshCcw } from 'lucide-react';
 
 export default function Dashboard() {
+  const { playEpisode } = useAudio();
   const [user, setUser] = useState<any>(null);
-  const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [detailsEpisode, setDetailsEpisode] = useState<Episode | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -19,6 +20,19 @@ export default function Dashboard() {
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const LIMIT = 32;
+
+  // Alert states
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error'
+  });
 
   const handleOpenDetails = (episode: Episode) => {
     setDetailsEpisode(episode);
@@ -78,7 +92,12 @@ export default function Dashboard() {
       authService.clearTokens();
       window.location.href = '/login';
     } catch (error) {
-      console.error('Logout failed:', error);
+      setAlertConfig({
+        isOpen: true,
+        title: "Erreur de déconnexion",
+        message: "Une erreur s'est produite lors de la déconnexion. Veuillez rafraîchir la page.",
+        type: 'error'
+      });
     }
   };
 
@@ -111,10 +130,10 @@ export default function Dashboard() {
                  <Sparkles className="w-3 h-3" />
                  Podcastic Premium
               </div>
-              <h2 className="text-4xl lg:text-5xl font-display font-black mb-4 tracking-tight leading-tight max-w-2xl">
+              <h2 className="text-4xl lg:text-5xl font-display font-black mb-4 tracking-tight leading-tight max-w-2xl text-[var(--text-primary)]">
                  Découvrez les nouveautés de votre univers audio.
               </h2>
-              <p className="text-[var(--text-secondary)] text-lg mb-8 max-w-xl leading-relaxed">
+              <p className="text-[var(--text-secondary)] text-lg mb-8 max-w-xl leading-relaxed font-medium">
                  Vous avez des nouveaux épisodes qui n'attendent que vous. Prêt pour une immersion ?
               </p>
               <div className="flex flex-wrap gap-4">
@@ -153,7 +172,7 @@ export default function Dashboard() {
                   <EpisodeCard
                     key={`progress-${episode._id}`}
                     episode={episode}
-                    onPlay={setSelectedEpisode}
+                    onPlay={playEpisode}
                     onDetails={handleOpenDetails}
                   />
                 ))}
@@ -185,7 +204,7 @@ export default function Dashboard() {
                 <EpisodeCard
                   key={`${skip}-${episode._id}`}
                   episode={episode}
-                  onPlay={setSelectedEpisode}
+                  onPlay={playEpisode}
                   onDetails={handleOpenDetails}
                 />
               ))}
@@ -205,10 +224,10 @@ export default function Dashboard() {
             )}
           </>
         ) : (
-          <div className="premium-glass p-16 rounded-[var(--radius-panel)] text-center max-w-2xl mx-auto border-dashed border-white/10">
+          <div className="premium-glass p-16 rounded-[var(--radius-panel)] text-center max-w-2xl mx-auto border-dashed border-[var(--border-color)]">
             <div className="text-4xl mb-6 opacity-40">🧘</div>
-            <p className="text-white font-bold text-lg mb-2">Silence radio...</p>
-            <p className="text-slate-500 text-sm leading-relaxed mb-8">
+            <p className="font-bold text-lg mb-2 text-[var(--text-primary)]">Silence radio...</p>
+            <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-8">
               Vous n'avez pas encore d'épisodes ici. Abonnez-vous à vos podcasts favoris pour commencer votre collection.
             </p>
             <Link to="/trending" className="neon-button">Explorer les podcasts</Link>
@@ -221,17 +240,16 @@ export default function Dashboard() {
         episode={detailsEpisode}
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
-        onPlay={setSelectedEpisode}
+        onPlay={playEpisode}
       />
 
-      {/* Audio Player Management */}
-      {selectedEpisode && (
-        <AudioPlayer
-          episode={selectedEpisode}
-          onClose={() => setSelectedEpisode(null)}
-          userId={user?._id}
-        />
-      )}
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

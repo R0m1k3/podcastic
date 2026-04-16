@@ -7,6 +7,7 @@ import { Loader, Plus, Flame, Check, Sparkles, TrendingUp } from 'lucide-react';
 import { authService } from '../services/authService';
 import SuccessModal from '../components/SuccessModal';
 import AlertModal, { AlertType } from '../components/AlertModal';
+import { GENRES } from '../constants';
 
 export default function Trending() {
   const queryClient = useQueryClient();
@@ -31,18 +32,7 @@ export default function Trending() {
     type: 'error'
   });
 
-  const GENRES = [
-    { id: '', label: 'Tout' },
-    { id: '1318', label: 'Technologie' },
-    { id: '1303', label: 'Humour' },
-    { id: '1321', label: 'Business' },
-    { id: '1311', label: 'News' },
-    { id: '1324', label: 'Société' },
-    { id: '1316', label: 'Sports' },
-    { id: '1310', label: 'Musique' },
-    { id: '1301', label: 'Arts' },
-    { id: '1315', label: 'Science' },
-  ];
+
 
   useEffect(() => {
     const loadUser = async () => {

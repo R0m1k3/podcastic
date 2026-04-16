@@ -69,8 +69,9 @@ export const podcastIndexService = {
           term,
           media: 'podcast',
           entity: 'podcast',
-          country: 'FR', // Prioritize French store
-          limit: Math.max(limit, 50), // Get more results to find the best match
+          country: 'FR',
+          lang: 'fr_fr', // Force French localized search
+          limit: 100, // Fetch more candidates to improve quality
         },
         timeout: 10000,
       }
@@ -78,7 +79,8 @@ export const podcastIndexService = {
 
     return response.data.results
       .map(mapItunesResult)
-      .filter((r): r is SearchResult => r !== null);
+      .filter((r): r is SearchResult => r !== null)
+      .slice(0, limit); // Respect requested limit after fetching candidates
   },
 
   getTrendingPodcasts: async (limit: number = 20, genreId?: string): Promise<SearchResult[]> => {

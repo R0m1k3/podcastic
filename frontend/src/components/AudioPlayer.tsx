@@ -11,7 +11,9 @@ import {
   X,
   RotateCcw,
   RotateCw,
+  AlertCircle
 } from 'lucide-react';
+import AlertModal from './AlertModal';
 
 interface AudioPlayerProps {
   episode: Episode | null;
@@ -28,6 +30,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
   const [playbackSpeed, setPlaybackSpeed] = useState(() => parseFloat(localStorage.getItem('podcastic-speed') || '1'));
   const [isMuted, setIsMuted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const podcast = typeof episode?.podcastId === 'object' ? episode.podcastId : null;
 
@@ -130,8 +133,19 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
         onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
         onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
         onEnded={() => setIsPlaying(false)}
-        crossOrigin="anonymous"
+        onError={() => setError("Impossible de charger ce fichier audio. Le lien est peut-être expiré ou protégé.")}
         autoPlay
+      />
+
+      <AlertModal
+        isOpen={!!error}
+        title="Erreur de lecture"
+        message={error || ""}
+        type="error"
+        onClose={() => {
+            setError(null);
+            onClose();
+        }}
       />
 
       {/* ── COMPACT BAR ── */}

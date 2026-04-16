@@ -1,13 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import './styles/globals.css';
 import { authService } from './services/authService';
+import { AudioProvider, useAudio } from './context/AudioContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Trending from './pages/Trending';
 import AddPodcast from './pages/AddPodcast';
 import Library from './pages/Library';
 import Navigation from './components/Navigation';
+import AudioPlayer from './components/AudioPlayer';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,6 +20,78 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// App Content Wrapper to access AudioContext
+function AppContent() {
+  const { currentEpisode, closePlayer } = useAudio();
+  const [user, setUser] = useState<any>(null);
+
+  // Load user for the player
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const { accessToken } = authService.getTokens();
+        if (accessToken) {
+          const response = await authService.getMe();
+          setUser(response.user);
+        }
+      } catch (error) {
+        console.error('Failed to load user for global player');
+      }
+    };
+    loadUser();
+  }, [currentEpisode]); // Reload if needed or on mount
+
+  return (
+    <>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/trending"
+          element={
+            <ProtectedRoute>
+              <Trending />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add"
+          element={
+            <ProtectedRoute>
+              <AddPodcast />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/library"
+          element={
+            <ProtectedRoute>
+              <Library />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+
+      {currentEpisode && (
+        <AudioPlayer
+          episode={currentEpisode}
+          onClose={closePlayer}
+          userId={user?._id}
+        />
+      )}
+    </>
+  );
+}
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -29,7 +104,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <Navigation />
-      <main className="flex-1 lg:ml-80 lg:mr-8 pb-32 pt-8 px-4 lg:px-0">
+      <main className="flex-1 lg:ml-80 lg:mr-8 pb-40 pt-8 px-4 lg:px-0">
         <div className="reveal">
           {children}
         </div>
@@ -41,45 +116,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/trending"
-            element={
-              <ProtectedRoute>
-                <Trending />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add"
-            element={
-              <ProtectedRoute>
-                <AddPodcast />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/library"
-            element={
-              <ProtectedRoute>
-                <Library />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <AudioProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </AudioProvider>
     </QueryClientProvider>
   );
 }
