@@ -165,7 +165,7 @@ export default function Trending() {
           </div>
 
           {/* Genre Pills with Scroll Indicators */}
-          <div className="relative w-full min-w-0 group/genres mb-14">
+          <div className="relative flex-1 min-w-0 group/genres mb-14">
             {/* Fade effect left */}
             <div className="absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-[var(--bg-primary)] to-transparent z-10 pointer-events-none opacity-100 sm:hidden" />
             
