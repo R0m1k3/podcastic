@@ -132,7 +132,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
   const inverseTheme = theme === 'light' ? 'dark-theme' : 'light-theme';
 
   return (
-    <div className={`fixed z-[100] transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${inverseTheme} ${
+    <div className={`fixed z-[100] transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${inverseTheme} text-[var(--text-primary)] ${
       isExpanded
         ? 'inset-0 rounded-none'
         : 'bottom-6 left-1/2 -translate-x-1/2 w-[96%] max-w-5xl rounded-[2rem] h-[88px]'
