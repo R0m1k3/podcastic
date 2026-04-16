@@ -2,16 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { connectDB } from './config/database';
 import { initRedis, closeRedis } from './config/redis';
 import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/authRoutes';
 import podcastRoutes from './routes/podcastRoutes';
 import episodeRoutes from './routes/episodeRoutes';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
