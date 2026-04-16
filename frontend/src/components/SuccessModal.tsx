@@ -1,5 +1,6 @@
 import { CheckCircle2, ChevronRight, BookOpen, Sparkles, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -20,8 +21,8 @@ export default function SuccessModal({
 }: SuccessModalProps) {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in"
@@ -85,6 +86,7 @@ export default function SuccessModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

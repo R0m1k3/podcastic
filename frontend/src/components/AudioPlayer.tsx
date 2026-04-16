@@ -159,7 +159,7 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
       isExpanded
         ? 'inset-0 rounded-none'
         : 'bottom-6 left-1/2 -translate-x-1/2 w-[96%] max-w-5xl rounded-[2rem] h-[88px]'
-    } premium-glass border-[var(--border-color)] shadow-2xl overflow-hidden flex flex-col`}>
+    } ${theme === 'light' ? 'bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-xl' : 'premium-glass'} border-[var(--border-color)] shadow-2xl overflow-hidden flex flex-col`}>
 
       <audio
         ref={audioRef}

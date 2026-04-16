@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Play, Clock, Calendar, BarChart2 } from 'lucide-react';
 import { Episode } from '../services/episodeService';
 
@@ -20,7 +21,7 @@ export default function EpisodeDetails({ episode, isOpen, onClose, onPlay }: Epi
     year: 'numeric'
   });
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div 
@@ -131,6 +132,7 @@ export default function EpisodeDetails({ episode, isOpen, onClose, onPlay }: Epi
            )}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }

@@ -164,15 +164,18 @@ export default function Trending() {
             </div>
           </div>
 
-          {/* Genre Pills */}
-          <div className="w-full min-w-0 overflow-hidden">
-            <div className="flex items-center gap-2 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth">
-               <div className="flex items-center gap-2 flex-nowrap">
+          {/* Genre Pills with Scroll Indicators */}
+          <div className="relative w-full min-w-0 group/genres mb-14">
+            {/* Fade effect left */}
+            <div className="absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-[var(--bg-primary)] to-transparent z-10 pointer-events-none opacity-100 sm:hidden" />
+            
+            <div className="flex items-center gap-2 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
+               <div className="flex items-center gap-2 flex-nowrap px-4 sm:px-0">
                  {GENRES.map(genre => (
                    <button
                      key={genre.id}
                      onClick={() => setSelectedGenre(genre.id)}
-                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
+                     className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
                        selectedGenre === genre.id 
                         ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-glow-indigo' 
                         : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--accent-primary)]'
@@ -183,6 +186,9 @@ export default function Trending() {
                  ))}
                </div>
             </div>
+
+            {/* Fade effect right */}
+            <div className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-[var(--bg-primary)] to-transparent z-10 pointer-events-none opacity-100 sm:hidden" />
           </div>
         </div>
 

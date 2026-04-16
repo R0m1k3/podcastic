@@ -1,4 +1,5 @@
 import { X, AlertCircle, Info, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 export type AlertType = 'error' | 'info' | 'success' | 'warning';
 
@@ -52,8 +53,8 @@ export default function AlertModal({
 
   const { icon: StatusIcon, color, bg, border, glow } = config[type];
 
-  return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in"
@@ -91,6 +92,7 @@ export default function AlertModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
