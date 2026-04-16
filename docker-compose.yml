@@ -2,13 +2,13 @@ version: '3.8'
 
 services:
   mongodb:
-    image: mongo:latest
+    image: mongo:7
     container_name: podcastic-mongodb
     restart: unless-stopped
     volumes:
       - mongodb_data:/data/db
     networks:
-      - podcastic
+      - podcastic_net
 
   redis:
     image: redis:7-alpine
@@ -17,16 +17,16 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - podcastic
+      - podcastic_net
 
-  podcastic:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: podcastic
+    container_name: podcastic-app
     restart: unless-stopped
     ports:
-      - "3579:3579"
+      - "${PORT:-3579}:3579"
     environment:
       NODE_ENV: production
       PORT: 3579
@@ -41,12 +41,12 @@ services:
       - mongodb
       - redis
     networks:
-      - podcastic
+      - podcastic_net
 
 volumes:
   mongodb_data:
   redis_data:
 
 networks:
-  podcastic:
+  podcastic_net:
     driver: bridge
