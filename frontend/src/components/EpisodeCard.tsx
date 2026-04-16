@@ -23,10 +23,10 @@ export default function EpisodeCard({ episode, onPlay }: EpisodeCardProps) {
     >
       {/* Visual Header */}
       <div className="relative aspect-square rounded-2xl overflow-hidden mb-5 shadow-xl border border-white/5">
-        {podcast?.imageUrl ? (
+        {(episode.imageUrl || podcast?.imageUrl) ? (
           <img
-            src={podcast.imageUrl}
-            alt={podcast.title}
+            src={episode.imageUrl || podcast!.imageUrl}
+            alt={episode.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
         ) : (

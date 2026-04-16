@@ -119,8 +119,8 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
         {/* Artwork + info */}
         <div className="flex items-center gap-3 min-w-0 flex-1 max-w-[280px]">
           <div className="w-13 h-13 w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0 shadow-lg">
-            {podcast?.imageUrl
-              ? <img src={podcast.imageUrl} alt="" className="w-full h-full object-cover" />
+            {(episode.imageUrl || podcast?.imageUrl)
+              ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
               : <div className="w-full h-full bg-gradient-to-br from-accent-indigo to-accent-violet flex items-center justify-center text-xl">🎙️</div>
             }
           </div>
@@ -196,8 +196,8 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
           <div className="flex flex-col lg:flex-row gap-12 items-center flex-1">
             {/* Artwork */}
             <div className="w-64 h-64 lg:w-80 lg:h-80 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 shrink-0">
-              {podcast?.imageUrl
-                ? <img src={podcast.imageUrl} alt="" className="w-full h-full object-cover" />
+              {(episode.imageUrl || podcast?.imageUrl)
+                ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
                 : <div className="w-full h-full bg-gradient-to-br from-accent-indigo to-accent-violet flex items-center justify-center text-7xl">🎙️</div>
               }
             </div>
