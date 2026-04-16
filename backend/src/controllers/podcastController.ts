@@ -77,8 +77,9 @@ export const subscribe = async (req: Request, res: Response) => {
       const subscription = new UserSubscription({
         userId: req.user.id,
         podcastId: podcast._id,
-        await subscription.save();
-      }
+      });
+      await subscription.save();
+    }
 
     res.status(200).json({
       message: existingSubscription ? 'Déjà abonné' : 'Abonnement réussi',
