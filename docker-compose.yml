@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: podcastic-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: podcastic
+      MONGO_INITDB_ROOT_USERNAME: podcastic
+      MONGO_INITDB_ROOT_PASSWORD: podcastic_dev
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - podcastic-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: podcastic-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - podcastic-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: podcastic-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://podcastic:podcastic_dev@mongo:27017/podcastic
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev_secret_key_change_in_prod
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - ./backend/src:/app/src
+      - /app/node_modules
+    networks:
+      - podcastic-network
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: podcastic-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src
+      - /app/node_modules
+    networks:
+      - podcastic-network
+    command: npm run dev
+
+volumes:
+  mongo_data:
+  redis_data:
+
+networks:
+  podcastic-network:
+    driver: bridge
