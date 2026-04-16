@@ -78,23 +78,29 @@ export const podcastIndexService = {
   },
 
   getTrendingPodcasts: async (limit: number = 20): Promise<SearchResult[]> => {
-    // Get Apple's top podcasts list
-    const topResponse = await axios.get<{ feed: { results: ItunesTopResult[] } }>(
-      `https://rss.applemarketingtools.com/api/v2/fr/podcasts/top-podcasts/${Math.min(limit, 50)}/podcasts.json`,
-      { timeout: 10000 }
-    );
+    // iTunes official top podcasts RSS (France)
+    const cap = Math.min(limit, 50);
+    const rssResponse = await axios.get<{
+      feed: {
+        entry: Array<{
+          id: { label: string; attributes: { 'im:id': string } };
+          'im:name': { label: string };
+          'im:artist': { label: string };
+          'im:image': Array<{ label: string; attributes: { height: string } }>;
+        }>;
+      };
+    }>(`https://itunes.apple.com/fr/rss/toppodcasts/limit=${cap}/json`, {
+      timeout: 10000,
+    });
 
-    const topItems = topResponse.data.feed.results;
-    if (!topItems || topItems.length === 0) return [];
+    const entries = rssResponse.data.feed.entry;
+    if (!entries || entries.length === 0) return [];
 
-    // Batch lookup to get RSS URLs
-    const ids = topItems.map((item) => item.id).join(',');
+    // Batch lookup to get feedUrls
+    const ids = entries.map((e) => e.id.attributes['im:id']).join(',');
     const lookupResponse = await axios.get<ItunesSearchResponse>(
       'https://itunes.apple.com/lookup',
-      {
-        params: { id: ids, entity: 'podcast' },
-        timeout: 10000,
-      }
+      { params: { id: ids, entity: 'podcast' }, timeout: 10000 }
     );
 
     return lookupResponse.data.results

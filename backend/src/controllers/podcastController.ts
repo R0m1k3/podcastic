@@ -50,14 +50,8 @@ export const subscribe = async (req: Request, res: Response) => {
 
     if (!podcast) {
       try {
-        const result = await rssParserService.createPodcastFromRss(rssUrl, {
-          title: 'Unknown Podcast',
-          description: '',
-          author: '',
-          imageUrl: undefined,
-          episodes: [],
-        });
-        podcast = result.podcast;
+        const result = await rssParserService.createPodcastFromRss(rssUrl);
+        podcast = await Podcast.findById(result.podcast._id);
       } catch (error: any) {
         if (error.message.includes('already in database')) {
           podcast = await Podcast.findOne({ rssUrl });
@@ -70,7 +64,7 @@ export const subscribe = async (req: Request, res: Response) => {
     }
 
     if (!podcast) {
-      return res.status(400).json({ message: 'Impossible d\'ajouter le podcast' });
+      return res.status(400).json({ message: "Impossible d'ajouter le podcast" });
     }
 
     // Check if already subscribed
@@ -184,9 +178,7 @@ export const discoverPodcasts = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Discover podcasts error:', error.message);
-    res.status(error.status || 500).json({
-      message: error.message || 'Recherche échouée',
-    });
+    res.json({ source: 'itunes', podcasts: [], count: 0 });
   }
 };
 
@@ -263,16 +255,11 @@ export const subscribeFromDiscovery = async (req: Request, res: Response) => {
 export const getTrendingPodcasts = async (req: Request, res: Response) => {
   try {
     const limit = Number(req.query.limit) || 20;
-
     const trending = await podcastIndexService.getTrendingPodcasts(limit);
-
-    res.json({
-      source: 'itunes',
-      podcasts: trending,
-      count: trending.length,
-    });
+    res.json({ source: 'itunes', podcasts: trending, count: trending.length });
   } catch (error: any) {
     console.error('Trending podcasts error:', error.message);
-    res.status(500).json({ message: 'Impossible de récupérer les tendances' });
+    // Return empty rather than crashing the page
+    res.json({ source: 'itunes', podcasts: [], count: 0 });
   }
 };
