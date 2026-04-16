@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { discoveryService, DiscoveryPodcast } from '../services/discoveryService';
 import { podcastService } from '../services/podcastService';
@@ -16,7 +16,7 @@ export default function AddPodcast() {
   const [rssError, setRssError] = useState<string | null>(null);
   const [rssSuccess, setRssSuccess] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     const loadUser = async () => {
       try {
         const response = await authService.getMe();

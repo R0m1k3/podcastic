@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { discoveryService, DiscoveryPodcast } from '../services/discoveryService';
 import Header from '../components/Header';
@@ -10,7 +10,7 @@ export default function Trending() {
   const [user, setUser] = useState<any>(null);
   const [subscribingId, setSubscribingId] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     const loadUser = async () => {
       try {
         const response = await authService.getMe();
