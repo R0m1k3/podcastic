@@ -268,12 +268,12 @@ export default function Discover() {
             <p>
               Propulsé par{' '}
               <a
-                href="https://podcastindex.org"
+                href="https://www.apple.com/itunes/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline"
               >
-                Podcast Index
+                iTunes Search API
               </a>
             </p>
           </div>

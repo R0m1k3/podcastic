@@ -12,7 +12,7 @@ export interface DiscoveryPodcast {
 }
 
 export interface DiscoveryResponse {
-  source: 'podcastindex' | 'local';
+  source: 'itunes' | 'podcastindex' | 'local';
   podcasts: DiscoveryPodcast[];
   count: number;
   message?: string;

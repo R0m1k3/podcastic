@@ -173,35 +173,19 @@ export const getPodcast = async (req: Request, res: Response) => {
 
 export const discoverPodcasts = async (req: Request, res: Response) => {
   try {
-    const { q, limit = 20, offset = 0 } = searchSchema.parse(req.query);
+    const { q, limit = 20 } = searchSchema.parse(req.query);
 
-    // If PodcastIndex is not configured, return message
-    if (!podcastIndexService.isConfigured()) {
-      // Return empty for now, user can subscribe via RSS URL
-      return res.json({
-        source: 'local',
-        podcasts: [],
-        count: 0,
-        message: 'PodcastIndex API not configured - use RSS URL to subscribe',
-      });
-    }
-
-    // Search via PodcastIndex
-    const results = await podcastIndexService.searchPodcasts(
-      q as string,
-      limit as number,
-      offset as number
-    );
+    const results = await podcastIndexService.searchPodcasts(q as string, limit as number);
 
     res.json({
-      source: 'podcastindex',
+      source: 'itunes',
       podcasts: results,
       count: results.length,
     });
   } catch (error: any) {
     console.error('Discover podcasts error:', error.message);
     res.status(error.status || 500).json({
-      message: error.message || 'Search failed',
+      message: error.message || 'Recherche échouée',
     });
   }
 };
@@ -278,26 +262,17 @@ export const subscribeFromDiscovery = async (req: Request, res: Response) => {
 
 export const getTrendingPodcasts = async (req: Request, res: Response) => {
   try {
-    const { limit = 20 } = req.query;
+    const limit = Number(req.query.limit) || 20;
 
-    if (!podcastIndexService.isConfigured()) {
-      return res.json({
-        source: 'local',
-        podcasts: [],
-        count: 0,
-        message: 'PodcastIndex API not configured',
-      });
-    }
-
-    const trending = await podcastIndexService.getTrendingPodcasts(limit as number);
+    const trending = await podcastIndexService.getTrendingPodcasts(limit);
 
     res.json({
-      source: 'podcastindex',
+      source: 'itunes',
       podcasts: trending,
       count: trending.length,
     });
   } catch (error: any) {
     console.error('Trending podcasts error:', error.message);
-    res.status(500).json({ message: 'Failed to fetch trending podcasts' });
+    res.status(500).json({ message: 'Impossible de récupérer les tendances' });
   }
 };
