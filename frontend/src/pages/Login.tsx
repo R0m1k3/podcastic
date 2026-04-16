@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { Sparkles, ArrowRight, Loader, Mail, Lock, User as UserIcon } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -46,117 +47,113 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-light flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center text-white text-4xl mx-auto mb-4">
+    <div className="min-h-screen bg-obsidian flex items-center justify-center px-4 relative overflow-hidden font-sans">
+      {/* Background Auras */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.15),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(6,182,212,0.15),transparent_40%)]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-indigo/5 blur-[120px] rounded-full animate-aura" />
+
+      <div className="w-full max-w-lg relative z-10 reveal">
+        {/* Logo & Header */}
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-accent-indigo to-accent-rose flex items-center justify-center text-4xl mx-auto mb-6 shadow-glow-indigo transform hover:scale-110 transition-transform duration-500">
             🎙️
           </div>
-          <h1 className="text-4xl font-bold text-light-900 mb-2">Podcastic</h1>
-          <p className="text-light-600">Votre compagnon de streaming de podcasts</p>
+          <h1 className="text-5xl font-display font-black text-white mb-3 tracking-tighter">PODCASTIC</h1>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black text-accent-indigo uppercase tracking-[0.2em]">
+             <Sparkles className="w-3 h-3" />
+             Expérience Audio Premium
+          </div>
         </div>
 
         {/* Form Card */}
-        <div className="card mb-6">
-          <div className="mb-6">
+        <div className="premium-glass p-8 lg:p-12 rounded-[3rem] shadow-2xl border-white/10">
+          <div className="flex p-1.5 rounded-2xl bg-white/[0.03] border border-white/5 mb-10">
             <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-                setFormData({ email: '', password: '', username: '' });
-              }}
-              className="w-full mb-4"
+              onClick={() => { setIsLogin(true); setError(null); }}
+              className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                isLogin ? 'bg-white text-obsidian shadow-lg' : 'text-slate-500 hover:text-slate-300'
+              }`}
             >
-              <div className="flex gap-2">
-                <button
-                  className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-                    isLogin
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-light-100 text-light-700 hover:bg-light-200'
-                  }`}
-                  onClick={() => setIsLogin(true)}
-                >
-                  Se connecter
-                </button>
-                <button
-                  className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-                    !isLogin
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-light-100 text-light-700 hover:bg-light-200'
-                  }`}
-                  onClick={() => setIsLogin(false)}
-                >
-                  Créer un compte
-                </button>
-              </div>
+              Connexion
+            </button>
+            <button
+              onClick={() => { setIsLogin(false); setError(null); }}
+              className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                !isLogin ? 'bg-white text-obsidian shadow-lg' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Inscription
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
-              <input
-                type="text"
-                name="username"
-                placeholder="Nom d'utilisateur"
-                value={formData.username}
-                onChange={handleChange}
-                required={!isLogin}
-                className="input"
-              />
+              <div className="relative group">
+                <UserIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-accent-indigo transition-colors" />
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="NOM D'UTILISATEUR"
+                  value={formData.username}
+                  onChange={handleChange}
+                  required={!isLogin}
+                  className="input-premium !pl-14 text-xs font-bold uppercase tracking-widest"
+                />
+              </div>
             )}
 
-            <input
-              type="email"
-              name="email"
-              placeholder="Adresse e-mail"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="input"
-            />
+            <div className="relative group">
+              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-accent-indigo transition-colors" />
+              <input
+                type="email"
+                name="email"
+                placeholder="ADRESSE E-MAIL"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="input-premium !pl-14 text-xs font-bold uppercase tracking-widest"
+              />
+            </div>
 
-            <input
-              type="password"
-              name="password"
-              placeholder="Mot de passe"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="input"
-            />
+            <div className="relative group">
+              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-accent-indigo transition-colors" />
+              <input
+                type="password"
+                name="password"
+                placeholder="MOT DE PASSE"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="input-premium !pl-14 text-xs font-bold uppercase tracking-widest"
+              />
+            </div>
 
             {error && (
-              <div className="p-4 rounded-lg bg-red-50 text-red-700 text-sm">
-                {error}
+              <div className="p-4 rounded-2xl bg-accent-rose/10 border border-accent-rose/20 text-accent-rose text-[10px] font-black uppercase tracking-widest text-center animate-pulse">
+                 ⚠️ {error}
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full"
+              className="neon-button w-full h-14 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.2em]"
             >
               {loading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="spinner border-white"></div>
-                  {isLogin ? 'Connexion en cours...' : 'Création du compte...'}
-                </div>
-              ) : isLogin ? (
-                'Se connecter'
+                <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
               ) : (
-                'Créer un compte'
+                <>
+                  {isLogin ? 'Commencer l\'écoute' : 'Créer mon univers'}
+                  <ArrowRight className="w-4 h-4" />
+                </>
               )}
             </button>
           </form>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-light-600">
-          {isLogin
-            ? "Pas de compte ? Cliquez sur Créer un compte ci-dessus"
-            : 'Déjà un compte ? Cliquez sur Se connecter ci-dessus'}
+        <p className="mt-8 text-center text-[10px] font-bold text-slate-600 uppercase tracking-[0.3em]">
+           Podcastic High-Fidelity Audio © 2026
         </p>
       </div>
     </div>

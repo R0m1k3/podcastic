@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { discoveryService, DiscoveryPodcast } from '../services/discoveryService';
 import { podcastService } from '../services/podcastService';
 import Header from '../components/Header';
-import { Loader, Plus, Flame, Check } from 'lucide-react';
+import { Loader, Plus, Flame, Check, Sparkles, TrendingUp } from 'lucide-react';
 import { authService } from '../services/authService';
 import SuccessModal from '../components/SuccessModal';
 
@@ -63,8 +63,7 @@ export default function Trending() {
       setShowSuccessModal(true);
       queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to subscribe';
-      alert(`Erreur : ${errorMessage}`);
+      console.error(error);
     } finally {
       setSubscribingId(null);
     }
@@ -81,86 +80,93 @@ export default function Trending() {
   };
 
   return (
-    <div className="min-h-screen bg-light-50">
+    <div className="min-h-screen">
       <Header
         title="Tendances"
-        subtitle="Découvrez les podcasts les plus populaires"
+        subtitle="EXPLORATION"
         user={user}
         onLogout={handleLogout}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center gap-2 mb-8">
-          <Flame className="w-6 h-6 text-orange-500" />
-          <h2 className="text-xl font-bold text-light-900">Podcasts Tendances</h2>
+      <main className="">
+        <div className="flex items-center gap-3 mb-10">
+          <div className="w-10 h-10 rounded-xl bg-accent-rose/10 flex items-center justify-center text-accent-rose">
+            <Flame className="w-6 h-6 animate-pulse" />
+          </div>
+          <div>
+             <h2 className="text-2xl font-display font-black text-white">Top Podcasts</h2>
+             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mis à jour en temps réel</p>
+          </div>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-3" />
-              <p className="text-light-600">Chargement des podcasts...</p>
-            </div>
+          <div className="flex flex-col items-center justify-center py-32">
+             <div className="w-12 h-12 rounded-full border-4 border-white/5 border-t-accent-rose animate-spin mb-4" />
+             <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Analyse des tendances...</p>
           </div>
         ) : trendingData?.podcasts && trendingData.podcasts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trendingData.podcasts.map((podcast) => (
-              <div key={podcast.id} className="card hover:shadow-lg transition-shadow">
-                {podcast.imageUrl && (
-                  <div className="mb-4 rounded-lg overflow-hidden aspect-video bg-light-200">
-                    <img
-                      src={podcast.imageUrl}
-                      alt={podcast.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-light-900 mb-1 line-clamp-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {trendingData.podcasts.map((podcast, index) => (
+              <div key={podcast.id} className="group premium-glass rounded-[2.5rem] overflow-hidden flex flex-col hover:bg-white/[0.05] transition-all duration-500">
+                <div className="relative aspect-[16/10] overflow-hidden">
+                   {podcast.imageUrl ? (
+                     <img
+                       src={podcast.imageUrl}
+                       alt={podcast.title}
+                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                     />
+                   ) : (
+                     <div className="w-full h-full bg-gradient-to-br from-slate-800 to-obsidian flex items-center justify-center text-4xl">🎙️</div>
+                   )}
+                   <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-black text-white uppercase tracking-widest">
+                      Rank #{index + 1}
+                   </div>
+                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-60" />
+                </div>
+
+                <div className="p-6 flex-1 flex flex-col">
+                  <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 leading-tight group-hover:text-accent-rose transition-colors">
                     {podcast.title}
                   </h3>
                   {podcast.author && (
-                    <p className="text-sm text-light-600 mb-2">{podcast.author}</p>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 truncate">{podcast.author}</p>
                   )}
-                  <p className="text-sm text-light-500 line-clamp-3 mb-4">
+                  <p className="text-xs text-slate-400 line-clamp-3 mb-6 leading-relaxed flex-1">
                     {podcast.description}
                   </p>
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => handleSubscribe(podcast)}
-                      disabled={subscribingId === podcast.id || subscribeMutation.isPending || isSubscribed(podcast.rssUrl)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium ${
-                        isSubscribed(podcast.rssUrl)
-                          ? 'bg-light-200 text-light-500 cursor-default'
-                          : 'bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed'
-                      }`}
-                    >
-                      {subscribingId === podcast.id ? (
-                        <>
-                          <Loader className="w-4 h-4 animate-spin" />
-                          Ajout...
-                        </>
-                      ) : isSubscribed(podcast.rssUrl) ? (
-                        <>
-                          <Check className="w-4 h-4" />
-                          Abonné
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4" />
-                          Ajouter
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  
+                  <button
+                    onClick={() => handleSubscribe(podcast)}
+                    disabled={subscribingId === podcast.id || subscribeMutation.isPending || isSubscribed(podcast.rssUrl)}
+                    className={`w-full py-3.5 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all duration-300 flex items-center justify-center gap-2 ${
+                      isSubscribed(podcast.rssUrl)
+                        ? 'bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 cursor-default'
+                        : 'bg-white text-obsidian hover:bg-accent-rose hover:text-white shadow-lg active:scale-95'
+                    }`}
+                  >
+                    {subscribingId === podcast.id ? (
+                      <Loader className="w-4 h-4 animate-spin" />
+                    ) : isSubscribed(podcast.rssUrl) ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        À l'écoute
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" />
+                        S'abonner
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-20">
-             <p className="text-light-600 text-lg mb-2">Aucun podcast tendance trouvé.</p>
-          </div>
+           <div className="premium-glass p-20 rounded-[3rem] text-center">
+              <Sparkles className="w-12 h-12 text-slate-700 mx-auto mb-6" />
+              <p className="text-white font-bold uppercase tracking-widest">Aucune tendance pour le moment</p>
+           </div>
         )}
       </main>
 

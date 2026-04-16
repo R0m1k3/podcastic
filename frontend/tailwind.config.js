@@ -7,34 +7,47 @@ export default {
   theme: {
     extend: {
       colors: {
+        obsidian: {
+          DEFAULT: '#020617',
+          900: '#020617',
+          800: '#0f172a',
+          700: '#1e293b',
+        },
+        accent: {
+          indigo: '#6366f1',
+          cyan: '#06b6d4',
+          rose: '#f43f5e',
+          violet: '#8b5cf6',
+        },
         light: {
-          50: '#f9fafb',
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          300: '#d1d5db',
-          400: '#9ca3af',
-          500: '#6b7280',
-          600: '#4b5563',
-          700: '#374151',
-          800: '#1f2937',
-          900: '#111827',
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
         }
       },
-      backdropFilter: {
-        'none': 'none',
-        'blur': 'blur(10px)',
-      },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        sans: ['"Outfit"', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['"Montserrat"', 'sans-serif'],
       },
       borderRadius: {
-        xl: '1rem',
-        '2xl': '1.5rem',
+        '2xl': '1.25rem',
         '3xl': '2rem',
+        '4xl': '3rem',
       },
       boxShadow: {
-        'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-        'glow': '0 0 30px rgba(59, 130, 246, 0.1)',
+        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+        'glow-indigo': '0 0 20px rgba(99, 102, 241, 0.3)',
+        'glow-cyan': '0 0 20px rgba(6, 182, 212, 0.3)',
+      },
+      backdropBlur: {
+        'xs': '2px',
       }
     },
   },

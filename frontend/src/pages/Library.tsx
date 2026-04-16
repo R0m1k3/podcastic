@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { podcastService, Podcast } from '../services/podcastService';
 import { authService } from '../services/authService';
 import Header from '../components/Header';
-import { BookOpen, Trash2, Loader, Rss } from 'lucide-react';
+import { BookOpen, Trash2, Loader, Rss, Play, Settings2, RefreshCw, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Library() {
@@ -32,50 +32,34 @@ export default function Library() {
   const unsubscribeMutation = useMutation({
     mutationFn: (podcastId: string) => podcastService.unsubscribe(podcastId),
     onMutate: async (podcastId: string) => {
-      // Cancel outgoing refetches to avoid overwriting our optimistic update
       await queryClient.cancelQueries({ queryKey: ['podcasts', 'subscriptions'] });
-
-      // Optimistic update: remove the podcast from the local cache immediately
       queryClient.setQueryData(
         ['podcasts', 'subscriptions'],
         (old: any) => {
           if (!old || !old.podcasts) return old;
-          // Optimistically filter by subscriptionId or _id as fallback
           const filtered = old.podcasts.filter((p: any) => 
             String(p.subscriptionId || p._id) !== String(podcastId)
           );
           return { ...old, podcasts: filtered, count: filtered.length };
         }
       );
-
       setConfirmDeleteId(null);
     },
     onSuccess: () => {
-      // Sync the server state after success
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
       queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     },
-    onError: (error: any, podcastId) => {
-      console.error(`[Unsubscribe FAILED] Podcast ID: ${podcastId}`, error);
-      // Rollback: re-fetch the real data from server if the mutation failed
+    onError: (error: any) => {
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
-      
-      const errorMessage = error.response?.data?.message || 'Erreur inconnue';
-      alert(`Erreur lors du désabonnement (ID: ${podcastId}) : ${errorMessage}`);
+      alert('Erreur lors du désabonnement');
     },
   });
 
   const syncMutation = useMutation({
     mutationFn: (podcastId: string) => podcastService.syncPodcast(podcastId),
-    onSuccess: (data, podcastId) => {
-      console.log(`[Sync SUCCESS] Podcast ID: ${podcastId}`, data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
       queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
-    },
-    onError: (error: any, podcastId) => {
-      console.error(`[Sync FAILED] Podcast ID: ${podcastId}`, error);
-      const errorMessage = error.response?.data?.message || 'Erreur de synchronisation';
-      alert(`Erreur : ${errorMessage}`);
     },
   });
 
@@ -85,210 +69,155 @@ export default function Library() {
       authService.clearTokens();
       window.location.href = '/login';
     } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-
-  const handleUnsubscribeRequest = (id: string) => {
-    console.log("[UI] Demande de désabonnement reçue pour l'ID (Sub/Pod):", id);
-    setConfirmDeleteId(id);
-  };
-
-  const handleConfirmUnsubscribe = () => {
-    if (confirmDeleteId) {
-      console.log("[UI] Confirmation du désabonnement pour l'ID:", confirmDeleteId);
-      unsubscribeMutation.mutate(confirmDeleteId);
+       console.error(error);
     }
   };
 
   const podcasts: Podcast[] = subscriptionsData?.podcasts ?? [];
 
   return (
-    <div className="min-h-screen bg-light-50">
+    <div className="min-h-screen">
       <Header
         title="Ma Bibliothèque"
-        subtitle="Gérez vos abonnements aux podcasts"
+        subtitle="VOTRE COLLECTION"
         user={user}
         onLogout={handleLogout}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Title row */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-blue-500" />
-            <h2 className="text-xl font-bold text-light-900">
-              {isLoading ? 'Chargement...' : `${podcasts.length} abonnement${podcasts.length !== 1 ? 's' : ''}`}
-            </h2>
+      {/* Stats Quick View */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="premium-glass p-6 rounded-[2rem] flex items-center gap-6">
+             <div className="w-12 h-12 rounded-2xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo">
+                <BookOpen className="w-6 h-6" />
+             </div>
+             <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Podcasts</p>
+                <h3 className="text-2xl font-display font-black text-white">{podcasts.length}</h3>
+             </div>
           </div>
-          <Link
-            to="/add"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors font-medium text-sm"
-          >
-            <Rss className="w-4 h-4" />
-            Ajouter un podcast
+          <Link to="/add" className="premium-glass p-6 rounded-[2rem] flex items-center gap-6 group hover:bg-accent-indigo/5 transition-all">
+             <div className="w-12 h-12 rounded-2xl bg-accent-indigo flex items-center justify-center text-white shadow-glow-indigo group-hover:scale-110 transition-transform">
+                <Rss className="w-6 h-6" />
+             </div>
+             <div>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Action</p>
+                <h3 className="text-lg font-bold text-white">Ajouter un Podcast</h3>
+             </div>
+          </Link>
+      </div>
+
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="w-16 h-16 rounded-full border-4 border-accent-indigo/20 border-t-accent-indigo animate-spin mb-6" />
+          <p className="text-slate-400 font-medium animate-pulse">Chargement de votre univers...</p>
+        </div>
+      ) : podcasts.length === 0 ? (
+        <div className="premium-glass py-24 px-12 rounded-[3.5rem] text-center max-w-2xl mx-auto">
+          <div className="w-24 h-24 rounded-[2rem] bg-white/[0.03] flex items-center justify-center text-4xl mx-auto mb-8 border border-white/5">🕳️</div>
+          <h2 className="text-3xl font-display font-black text-white mb-4">Bibliothèque vide</h2>
+          <p className="text-slate-400 mb-10 leading-relaxed">Commencez votre voyage audio en ajoutant vos podcasts préférés dès maintenant.</p>
+          <Link to="/add" className="neon-button inline-flex items-center gap-3">
+            <Rss className="w-5 h-5" />
+            Découvrir des podcasts
           </Link>
         </div>
-
-        {/* Content */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-3" />
-              <p className="text-light-600">Chargement de vos abonnements...</p>
-            </div>
-          </div>
-        ) : podcasts.length === 0 ? (
-          <div className="text-center py-20">
-            <BookOpen className="w-16 h-16 text-light-300 mx-auto mb-4" />
-            <p className="text-light-600 text-lg mb-2">Votre bibliothèque est vide</p>
-            <p className="text-light-500 mb-6">Abonnez-vous à des podcasts pour les retrouver ici</p>
-            <Link
-              to="/add"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors font-medium"
-            >
-              <Rss className="w-5 h-5" />
-              Ajouter mon premier podcast
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {podcasts.map((podcast) => (
-              <div key={podcast._id} className="card bg-white hover:shadow-lg transition-shadow flex flex-col">
-                {/* Podcast cover */}
-                {podcast.imageUrl ? (
-                  <div className="mb-4 rounded-lg overflow-hidden aspect-square w-24 h-24 bg-light-200 flex-shrink-0">
-                    <img
-                      src={podcast.imageUrl}
-                      alt={podcast.title}
-                      className="w-full h-full object-cover"
-                    />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+          {podcasts.map((podcast) => (
+            <div key={podcast._id} className="group premium-glass rounded-[2.5rem] p-6 hover:bg-white/[0.05] transition-all duration-500 border-white/5 hover:border-white/10 flex flex-col h-full">
+              <div className="flex gap-6 mb-6">
+                <div className="relative shrink-0">
+                  <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-2xl border border-white/10 group-hover:scale-105 transition-transform duration-500">
+                    {podcast.imageUrl ? (
+                      <img src={podcast.imageUrl} alt={podcast.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-accent-indigo to-accent-violet flex items-center justify-center text-3xl">🎙️</div>
+                    )}
                   </div>
-                ) : (
-                  <div className="mb-4 w-24 h-24 rounded-lg bg-light-200 flex items-center justify-center flex-shrink-0">
-                    <Rss className="w-8 h-8 text-light-400" />
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-white text-obsidian flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all">
+                     <Play className="w-4 h-4 fill-current ml-0.5" />
                   </div>
-                )}
+                </div>
 
-                {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-bold text-light-900 mb-1 truncate">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-lg font-bold text-white truncate leading-tight group-hover:text-accent-indigo transition-colors">
                       {podcast.title}
                     </h3>
-                    {podcast.author && (
-                      <p className="text-xs text-light-500 mb-2 truncate">{podcast.author}</p>
+                  </div>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">{podcast.author || 'Artiste Inconnu'}</p>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-slate-400 uppercase tracking-tighter">
+                       {podcast.episodeCount} EPISODES
+                    </span>
+                    {podcast.language && (
+                      <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-slate-400 uppercase">
+                        {podcast.language}
+                      </span>
                     )}
-                    
-                    {/* Description preview */}
-                    {podcast.description && (
-                      <p className="text-xs text-light-400 line-clamp-2 mb-3 h-8 leading-relaxed">
-                        {podcast.description}
-                      </p>
-                    )}
+                  </div>
+                </div>
+              </div>
 
-                    <div className="flex flex-wrap gap-2 text-[10px] text-light-400 mb-4">
-                      {podcast.episodeCount > 0 && (
-                        <span className="bg-light-100 px-2 py-0.5 rounded-full">
-                          {podcast.episodeCount} épisodes
-                        </span>
-                      )}
-                      {podcast.language && (
-                        <span className="bg-light-100 px-2 py-0.5 rounded-full uppercase">
-                          {podcast.language}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Last Episode info */}
-                    {podcast.lastEpisodeTitle && (
-                      <div className="bg-blue-50/50 rounded-lg p-2.5 mb-2 border border-blue-100/50">
-                        <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider mb-1">
-                          Dernier épisode
-                        </p>
-                        <p className="text-xs font-medium text-light-800 line-clamp-1 mb-0.5">
-                          {podcast.lastEpisodeTitle}
-                        </p>
-                        {podcast.lastEpisodeDate && (
-                          <p className="text-[10px] text-light-400">
-                            {new Date(podcast.lastEpisodeDate).toLocaleDateString('fr-FR', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric'
-                            })}
-                          </p>
+              {/* Status Section */}
+              <div className="flex-1">
+                {podcast.episodeCount === 0 ? (
+                  <div className="bg-orange-500/5 border border-orange-500/10 rounded-2xl p-4 mb-4">
+                     <div className="flex items-center gap-3 mb-3">
+                        <AlertCircle className="w-4 h-4 text-orange-500" />
+                        <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Besoin de synchronisation</span>
+                     </div>
+                     <button
+                        onClick={() => syncMutation.mutate(podcast._id)}
+                        disabled={syncMutation.isPending}
+                        className="w-full py-2.5 rounded-xl bg-orange-500 text-white text-[11px] font-bold hover:bg-orange-600 transition-all flex items-center justify-center gap-2"
+                      >
+                        {syncMutation.isPending && syncMutation.variables === podcast._id ? (
+                           <Loader className="w-3 h-3 animate-spin" />
+                        ) : (
+                           <RefreshCw className="w-3 h-3" />
                         )}
-                      </div>
-                    )}
+                        Synchroniser maintenant
+                      </button>
                   </div>
-
-                {/* Unsubscribe button */}
-                {confirmDeleteId === (podcast.subscriptionId || podcast._id) ? (
-                  <div className="flex items-center gap-2 mt-auto pt-3 border-t border-light-100">
-                    <span className="text-xs text-light-600 flex-1">Confirmer le désabonnement ?</span>
-                    <button
-                      onClick={handleConfirmUnsubscribe}
-                      disabled={unsubscribeMutation.isPending}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors text-xs font-medium"
-                    >
-                      {unsubscribeMutation.isPending ? (
-                        <Loader className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-3 h-3" />
-                      )}
-                      Confirmer
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteId(null)}
-                      className="px-3 py-1.5 rounded-lg bg-light-200 text-light-700 hover:bg-light-300 transition-colors text-xs font-medium"
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mt-auto">
-                    {podcast.episodeCount === 0 && (
-                      <div className="mb-4">
-                        <p className="text-[10px] text-orange-500 font-semibold mb-2 flex items-center gap-1 uppercase tracking-wider">
-                          {syncMutation.isPending && syncMutation.variables === (podcast.subscriptionId || podcast._id) ? (
-                            <Loader className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                          )}
-                          Aucun épisode trouvé
-                        </p>
-                        <button
-                          onClick={() => syncMutation.mutate(podcast._id)}
-                          disabled={syncMutation.isPending}
-                          className="w-full py-2 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all text-xs font-bold flex items-center justify-center gap-2 border border-orange-200/50"
-                        >
-                          {syncMutation.isPending && syncMutation.variables === podcast._id ? (
-                             <>
-                               <Loader className="w-3 h-3 animate-spin" />
-                               Synchronisation...
-                             </>
-                          ) : (
-                             <>
-                               <Loader className="w-3 h-3" />
-                               Synchroniser maintenant
-                             </>
-                          )}
-                        </button>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => handleUnsubscribeRequest(podcast.subscriptionId || podcast._id)}
-                      className="pt-3 border-t border-light-100 flex items-center gap-2 text-sm text-light-500 hover:text-red-600 transition-colors w-full"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Se désabonner
-                    </button>
+                ) : podcast.lastEpisodeTitle && (
+                  <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 mb-6 group-hover:bg-white/[0.04] transition-colors">
+                    <p className="text-[10px] font-bold text-accent-indigo uppercase tracking-[0.2em] mb-2">Dernier épisode</p>
+                    <p className="text-sm font-bold text-slate-200 line-clamp-1 mb-1">{podcast.lastEpisodeTitle}</p>
+                    <p className="text-[10px] font-medium text-slate-500 italic">
+                      {new Date(podcast.lastEpisodeDate!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-        )}
-      </main>
+
+              {/* Actions Footer */}
+              <div className="flex items-center justify-between pt-6 border-t border-white/5 mt-auto">
+                 {confirmDeleteId === (podcast.subscriptionId || podcast._id) ? (
+                    <div className="flex items-center gap-3 w-full animate-fade-in">
+                       <button onClick={handleConfirmUnsubscribe} className="flex-1 py-2 bg-accent-rose text-white rounded-xl text-[11px] font-black uppercase hover:bg-accent-rose/80">Confirmer</button>
+                       <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-2 bg-white/5 text-slate-400 rounded-xl text-[11px] font-black uppercase hover:bg-white/10">Annuler</button>
+                    </div>
+                 ) : (
+                    <>
+                      <button className="p-2.5 rounded-xl bg-white/5 text-slate-500 hover:text-white hover:bg-white/10 transition-all">
+                        <Settings2 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => setConfirmDeleteId(podcast.subscriptionId || podcast._id)}
+                        className="flex items-center gap-2 text-[10px] font-bold text-slate-600 hover:text-accent-rose transition-all uppercase tracking-widest"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Désabonner
+                      </button>
+                    </>
+                 )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

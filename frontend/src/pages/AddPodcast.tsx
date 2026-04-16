@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { discoveryService, DiscoveryPodcast } from '../services/discoveryService';
 import { podcastService } from '../services/podcastService';
 import Header from '../components/Header';
-import { Search, Plus, Loader, Rss, Check } from 'lucide-react';
+import { Search, Plus, Loader, Rss, Check, Globe, Sparkles, PlusCircle } from 'lucide-react';
 import { authService } from '../services/authService';
 import SuccessModal from '../components/SuccessModal';
 
@@ -69,8 +69,7 @@ export default function AddPodcast() {
       setShowSuccessModal(true);
       queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to subscribe';
-      alert(`Erreur : ${errorMessage}`);
+      console.error(error);
     } finally {
       setSubscribingId(null);
     }
@@ -84,7 +83,7 @@ export default function AddPodcast() {
     setRssSuccess(null);
     try {
       const result = await podcastService.subscribe(rssUrl.trim());
-      setRssSuccess(`"${result.podcast.title}" — ${result.message === 'Déjà abonné' ? 'Déjà dans vos abonnements' : 'ajouté à vos abonnements !'}`);
+      setRssSuccess(`"${result.podcast.title}" ajouté !`);
       setRssUrl('');
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
     } catch (error: any) {
@@ -94,145 +93,121 @@ export default function AddPodcast() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      authService.clearTokens();
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-light-50">
+    <div className="min-h-screen">
       <Header
-        title="Ajouter un Podcast"
-        subtitle="Trouvez et abonnez-vous à vos podcasts favoris"
+        title="Ajouter"
+        subtitle="EXPANSION"
         user={user}
-        onLogout={handleLogout}
+        onLogout={() => { /* Logout handled in service/navigation usually */ }}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* RSS URL Section */}
-        <div className="mb-12 card bg-white">
-          <div className="flex items-center gap-2 mb-3">
-            <Rss className="w-5 h-5 text-orange-500" />
-            <h3 className="text-sm font-bold text-light-900 uppercase tracking-wider">Ajouter via URL RSS</h3>
-          </div>
-          <form onSubmit={handleRssSubscribe} className="flex gap-3">
-            <input
-              type="url"
-              placeholder="https://feeds.example.com/podcast.rss"
-              value={rssUrl}
-              onChange={(e) => { setRssUrl(e.target.value); setRssError(null); setRssSuccess(null); }}
-              className="flex-1 px-4 py-2.5 rounded-xl border border-light-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-            />
-            <button
-              type="submit"
-              disabled={rssLoading || !rssUrl.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-            >
-              {rssLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              {rssLoading ? 'Ajout...' : 'Ajouter'}
-            </button>
-          </form>
-          {rssError && <p className="mt-2 text-sm text-red-600">{rssError}</p>}
-          {rssSuccess && <p className="mt-2 text-sm text-green-600">{rssSuccess}</p>}
+      <main className="max-w-5xl mx-auto">
+        {/* RSS Input Area */}
+        <div className="premium-glass p-8 rounded-[3rem] mb-12 relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-32 h-32 bg-accent-rose/5 blur-[50px]" />
+           <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-accent-rose/10 flex items-center justify-center text-accent-rose shadow-glow-indigo">
+                   <Rss className="w-5 h-5" />
+                </div>
+                <h3 className="text-xl font-display font-black text-white">Importation Directe</h3>
+              </div>
+              
+              <form onSubmit={handleRssSubscribe} className="flex flex-col sm:flex-row gap-4">
+                 <input
+                    type="url"
+                    placeholder="Collez une adresse URL de flux RSS ici..."
+                    value={rssUrl}
+                    onChange={(e) => { setRssUrl(e.target.value); setRssError(null); setRssSuccess(null); }}
+                    className="input-premium flex-1"
+                 />
+                 <button
+                    type="submit"
+                    disabled={rssLoading || !rssUrl.trim()}
+                    className="neon-button !from-accent-rose !to-accent-rose/80 shrink-0"
+                 >
+                    {rssLoading ? <Loader className="w-4 h-4 animate-spin" /> : <PlusCircle className="w-4 h-4" />}
+                    <span>Ajouter</span>
+                 </button>
+              </form>
+              
+              {rssError && <p className="mt-4 text-xs font-bold text-accent-rose animate-pulse">⚠️ {rssError}</p>}
+              {rssSuccess && <p className="mt-4 text-xs font-bold text-accent-cyan">✨ {rssSuccess}</p>}
+           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <Search className="w-5 h-5 text-blue-500" />
-            <h3 className="text-sm font-bold text-light-900 uppercase tracking-wider">Rechercher dans l'annuaire</h3>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-4 top-3.5 w-5 h-5 text-light-400" />
-            <input
-              type="text"
-              placeholder="Rechercher des podcasts, auteurs, sujets..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-xl border border-light-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-lg"
-            />
-          </div>
+        {/* Global Directory Search */}
+        <div className="mb-12">
+           <div className="flex items-center gap-4 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo shadow-glow-indigo">
+                 <Search className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-display font-black text-white">Annuaire Global</h3>
+           </div>
+           
+           <div className="relative group">
+              <input
+                type="text"
+                placeholder="Rechercher par titre, auteur ou thématique..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-premium !py-6 !pl-16 text-xl shadow-2xl transition-all group-hover:bg-white/[0.05]"
+              />
+              <Sparkles className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-500 group-focus-within:text-accent-indigo transition-colors" />
+           </div>
         </div>
 
-        {/* Results Grid */}
+        {/* Dynamic Results Grid */}
         {isSearching ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-3" />
-              <p className="text-light-600">Recherche en cours...</p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+             {[1,2,3].map(i => <div key={i} className="premium-glass rounded-[2.5rem] h-64 animate-pulse bg-white/5" />)}
           </div>
         ) : searchResults?.podcasts && searchResults.podcasts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
             {searchResults.podcasts.map((podcast) => (
-              <div key={podcast.id} className="card hover:shadow-lg transition-shadow bg-white">
-                {podcast.imageUrl && (
-                  <div className="mb-4 rounded-lg overflow-hidden aspect-video bg-light-200">
-                    <img
-                      src={podcast.imageUrl}
-                      alt={podcast.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-light-900 mb-1 line-clamp-2">
-                    {podcast.title}
-                  </h3>
-                  {podcast.author && (
-                    <p className="text-sm text-light-600 mb-2">{podcast.author}</p>
-                  )}
-                  <p className="text-sm text-light-500 line-clamp-3 mb-4">
-                    {podcast.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => handleSubscribe(podcast)}
-                      disabled={subscribingId === podcast.id || subscribeMutation.isPending || isSubscribed(podcast.rssUrl)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium ${
-                        isSubscribed(podcast.rssUrl)
-                          ? 'bg-light-200 text-light-500 cursor-default'
-                          : 'bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed'
-                      }`}
-                    >
-                      {subscribingId === podcast.id ? (
-                        <>
-                          <Loader className="w-4 h-4 animate-spin" />
-                          Ajout...
-                        </>
-                      ) : isSubscribed(podcast.rssUrl) ? (
-                        <>
-                          <Check className="w-4 h-4" />
-                          Abonné
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4" />
-                          Ajouter
-                        </>
-                      )}
-                    </button>
-                  </div>
+              <div key={podcast.id} className="group premium-glass rounded-[2.5rem] overflow-hidden flex flex-col hover:bg-white/[0.05] transition-all duration-500">
+                <div className="relative aspect-[16/10] overflow-hidden">
+                   {podcast.imageUrl ? (
+                     <img src={podcast.imageUrl} alt={podcast.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                   ) : (
+                     <div className="w-full h-full bg-gradient-to-br from-slate-800 to-obsidian flex items-center justify-center text-4xl">🎙️</div>
+                   )}
+                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-60" />
+                </div>
+
+                <div className="p-6 flex flex-col flex-1">
+                  <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 leading-tight group-hover:text-accent-indigo transition-colors">{podcast.title}</h3>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 truncate">{podcast.author || 'Inconnu'}</p>
+                  
+                  <button
+                    onClick={() => handleSubscribe(podcast)}
+                    disabled={subscribingId === podcast.id || subscribeMutation.isPending || isSubscribed(podcast.rssUrl)}
+                    className={`mt-auto w-full py-3.5 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all duration-300 flex items-center justify-center gap-2 ${
+                      isSubscribed(podcast.rssUrl)
+                        ? 'bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20'
+                        : 'bg-white text-obsidian hover:bg-accent-indigo hover:text-white'
+                    }`}
+                  >
+                    {subscribingId === podcast.id ? <Loader className="w-4 h-4 animate-spin" /> : isSubscribed(podcast.rssUrl) ? <><Check className="w-4 h-4" /> Membre</> : <><Plus className="w-4 h-4" /> S'abonner</>}
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         ) : searchQuery.length >= 2 ? (
-          <div className="text-center py-20">
-            <p className="text-light-600 text-lg mb-2">Aucun podcast trouvé.</p>
-            <p className="text-light-500">Essayez de rechercher des titres, auteurs ou sujets</p>
+          <div className="premium-glass p-20 rounded-[3rem] text-center max-w-lg mx-auto">
+            <Globe className="w-12 h-12 text-slate-700 mx-auto mb-6" />
+            <p className="text-white font-bold uppercase tracking-widest text-sm mb-2">Aucun signal trouvé</p>
+            <p className="text-slate-500 text-xs">Vérifiez l'orthographe ou essayez d'autres mots-clés.</p>
           </div>
         ) : (
           <div className="text-center py-20">
-             <p className="text-light-600 text-lg">Entrez au moins 2 caractères pour lancer la recherche.</p>
+             <div className="p-8 inline-block rounded-full bg-white/[0.02] border border-white/5 animate-aura">
+                <Search className="w-12 h-12 text-slate-700" />
+             </div>
           </div>
         )}
-
       </main>
 
       <SuccessModal
