@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { podcastService, Podcast } from '../services/podcastService';
 import { authService } from '../services/authService';
 import Header from '../components/Header';
-import { BookOpen, Trash2, Loader, Rss, Play, Settings2, RefreshCw, AlertCircle } from 'lucide-react';
+import { BookOpen, Trash2, Loader, Rss, Play, RefreshCw, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Library() {
@@ -90,26 +90,26 @@ export default function Library() {
         onLogout={handleLogout}
       />
 
-      {/* Stats Quick View */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="premium-glass p-6 rounded-[2rem] flex items-center gap-6">
-             <div className="w-12 h-12 rounded-2xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo">
-                <BookOpen className="w-6 h-6" />
-             </div>
-             <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Podcasts</p>
-                <h3 className="text-2xl font-display font-black text-white">{podcasts.length}</h3>
-             </div>
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-4 mb-10">
+        <div className="premium-glass p-5 rounded-[1.5rem] flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo shrink-0">
+            <BookOpen className="w-5 h-5" />
           </div>
-          <Link to="/add" className="premium-glass p-6 rounded-[2rem] flex items-center gap-6 group hover:bg-accent-indigo/5 transition-all">
-             <div className="w-12 h-12 rounded-2xl bg-accent-indigo flex items-center justify-center text-white shadow-glow-indigo group-hover:scale-110 transition-transform">
-                <Rss className="w-6 h-6" />
-             </div>
-             <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Action</p>
-                <h3 className="text-lg font-bold text-white">Ajouter un Podcast</h3>
-             </div>
-          </Link>
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Abonnements</p>
+            <h3 className="text-2xl font-display font-black text-white">{podcasts.length}</h3>
+          </div>
+        </div>
+        <Link to="/add" className="premium-glass p-5 rounded-[1.5rem] flex items-center gap-4 group hover:bg-accent-indigo/5 transition-all">
+          <div className="w-10 h-10 rounded-xl bg-accent-indigo flex items-center justify-center text-white shadow-glow-indigo group-hover:scale-110 transition-transform shrink-0">
+            <Rss className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Action</p>
+            <h3 className="text-base font-bold text-white">Ajouter un podcast</h3>
+          </div>
+        </Link>
       </div>
 
       {isLoading ? (
@@ -206,18 +206,13 @@ export default function Library() {
                        <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-2 bg-white/5 text-slate-400 rounded-xl text-[11px] font-black uppercase hover:bg-white/10">Annuler</button>
                     </div>
                  ) : (
-                    <>
-                      <button className="p-2.5 rounded-xl bg-white/5 text-slate-500 hover:text-white hover:bg-white/10 transition-all">
-                        <Settings2 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => setConfirmDeleteId(podcast.subscriptionId || podcast._id)}
-                        className="flex items-center gap-2 text-[10px] font-bold text-slate-600 hover:text-accent-rose transition-all uppercase tracking-widest"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        Désabonner
-                      </button>
-                    </>
+                    <button
+                      onClick={() => setConfirmDeleteId(podcast.subscriptionId || podcast._id)}
+                      className="ml-auto flex items-center gap-2 text-[10px] font-bold text-slate-600 hover:text-accent-rose transition-all uppercase tracking-widest"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Désabonner
+                    </button>
                  )}
               </div>
             </div>

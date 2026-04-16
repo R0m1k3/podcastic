@@ -55,7 +55,7 @@ export default function Navigation() {
 
         {/* Footer */}
         <div className="mt-auto pt-6 border-t border-white/5">
-           <p className="px-2 text-[10px] text-slate-600 font-medium">Podcastic © 2026</p>
+          <p className="px-2 text-[10px] text-slate-700 font-bold uppercase tracking-widest">Podcastic © 2026</p>
         </div>
       </nav>
 
