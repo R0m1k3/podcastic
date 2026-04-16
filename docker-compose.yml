@@ -19,11 +19,10 @@ services:
     networks:
       - podcastic
 
-  app:
+  podcastic:
     build:
       context: .
       dockerfile: Dockerfile
-    image: podcastic-app:latest
     container_name: podcastic
     restart: unless-stopped
     ports:
