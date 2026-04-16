@@ -5,7 +5,8 @@
       "Bash(rtk npm:*)",
       "Bash(git remote:*)",
       "Bash(git branch:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(ls -la /c/Claude/Podcastic/Dockerfile*)"
     ]
   }
 }

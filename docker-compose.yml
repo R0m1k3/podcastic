@@ -1,20 +1,16 @@
 version: '3.8'
 
 services:
-  mongo:
+  mongodb:
     image: mongo:latest
-    container_name: podcastic-mongo
+    container_name: podcastic-mongodb
     restart: unless-stopped
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_DATABASE: podcastic
-      MONGO_INITDB_ROOT_USERNAME: podcastic
-      MONGO_INITDB_ROOT_PASSWORD: podcastic_dev
     volumes:
-      - mongo_data:/data/db
+      - mongodb_data:/data/db
     networks:
-      - podcastic-network
+      - podcastic
 
   redis:
     image: redis:7-alpine
@@ -22,58 +18,57 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
     networks:
-      - podcastic-network
+      - podcastic
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: node:20-alpine
     container_name: podcastic-backend
     restart: unless-stopped
+    working_dir: /app
     ports:
       - "5000:5000"
     environment:
-      NODE_ENV: development
-      MONGODB_URI: mongodb://podcastic:podcastic_dev@mongo:27017/podcastic
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongodb:27017/podcastic
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: dev_secret_key_change_in_prod
-    depends_on:
-      - mongo
-      - redis
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      JWT_EXPIRES_IN: 7d
+      JWT_REFRESH_EXPIRES_IN: 30d
+      PODCAST_INDEX_API_KEY: ${PODCAST_INDEX_API_KEY:-}
+      PODCAST_INDEX_API_SECRET: ${PODCAST_INDEX_API_SECRET:-}
     volumes:
-      - ./backend/src:/app/src
-      - /app/node_modules
+      - ./backend:/app
+    command: sh -c "npm install && npm run build && node dist/index.js"
+    depends_on:
+      - mongodb
+      - redis
     networks:
-      - podcastic-network
-    command: npm run dev
+      - podcastic
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: node:20-alpine
     container_name: podcastic-frontend
     restart: unless-stopped
+    working_dir: /app
     ports:
-      - "3000:3000"
+      - "3579:3579"
     environment:
       VITE_API_URL: http://localhost:5000/api
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm install && npm run build && npm install -g serve && serve -s dist -l 3579"
     depends_on:
       - backend
-    volumes:
-      - ./frontend/src:/app/src
-      - /app/node_modules
     networks:
-      - podcastic-network
-    command: npm run dev
+      - podcastic
 
 volumes:
-  mongo_data:
+  mongodb_data:
   redis_data:
 
 networks:
-  podcastic-network:
+  podcastic:
     driver: bridge
