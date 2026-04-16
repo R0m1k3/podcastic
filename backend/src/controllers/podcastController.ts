@@ -1,0 +1,147 @@
+import { Request, Response } from 'express';
+import { Podcast } from '../models/Podcast';
+import { UserSubscription } from '../models/UserSubscription';
+import { Episode } from '../models/Episode';
+import { z } from 'zod';
+
+const subscribeSchema = z.object({
+  rssUrl: z.string().url('Invalid RSS URL'),
+});
+
+export const getUserSubscriptions = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const subscriptions = await UserSubscription.find({
+      userId: req.user.id,
+    })
+      .populate('podcastId')
+      .sort({ subscribedAt: -1 });
+
+    const podcasts = subscriptions.map((sub) => sub.podcastId);
+
+    res.json({ podcasts, count: podcasts.length });
+  } catch (error) {
+    console.error('Get subscriptions error:', error);
+    res.status(500).json({ message: 'Failed to fetch subscriptions' });
+  }
+};
+
+export const subscribe = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const { rssUrl } = subscribeSchema.parse(req.body);
+
+    // Check if podcast exists
+    let podcast = await Podcast.findOne({ rssUrl });
+
+    if (!podcast) {
+      // For now, create a basic podcast entry
+      // In production, you'd fetch from PodcastIndex API or parse the RSS feed
+      return res.status(400).json({
+        message: 'Podcast not found. Please use a valid RSS URL.',
+      });
+    }
+
+    // Check if already subscribed
+    const existingSubscription = await UserSubscription.findOne({
+      userId: req.user.id,
+      podcastId: podcast._id,
+    });
+
+    if (existingSubscription) {
+      return res.status(409).json({ message: 'Already subscribed to this podcast' });
+    }
+
+    // Create subscription
+    const subscription = new UserSubscription({
+      userId: req.user.id,
+      podcastId: podcast._id,
+    });
+
+    await subscription.save();
+
+    res.status(201).json({
+      message: 'Subscribed successfully',
+      podcast: podcast.toJSON(),
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        message: 'Validation error',
+        errors: error.errors,
+      });
+    }
+
+    console.error('Subscribe error:', error);
+    res.status(500).json({ message: 'Failed to subscribe' });
+  }
+};
+
+export const unsubscribe = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const { podcastId } = req.params;
+
+    const subscription = await UserSubscription.findOneAndDelete({
+      userId: req.user.id,
+      podcastId,
+    });
+
+    if (!subscription) {
+      return res.status(404).json({ message: 'Subscription not found' });
+    }
+
+    res.json({ message: 'Unsubscribed successfully' });
+  } catch (error) {
+    console.error('Unsubscribe error:', error);
+    res.status(500).json({ message: 'Failed to unsubscribe' });
+  }
+};
+
+export const searchPodcasts = async (req: Request, res: Response) => {
+  try {
+    const { q, limit = 20, skip = 0 } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ message: 'Search query required' });
+    }
+
+    const podcasts = await Podcast.find(
+      { $text: { $search: q as string } },
+      { score: { $meta: 'textScore' } }
+    )
+      .sort({ score: { $meta: 'textScore' } })
+      .limit(Number(limit))
+      .skip(Number(skip));
+
+    res.json({ podcasts, count: podcasts.length });
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ message: 'Search failed' });
+  }
+};
+
+export const getPodcast = async (req: Request, res: Response) => {
+  try {
+    const { podcastId } = req.params;
+
+    const podcast = await Podcast.findById(podcastId);
+    if (!podcast) {
+      return res.status(404).json({ message: 'Podcast not found' });
+    }
+
+    res.json({ podcast });
+  } catch (error) {
+    console.error('Get podcast error:', error);
+    res.status(500).json({ message: 'Failed to fetch podcast' });
+  }
+};

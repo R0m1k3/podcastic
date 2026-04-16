@@ -5,6 +5,9 @@ import { connectDB } from './config/database';
 import { initRedis, closeRedis } from './config/redis';
 import { authenticate, optional } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import authRoutes from './routes/authRoutes';
+import podcastRoutes from './routes/podcastRoutes';
+import episodeRoutes from './routes/episodeRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -36,10 +39,14 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API Routes - TODO: Import and register routes
+// API Routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'API is running' });
 });
+
+app.use('/api/auth', authRoutes);
+app.use('/api/podcasts', podcastRoutes);
+app.use('/api/episodes', episodeRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
