@@ -4,6 +4,8 @@ import './styles/globals.css';
 import { authService } from './services/authService';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Discover from './pages/Discover';
+import Navigation from './components/Navigation';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,7 +24,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <div className="flex">
+      <Navigation />
+      <div className="flex-1 lg:ml-64">{children}</div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -36,6 +43,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/discover"
+            element={
+              <ProtectedRoute>
+                <Discover />
               </ProtectedRoute>
             }
           />

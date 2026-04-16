@@ -2,10 +2,18 @@ import { Request, Response } from 'express';
 import { Podcast } from '../models/Podcast';
 import { UserSubscription } from '../models/UserSubscription';
 import { Episode } from '../models/Episode';
+import { podcastIndexService } from '../services/podcastIndexService';
+import { rssParserService } from '../services/rssParserService';
 import { z } from 'zod';
 
 const subscribeSchema = z.object({
   rssUrl: z.string().url('Invalid RSS URL'),
+});
+
+const searchSchema = z.object({
+  q: z.string().min(2, 'Query must be at least 2 characters'),
+  limit: z.number().int().min(1).max(50).optional().default(20),
+  offset: z.number().int().min(0).optional().default(0),
 });
 
 export const getUserSubscriptions = async (req: Request, res: Response) => {
@@ -143,5 +151,136 @@ export const getPodcast = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Get podcast error:', error);
     res.status(500).json({ message: 'Failed to fetch podcast' });
+  }
+};
+
+export const discoverPodcasts = async (req: Request, res: Response) => {
+  try {
+    const { q, limit = 20, offset = 0 } = searchSchema.parse(req.query);
+
+    // If PodcastIndex is not configured, return message
+    if (!podcastIndexService.isConfigured()) {
+      // Return empty for now, user can subscribe via RSS URL
+      return res.json({
+        source: 'local',
+        podcasts: [],
+        count: 0,
+        message: 'PodcastIndex API not configured - use RSS URL to subscribe',
+      });
+    }
+
+    // Search via PodcastIndex
+    const results = await podcastIndexService.searchPodcasts(
+      q as string,
+      limit as number,
+      offset as number
+    );
+
+    res.json({
+      source: 'podcastindex',
+      podcasts: results,
+      count: results.length,
+    });
+  } catch (error: any) {
+    console.error('Discover podcasts error:', error.message);
+    res.status(error.status || 500).json({
+      message: error.message || 'Search failed',
+    });
+  }
+};
+
+export const subscribeFromDiscovery = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const { rssUrl, title, author, imageUrl } = req.body;
+
+    if (!rssUrl) {
+      return res.status(400).json({ message: 'RSS URL required' });
+    }
+
+    // Check if podcast already in database
+    let podcast = await Podcast.findOne({ rssUrl });
+
+    // If not in database, try to fetch and create it
+    if (!podcast) {
+      try {
+        const result = await rssParserService.createPodcastFromRss(rssUrl, {
+          title: title || 'Unknown Podcast',
+          description: '',
+          author: author || '',
+          imageUrl: imageUrl,
+          episodes: [],
+        });
+        podcast = result.podcast;
+      } catch (error: any) {
+        // If podcast creation fails, create minimal entry
+        if (error.message.includes('already in database')) {
+          podcast = await Podcast.findOne({ rssUrl });
+        } else {
+          return res.status(400).json({
+            message: `Failed to fetch podcast: ${error.message}`,
+          });
+        }
+      }
+    }
+
+    if (!podcast) {
+      return res.status(400).json({ message: 'Failed to add podcast' });
+    }
+
+    // Check if already subscribed
+    const existingSubscription = await UserSubscription.findOne({
+      userId: req.user.id,
+      podcastId: podcast._id,
+    });
+
+    if (existingSubscription) {
+      return res.status(409).json({ message: 'Already subscribed to this podcast' });
+    }
+
+    // Create subscription
+    const subscription = new UserSubscription({
+      userId: req.user.id,
+      podcastId: podcast._id,
+    });
+
+    await subscription.save();
+
+    res.status(201).json({
+      message: 'Subscribed successfully',
+      podcast: podcast.toJSON(),
+    });
+  } catch (error: any) {
+    console.error('Subscribe from discovery error:', error);
+    res.status(500).json({ message: 'Failed to subscribe' });
+  }
+};
+
+export const getTrendingPodcasts = async (req: Request, res: Response) => {
+  try {
+    const { limit = 20 } = req.query;
+
+    if (!podcastIndexService.isConfigured()) {
+      return res.json({
+        source: 'local',
+        podcasts: [],
+        count: 0,
+        message: 'PodcastIndex API not configured',
+      });
+    }
+
+    const trending = await podcastIndexService.getTrendingPodcasts(limit as number);
+
+    res.json({
+      source: 'podcastindex',
+      podcasts: trending,
+      count: trending.length,
+    });
+  } catch (error: any) {
+    console.error('Trending podcasts error:', error.message);
+    res.status(500).json({ message: 'Failed to fetch trending podcasts' });
   }
 };

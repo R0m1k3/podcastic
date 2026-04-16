@@ -5,6 +5,9 @@ import {
   unsubscribe,
   searchPodcasts,
   getPodcast,
+  discoverPodcasts,
+  subscribeFromDiscovery,
+  getTrendingPodcasts,
 } from '../controllers/podcastController';
 import { authenticate } from '../middleware/auth';
 
@@ -13,9 +16,12 @@ const router = Router();
 // Protected routes
 router.get('/subscriptions', authenticate, getUserSubscriptions);
 router.post('/subscribe', authenticate, subscribe);
+router.post('/subscribe-discovery', authenticate, subscribeFromDiscovery);
 router.delete('/:podcastId/unsubscribe', authenticate, unsubscribe);
 
-// Public routes
+// Public/discovery routes
+router.get('/discover', discoverPodcasts);
+router.get('/trending', getTrendingPodcasts);
 router.get('/search', searchPodcasts);
 router.get('/:podcastId', getPodcast);
 
