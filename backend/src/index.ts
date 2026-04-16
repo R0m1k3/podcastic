@@ -2,8 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import path from 'path';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { connectDB } from './config/database';
 import { initRedis, closeRedis } from './config/redis';
+import { syncService } from './services/syncService';
 import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/authRoutes';
 import podcastRoutes from './routes/podcastRoutes';
@@ -11,6 +14,26 @@ import episodeRoutes from './routes/episodeRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Security Middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for simplicity in this development phase
+}));
+
+// Rate Limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per window
+  message: { message: 'Trop de requêtes, veuillez réessayer plus tard.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const discoveryLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 50, // lower limit for heavy RSS operations
+  message: { message: 'Limite de recherche atteinte pour cette heure.' },
+});
 
 // Middleware
 app.use(cors());
@@ -45,8 +68,8 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/podcasts', podcastRoutes);
-app.use('/api/episodes', episodeRoutes);
+app.use('/api/podcasts', apiLimiter, podcastRoutes);
+app.use('/api/episodes', apiLimiter, episodeRoutes);
 
 // Serve frontend static files in production
 const frontendDist = path.join(__dirname, '..', 'public');
@@ -79,6 +102,7 @@ process.on('SIGINT', gracefulShutdown);
 const startServer = async () => {
   try {
     await initialize();
+    syncService.startBackgroundSync();
 
     app.listen(PORT, () => {
       console.log(`\n${'='.repeat(50)}`);

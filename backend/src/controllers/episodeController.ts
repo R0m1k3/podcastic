@@ -31,7 +31,24 @@ export const getLatestEpisodes = async (req: Request, res: Response) => {
       .limit(Number(limit))
       .skip(Number(skip));
 
-    res.json({ episodes, count: episodes.length });
+    // Fetch progress for these episodes
+    const episodeIds = episodes.map((e) => e._id);
+    const progresses = await UserProgress.find({
+      userId: req.user.id,
+      episodeId: { $in: episodeIds },
+    });
+
+    const episodesWithProgress = episodes.map((episode) => {
+      const progress = progresses.find(
+        (p) => p.episodeId.toString() === episode._id.toString()
+      );
+      return {
+        ...episode.toJSON(),
+        progress: progress ? { position: progress.position, isCompleted: progress.isCompleted } : null,
+      };
+    });
+
+    res.json({ episodes: episodesWithProgress, count: episodesWithProgress.length });
   } catch (error) {
     console.error('Get latest episodes error:', error);
     res.status(500).json({ message: 'Failed to fetch episodes' });
@@ -48,7 +65,25 @@ export const getPodcastEpisodes = async (req: Request, res: Response) => {
       .limit(Number(limit))
       .skip(Number(skip));
 
-    res.json({ episodes, count: episodes.length });
+    // If user is authenticated, fetch progress
+    let episodesWithProgress = episodes.map(e => e.toJSON());
+    if (req.user) {
+        const progresses = await UserProgress.find({
+            userId: req.user.id,
+            episodeId: { $in: episodes.map(e => e._id) }
+        });
+        episodesWithProgress = episodes.map((episode) => {
+            const progress = progresses.find(
+              (p) => p.episodeId.toString() === episode._id.toString()
+            );
+            return {
+              ...episode.toJSON(),
+              progress: progress ? { position: progress.position, isCompleted: progress.isCompleted } : null,
+            };
+          });
+    }
+
+    res.json({ episodes: episodesWithProgress, count: episodes.length });
   } catch (error) {
     console.error('Get podcast episodes error:', error);
     res.status(500).json({ message: 'Failed to fetch episodes' });
@@ -142,5 +177,48 @@ export const getProgress = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Get progress error:', error);
     res.status(500).json({ message: 'Failed to fetch progress' });
+  }
+};
+
+export const searchEpisodes = async (req: Request, res: Response) => {
+  try {
+    const { q, limit = 40, skip = 0 } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ message: 'Search query required' });
+    }
+
+    // Search episodes by title/description using text index
+    const episodes = await Episode.find(
+      { $text: { $search: q as string } },
+      { score: { $meta: 'textScore' } }
+    )
+      .populate('podcastId', 'title author imageUrl')
+      .sort({ score: { $meta: 'textScore' } })
+      .limit(Number(limit))
+      .skip(Number(skip));
+
+    // Fetch progress if authenticated
+    let episodesWithProgress = episodes.map(e => e.toJSON());
+    if (req.user) {
+        const progresses = await UserProgress.find({
+            userId: req.user.id,
+            episodeId: { $in: episodes.map(e => e._id) }
+        });
+        episodesWithProgress = episodes.map((episode) => {
+            const progress = progresses.find(
+              (p) => p.episodeId.toString() === episode._id.toString()
+            );
+            return {
+              ...episode.toJSON(),
+              progress: progress ? { position: progress.position, isCompleted: progress.isCompleted } : null,
+            };
+          });
+    }
+
+    res.json({ episodes: episodesWithProgress, count: episodesWithProgress.length });
+  } catch (error) {
+    console.error('Search episodes error:', error);
+    res.status(500).json({ message: 'Search failed' });
   }
 };

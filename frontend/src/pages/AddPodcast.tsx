@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { discoveryService, DiscoveryPodcast } from '../services/discoveryService';
 import { podcastService } from '../services/podcastService';
+import { episodeService, Episode } from '../services/episodeService';
 import Header from '../components/Header';
-import { Search, Plus, Loader, Rss, Check, Globe, Sparkles, PlusCircle } from 'lucide-react';
+import EpisodeCard from '../components/EpisodeCard';
+import AudioPlayer from '../components/AudioPlayer';
+import { Search, Plus, Loader, Rss, Check, Globe, Sparkles, PlusCircle, LayoutGrid, ListMusic } from 'lucide-react';
 import { authService } from '../services/authService';
 import SuccessModal from '../components/SuccessModal';
 
@@ -11,11 +14,13 @@ export default function AddPodcast() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState<'podcasts' | 'episodes'>('podcasts');
   const [subscribingId, setSubscribingId] = useState<string | null>(null);
   const [rssUrl, setRssUrl] = useState('');
   const [rssLoading, setRssLoading] = useState(false);
   const [rssError, setRssError] = useState<string | null>(null);
   const [rssSuccess, setRssSuccess] = useState<string | null>(null);
+  const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   
   // Modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -33,11 +38,20 @@ export default function AddPodcast() {
     loadUser();
   }, []);
 
+  // Podcast Discovery Query
   const { data: searchResults, isLoading: isSearching } = useQuery({
     queryKey: ['discover', 'search', searchQuery],
     queryFn: () => discoveryService.discoverPodcasts(searchQuery, 30),
-    enabled: searchQuery.length > 2,
+    enabled: searchQuery.length > 2 && searchType === 'podcasts',
     staleTime: 5 * 60 * 1000,
+  });
+
+  // Episode Global Search Query
+  const { data: episodeResults, isLoading: isSearchingEpisodes } = useQuery({
+      queryKey: ['episodes', 'search', searchQuery],
+      queryFn: () => episodeService.searchEpisodes(searchQuery, 40),
+      enabled: searchQuery.length > 2 && searchType === 'episodes',
+      staleTime: 2 * 60 * 1000,
   });
 
   const { data: subsData } = useQuery({
@@ -96,28 +110,28 @@ export default function AddPodcast() {
   return (
     <div className="min-h-screen">
       <Header
-        title="Ajouter"
-        subtitle="EXPANSION"
+        title="Exploration"
+        subtitle="DÉCOUVRIR"
         user={user}
-        onLogout={() => { /* Logout handled in service/navigation usually */ }}
+        onLogout={() => {}}
       />
 
       <main className="max-w-5xl mx-auto">
         {/* RSS Input Area */}
         <div className="premium-glass p-8 rounded-[3rem] mb-12 relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-accent-rose/5 blur-[50px]" />
+           <div className="absolute top-0 right-0 w-32 h-32 bg-accent-indigo/5 blur-[50px]" />
            <div className="relative z-10">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-accent-rose/10 flex items-center justify-center text-accent-rose shadow-glow-indigo">
                    <Rss className="w-5 h-5" />
                 </div>
-                <h3 className="text-xl font-display font-black text-white">Importation Directe</h3>
+                <h3 className="text-xl font-display font-black text-white">Flux RSS Direct</h3>
               </div>
               
               <form onSubmit={handleRssSubscribe} className="flex flex-col sm:flex-row gap-4">
                  <input
                     type="url"
-                    placeholder="Collez une adresse URL de flux RSS ici..."
+                    placeholder="URL du flux RSS (ex: https://feed.podbean.com/...)"
                     value={rssUrl}
                     onChange={(e) => { setRssUrl(e.target.value); setRssError(null); setRssSuccess(null); }}
                     className="input-premium flex-1"
@@ -132,24 +146,44 @@ export default function AddPodcast() {
                  </button>
               </form>
               
-              {rssError && <p className="mt-4 text-xs font-bold text-accent-rose animate-pulse">⚠️ {rssError}</p>}
+              {rssError && <p className="mt-4 text-xs font-bold text-accent-rose">⚠️ {rssError}</p>}
               {rssSuccess && <p className="mt-4 text-xs font-bold text-accent-cyan">✨ {rssSuccess}</p>}
            </div>
         </div>
 
-        {/* Global Directory Search */}
+        {/* Global Search Bar with Tabs */}
         <div className="mb-12">
-           <div className="flex items-center gap-4 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo shadow-glow-indigo">
-                 <Search className="w-5 h-5" />
+           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+              <div className="flex items-center gap-4">
+                 <div className="w-10 h-10 rounded-xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo shadow-glow-indigo">
+                    <Search className="w-5 h-5" />
+                 </div>
+                 <h3 className="text-xl font-display font-black text-white">Recherche Intelligente</h3>
               </div>
-              <h3 className="text-xl font-display font-black text-white">Annuaire Global</h3>
+
+              {/* Tabs */}
+              <div className="flex p-1 rounded-2xl bg-white/[0.03] border border-white/5">
+                 <button 
+                  onClick={() => setSearchType('podcasts')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${searchType === 'podcasts' ? 'bg-white text-obsidian shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                 >
+                    <LayoutGrid className="w-3 h-3" />
+                    Podcasts
+                 </button>
+                 <button 
+                  onClick={() => setSearchType('episodes')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${searchType === 'episodes' ? 'bg-white text-obsidian shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                 >
+                    <ListMusic className="w-3 h-3" />
+                    Épisodes
+                 </button>
+              </div>
            </div>
            
            <div className="relative group">
               <input
                 type="text"
-                placeholder="Rechercher par titre, auteur ou thématique..."
+                placeholder={searchType === 'podcasts' ? "Trouvez un podcast par titre ou auteur..." : "Cherchez un sujet dans tous les épisodes..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="input-premium !py-6 !pl-16 text-xl shadow-2xl transition-all group-hover:bg-white/[0.05]"
@@ -159,11 +193,11 @@ export default function AddPodcast() {
         </div>
 
         {/* Dynamic Results Grid */}
-        {isSearching ? (
+        {(isSearching || isSearchingEpisodes) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
              {[1,2,3].map(i => <div key={i} className="premium-glass rounded-[2.5rem] h-64 animate-pulse bg-white/5" />)}
           </div>
-        ) : searchResults?.podcasts && searchResults.podcasts.length > 0 ? (
+        ) : searchType === 'podcasts' && searchResults?.podcasts && searchResults.podcasts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
             {searchResults.podcasts.map((podcast) => (
               <div key={podcast.id} className="group premium-glass rounded-[2.5rem] overflow-hidden flex flex-col hover:bg-white/[0.05] transition-all duration-500">
@@ -195,20 +229,34 @@ export default function AddPodcast() {
               </div>
             ))}
           </div>
+        ) : searchType === 'episodes' && episodeResults?.episodes && episodeResults.episodes.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
+             {episodeResults.episodes.map((episode) => (
+                <EpisodeCard key={episode._id} episode={episode} onPlay={setSelectedEpisode} />
+             ))}
+          </div>
         ) : searchQuery.length >= 2 ? (
           <div className="premium-glass p-20 rounded-[3rem] text-center max-w-lg mx-auto">
             <Globe className="w-12 h-12 text-slate-700 mx-auto mb-6" />
             <p className="text-white font-bold uppercase tracking-widest text-sm mb-2">Aucun signal trouvé</p>
-            <p className="text-slate-500 text-xs">Vérifiez l'orthographe ou essayez d'autres mots-clés.</p>
+            <p className="text-slate-500 text-xs">Vérifiez l'orthographe ou changez de type de recherche.</p>
           </div>
         ) : (
-          <div className="text-center py-20">
-             <div className="p-8 inline-block rounded-full bg-white/[0.02] border border-white/5 animate-aura">
+          <div className="text-center py-20 opacity-30">
+             <div className="p-8 inline-block rounded-full bg-white/[0.02] border border-white/5">
                 <Search className="w-12 h-12 text-slate-700" />
              </div>
           </div>
         )}
       </main>
+
+      {selectedEpisode && (
+        <AudioPlayer
+          episode={selectedEpisode}
+          onClose={() => setSelectedEpisode(null)}
+          userId={user?._id}
+        />
+      )}
 
       <SuccessModal
         isOpen={showSuccessModal}

@@ -24,11 +24,26 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(() => parseFloat(localStorage.getItem('podcastic-volume') || '1'));
+  const [playbackSpeed, setPlaybackSpeed] = useState(() => parseFloat(localStorage.getItem('podcastic-speed') || '1'));
   const [isMuted, setIsMuted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const podcast = typeof episode?.podcastId === 'object' ? episode.podcastId : null;
+
+  // Sync settings to audio element
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume;
+      audioRef.current.playbackRate = playbackSpeed;
+    }
+  }, [volume, isMuted, playbackSpeed, episode]);
+
+  // Save settings
+  useEffect(() => {
+    localStorage.setItem('podcastic-volume', volume.toString());
+    localStorage.setItem('podcastic-speed', playbackSpeed.toString());
+  }, [volume, playbackSpeed]);
 
   // Save progress periodically
   useEffect(() => {
@@ -58,6 +73,12 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
     if (isPlaying) audioRef.current.pause();
     else audioRef.current.play();
     setIsPlaying(!isPlaying);
+  };
+
+  const changeSpeed = () => {
+      const speeds = [1, 1.25, 1.5, 2, 0.75];
+      const nextIndex = (speeds.indexOf(playbackSpeed) + 1) % speeds.length;
+      setPlaybackSpeed(speeds[nextIndex]);
   };
 
   const handleSeek = (delta: number) => {
@@ -163,6 +184,9 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
 
         {/* Right actions */}
         <div className="flex items-center gap-2 shrink-0">
+          <button onClick={changeSpeed} className="px-2 py-1 rounded-lg bg-white/5 text-[10px] font-black text-slate-500 hover:text-white transition-all uppercase tracking-tighter w-10">
+            {playbackSpeed}x
+          </button>
           <button onClick={toggleMute} className="p-2 text-slate-500 hover:text-white transition-colors">
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
@@ -249,6 +273,9 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
 
               {/* Volume */}
               <div className="flex items-center gap-4">
+                <button onClick={changeSpeed} className="px-3 py-1.5 rounded-xl bg-white/5 text-xs font-black text-slate-400 hover:text-white transition-all uppercase tracking-widest">
+                  {playbackSpeed}x Speed
+                </button>
                 <button onClick={toggleMute} className="text-slate-400 hover:text-white transition-colors shrink-0">
                   {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                 </button>

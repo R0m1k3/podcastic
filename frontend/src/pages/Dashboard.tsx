@@ -46,6 +46,9 @@ export default function Dashboard() {
     }
   };
 
+  // Extract episodes in progress
+  const episodesInProgress = episodesData?.episodes?.filter(e => e.progress && !e.progress.isCompleted) || [];
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -79,16 +82,47 @@ export default function Dashboard() {
                  Vous avez {episodesData?.count || 0} nouveaux épisodes qui n'attendent que vous. Prêt pour une immersion ?
               </p>
               <div className="flex flex-wrap gap-4">
-                 <button className="neon-button flex items-center gap-2">
-                    <Play className="w-4 h-4 fill-current" />
-                    Reprendre la lecture
-                 </button>
+                 {episodesInProgress.length > 0 ? (
+                    <button 
+                      onClick={() => setSelectedEpisode(episodesInProgress[0])}
+                      className="neon-button flex items-center gap-2"
+                    >
+                       <Play className="w-4 h-4 fill-current" />
+                       Reprendre : {episodesInProgress[0].title.substring(0, 20)}...
+                    </button>
+                 ) : (
+                    <button className="neon-button flex items-center gap-2">
+                       <TrendingUp className="w-4 h-4" />
+                       Découvrir
+                    </button>
+                 )}
                  <button className="px-6 py-3 rounded-2xl bg-white/5 text-slate-300 font-bold text-sm hover:bg-white/10 transition-all border border-white/5">
                     Parcourir les tendances
                  </button>
               </div>
            </div>
         </div>
+
+        {/* Continue Listening Section (Only if progression exists) */}
+        {episodesInProgress.length > 0 && (
+          <div className="mb-12 animate-fade-in">
+             <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo shadow-glow-indigo">
+                   <Play className="w-5 h-5 fill-current" />
+                </div>
+                <h3 className="text-2xl font-display font-black text-white">Continuer l'écoute</h3>
+             </div>
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {episodesInProgress.map((episode) => (
+                  <EpisodeCard
+                    key={`progress-${episode._id}`}
+                    episode={episode}
+                    onPlay={setSelectedEpisode}
+                  />
+                ))}
+             </div>
+          </div>
+        )}
 
         {/* Latest Episodes Section */}
         <div className="flex items-center justify-between mb-8">

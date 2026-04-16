@@ -5,6 +5,7 @@ import {
   getEpisode,
   saveProgress,
   getProgress,
+  searchEpisodes,
 } from '../controllers/episodeController';
 import { authenticate } from '../middleware/auth';
 
@@ -12,6 +13,7 @@ const router = Router();
 
 // Protected routes
 router.get('/latest', authenticate, getLatestEpisodes);
+router.get('/search', authenticate, searchEpisodes);
 router.post('/progress', authenticate, saveProgress);
 router.get('/progress/:episodeId', authenticate, getProgress);
 

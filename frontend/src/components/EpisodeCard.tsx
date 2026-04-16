@@ -66,6 +66,16 @@ export default function EpisodeCard({ episode, onPlay }: EpisodeCardProps) {
            </div>
         </div>
       </div>
+
+      {/* Local Progress Bar */}
+      {episode.progress && !episode.progress.isCompleted && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/5 rounded-b-[2rem] overflow-hidden">
+           <div 
+             className="h-full bg-accent-indigo shadow-glow-indigo transition-all duration-1000"
+             style={{ width: `${Math.min(100, (episode.progress.position / episode.duration) * 100)}%` }}
+           />
+        </div>
+      )}
     </div>
   );
 }
