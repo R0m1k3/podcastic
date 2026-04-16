@@ -1,0 +1,154 @@
+# Multi-stage build for Podcastic All-in-One Container
+# Combines: Backend (Node.js), Frontend (React), Web Server (Nginx), Database (MongoDB), Cache (Redis)
+
+# ==================== STAGE 1: Build Backend ====================
+FROM node:20-alpine AS backend-builder
+
+WORKDIR /build/backend
+
+COPY backend/package*.json ./
+RUN npm ci
+
+COPY backend/tsconfig.json ./
+COPY backend/src ./src
+
+RUN npm run build
+
+# ==================== STAGE 2: Build Frontend ====================
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /build/frontend
+
+COPY frontend/package*.json ./
+RUN npm ci
+
+COPY frontend/tsconfig*.json ./
+COPY frontend/vite.config.ts ./
+COPY frontend/postcss.config.js ./
+COPY frontend/tailwind.config.js ./
+COPY frontend/index.html ./
+COPY frontend/src ./src
+
+RUN npm run build
+
+# ==================== STAGE 3: Final Image ====================
+FROM node:20-alpine
+
+# Install supervisor to manage multiple processes, mongodb, redis, nginx
+RUN apk add --no-cache supervisor nginx mongodb redis bash curl
+
+WORKDIR /app
+
+# ==================== Setup Backend ====================
+COPY --from=backend-builder /build/backend/dist ./backend/dist
+COPY --from=backend-builder /build/backend/package*.json ./backend/
+RUN cd backend && npm ci --only=production
+
+# ==================== Setup Frontend ====================
+RUN mkdir -p /usr/share/nginx/html
+COPY --from=frontend-builder /build/frontend/dist/* /usr/share/nginx/html/
+
+# ==================== Setup Nginx ====================
+RUN mkdir -p /etc/nginx/conf.d
+
+COPY <<'EOF' /etc/nginx/conf.d/default.conf
+server {
+    listen 3579;
+    server_name _;
+    client_max_body_size 100M;
+
+    # Frontend - Static files
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+        expires 1d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Static assets with long cache
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        root /usr/share/nginx/html;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # API - Proxy to backend
+    location /api {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # Health check endpoint
+    location /health {
+        proxy_pass http://127.0.0.1:5000;
+    }
+}
+EOF
+
+# ==================== Setup Supervisor ====================
+RUN mkdir -p /var/log/supervisor
+
+COPY <<'EOF' /etc/supervisor/conf.d/supervisord.conf
+[supervisord]
+nodaemon=true
+logfile=/var/log/supervisor/supervisord.log
+pidfile=/var/run/supervisord.pid
+
+[program:mongodb]
+command=/usr/bin/mongod --dbpath /data/db --bind_ip 127.0.0.1
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/mongodb.err.log
+stdout_logfile=/var/log/supervisor/mongodb.out.log
+
+[program:redis]
+command=/usr/bin/redis-server --bind 127.0.0.1
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/redis.err.log
+stdout_logfile=/var/log/supervisor/redis.out.log
+
+[program:backend]
+command=/bin/bash -c "cd /app/backend && node dist/index.js"
+environment=NODE_ENV=production,MONGODB_URI=mongodb://127.0.0.1:27017/podcastic,REDIS_URL=redis://127.0.0.1:6379
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/backend.err.log
+stdout_logfile=/var/log/supervisor/backend.out.log
+
+[program:nginx]
+command=/usr/sbin/nginx -g "daemon off;"
+autostart=true
+autorestart=true
+stderr_logfile=/var/log/supervisor/nginx.err.log
+stdout_logfile=/var/log/supervisor/nginx.out.log
+EOF
+
+# ==================== Create Data Directories ====================
+RUN mkdir -p /data/db /data/redis
+
+# ==================== Environment ====================
+ENV NODE_ENV=production
+ENV MONGODB_URI=mongodb://127.0.0.1:27017/podcastic
+ENV REDIS_URL=redis://127.0.0.1:6379
+ENV PORT=5000
+
+# ==================== Health Check ====================
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://127.0.0.1:3579/health || exit 1
+
+# ==================== Expose Port ====================
+EXPOSE 3579
+
+# ==================== Entrypoint ====================
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

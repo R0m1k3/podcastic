@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(rtk git:*)",
-      "Bash(rtk npm:*)"
+      "Bash(rtk npm:*)",
+      "Bash(git remote:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)"
     ]
   }
 }
