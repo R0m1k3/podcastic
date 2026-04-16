@@ -189,10 +189,10 @@ export default function Trending() {
           </div>
         ) : podcasts.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
               {podcasts.map((podcast, index) => (
-                <div key={`${skip}-${podcast.id}`} className="group premium-card premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500">
-                  <div className="relative aspect-[16/10] overflow-hidden">
+                <div key={`${skip}-${podcast.id}`} className="group premium-card premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500 border border-[var(--border-color)]">
+                  <div className="relative aspect-square overflow-hidden bg-black/5">
                      {podcast.imageUrl ? (
                        <img
                          src={podcast.imageUrl}
@@ -200,44 +200,41 @@ export default function Trending() {
                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                        />
                      ) : (
-                       <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-800 dark:to-obsididan flex items-center justify-center text-4xl">🎙️</div>
+                       <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-4xl">🎙️</div>
                      )}
-                     <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-black text-white uppercase tracking-widest">
+                     <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-black text-white uppercase tracking-widest shadow-lg z-10">
                         Rank #{index + 1}
                      </div>
-                     <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-transparent to-transparent opacity-60" />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
 
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="text-lg font-bold mb-2 line-clamp-2 leading-tight group-hover:text-[var(--accent-primary)] transition-colors">
+                  <div className="p-5 flex-1 flex flex-col">
+                    <h3 className="text-sm font-bold mb-2 line-clamp-2 leading-tight group-hover:text-[var(--accent-primary)] transition-colors min-h-[40px]">
                       {podcast.title}
                     </h3>
                     {podcast.author && (
-                      <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4 truncate">{podcast.author}</p>
+                      <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4 truncate">{podcast.author}</p>
                     )}
-                    <p className="text-xs text-[var(--text-secondary)] line-clamp-3 mb-6 leading-relaxed flex-1 opacity-80">
-                      {podcast.description}
-                    </p>
                     
                     <button
                       onClick={() => handleSubscribe(podcast)}
                       disabled={subscribingId === podcast.id || subscribeMutation.isPending || isSubscribed(podcast.rssUrl)}
-                      className={`w-full py-3.5 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all duration-300 flex items-center justify-center gap-2 ${
+                      className={`mt-auto w-full py-3 rounded-xl font-bold uppercase tracking-widest text-[9px] transition-all duration-300 flex items-center justify-center gap-2 ${
                         isSubscribed(podcast.rssUrl)
-                          ? 'bg-[var(--accent-secondary)]/10 text-[var(--accent-secondary)] border border-[var(--accent-secondary)]/20 cursor-default'
+                          ? 'bg-[var(--accent-secondary)]/10 text-[var(--accent-secondary)] border border-[var(--accent-secondary)]/20'
                           : 'bg-[var(--text-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-primary)] hover:text-white shadow-lg active:scale-95'
                       }`}
                     >
                       {subscribingId === podcast.id ? (
-                        <Loader className="w-4 h-4 animate-spin" />
+                        <Loader className="w-3.5 h-3.5 animate-spin" />
                       ) : isSubscribed(podcast.rssUrl) ? (
                         <>
-                          <Check className="w-4 h-4" />
-                          À l'écoute
+                          <Check className="w-3.5 h-3.5" />
+                          Abonné
                         </>
                       ) : (
                         <>
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5" />
                           S'abonner
                         </>
                       )}
