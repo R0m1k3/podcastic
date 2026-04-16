@@ -70,7 +70,6 @@ export const podcastIndexService = {
           media: 'podcast',
           entity: 'podcast',
           country: 'FR',
-          lang: 'fr_fr', // Force French localized search
           limit: 100, // Fetch more candidates to improve quality
         },
         timeout: 10000,

@@ -11,7 +11,7 @@ import AlertModal, { AlertType } from '../components/AlertModal';
 import { Search, Plus, Loader, Rss, Check, Globe, Sparkles, PlusCircle, LayoutGrid, ListMusic } from 'lucide-react';
 import { authService } from '../services/authService';
 import SuccessModal from '../components/SuccessModal';
-import { GENRES } from '../constants';
+
 
 export default function AddPodcast() {
   const queryClient = useQueryClient();
@@ -39,7 +39,7 @@ export default function AddPodcast() {
   const [rssSuccess, setRssSuccess] = useState<string | null>(null);
   const [detailsEpisode, setDetailsEpisode] = useState<Episode | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [selectedGenre, setSelectedGenre] = useState<string>(GENRES[1].id); // Tech by default or first genre
+  const selectedGenre = ''; // Default to All categories
   
   // Modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -66,7 +66,7 @@ export default function AddPodcast() {
   const { data: searchResults, isLoading: isSearching } = useQuery({
     queryKey: ['discover', 'search', searchQuery],
     queryFn: () => discoveryService.discoverPodcasts(searchQuery, 30),
-    enabled: searchQuery.length > 2 && searchType === 'podcasts',
+    enabled: searchQuery.length >= 2 && searchType === 'podcasts',
     staleTime: 5 * 60 * 1000,
   });
 
@@ -74,7 +74,7 @@ export default function AddPodcast() {
   const { data: episodeResults, isLoading: isSearchingEpisodes } = useQuery({
       queryKey: ['episodes', 'search', searchQuery],
       queryFn: () => episodeService.searchEpisodes(searchQuery, 40),
-      enabled: searchQuery.length > 2 && searchType === 'episodes',
+      enabled: searchQuery.length >= 2 && searchType === 'episodes',
       staleTime: 2 * 60 * 1000,
   });
 
@@ -218,7 +218,7 @@ export default function AddPodcast() {
            <div className="relative group">
               <input
                 type="text"
-                placeholder={searchType === 'podcasts' ? "Trouvez un podcast (Base iTunes FR)..." : "Cherchez un sujet dans tous les épisodes..."}
+                placeholder={searchType === 'podcasts' ? "Recherchez un podcast par nom ou auteur..." : "Cherchez un sujet dans tous les épisodes..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="input-premium !py-6 !pl-16 text-xl shadow-2xl transition-all group-hover:bg-[var(--bg-secondary)]"
@@ -226,27 +226,7 @@ export default function AddPodcast() {
               <Sparkles className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-500 group-focus-within:text-[var(--accent-primary)] transition-colors" />
            </div>
 
-           {/* Category Discovery Pills */}
-           {searchType === 'podcasts' && (
-             <div className="flex items-center gap-2 overflow-x-auto pb-4 mt-8 no-scrollbar">
-               {GENRES.map(genre => (
-                 <button
-                   key={genre.id}
-                   onClick={() => {
-                       setSelectedGenre(genre.id);
-                       setSearchQuery(''); 
-                   }}
-                   className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
-                     selectedGenre === genre.id && searchQuery === ''
-                      ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-glow-indigo' 
-                      : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--accent-primary)]'
-                   }`}
-                 >
-                   {genre.label || 'Explorer'}
-                 </button>
-               ))}
-             </div>
-           )}
+
         </div>
 
         {/* Dynamic Results Grid */}
