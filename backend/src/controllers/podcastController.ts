@@ -58,7 +58,7 @@ export const subscribe = async (req: Request, res: Response) => {
     if (!podcast) {
       // Parse RSS feed
       const feedData = await rssParserService.parseFeed(rssUrl);
-      const episodes = rssParserService.parseEpisodes(feedData.items, feedData.image?.url || '', rssUrl);
+      const episodes = rssParserService.parseEpisodes(feedData.episodes, feedData.imageUrl, rssUrl);
       try {
         const result = await rssParserService.createPodcastFromRss(rssUrl);
         podcast = await Podcast.findById(result.podcast._id);
