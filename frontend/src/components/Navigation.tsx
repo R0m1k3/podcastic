@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Compass } from 'lucide-react';
+import { Home, Flame, PlusCircle } from 'lucide-react';
 
 export default function Navigation() {
   const location = useLocation();
@@ -32,15 +32,27 @@ export default function Navigation() {
           </Link>
 
           <Link
-            to="/discover"
+            to="/trending"
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              isActive('/discover')
+              isActive('/trending')
+                ? 'bg-orange-500 text-white'
+                : 'text-light-700 hover:bg-light-100'
+            }`}
+          >
+            <Flame className="w-5 h-5" />
+            <span className="font-medium">Tendance</span>
+          </Link>
+
+          <Link
+            to="/add"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive('/add')
                 ? 'bg-blue-500 text-white'
                 : 'text-light-700 hover:bg-light-100'
             }`}
           >
-            <Compass className="w-5 h-5" />
-            <span className="font-medium">Découvrir</span>
+            <PlusCircle className="w-5 h-5" />
+            <span className="font-medium">Ajouter</span>
           </Link>
         </div>
       </div>

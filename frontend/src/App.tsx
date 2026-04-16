@@ -4,7 +4,8 @@ import './styles/globals.css';
 import { authService } from './services/authService';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Discover from './pages/Discover';
+import Trending from './pages/Trending';
+import AddPodcast from './pages/AddPodcast';
 import Navigation from './components/Navigation';
 
 const queryClient = new QueryClient({
@@ -47,10 +48,18 @@ export default function App() {
             }
           />
           <Route
-            path="/discover"
+            path="/trending"
             element={
               <ProtectedRoute>
-                <Discover />
+                <Trending />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add"
+            element={
+              <ProtectedRoute>
+                <AddPodcast />
               </ProtectedRoute>
             }
           />
