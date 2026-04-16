@@ -257,11 +257,11 @@ export default function Library() {
                           Aucun épisode trouvé
                         </p>
                         <button
-                          onClick={() => syncMutation.mutate(podcast.subscriptionId || podcast._id)}
+                          onClick={() => syncMutation.mutate(podcast._id)}
                           disabled={syncMutation.isPending}
                           className="w-full py-2 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all text-xs font-bold flex items-center justify-center gap-2 border border-orange-200/50"
                         >
-                          {syncMutation.isPending && syncMutation.variables === (podcast.subscriptionId || podcast._id) ? (
+                          {syncMutation.isPending && syncMutation.variables === podcast._id ? (
                              <>
                                <Loader className="w-3 h-3 animate-spin" />
                                Synchronisation...
