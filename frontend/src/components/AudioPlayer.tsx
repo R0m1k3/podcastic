@@ -205,8 +205,8 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
           </div>
         </div>
 
-        {/* Controls + progress */}
-        <div className="flex-1 flex flex-col items-center gap-1.5">
+        {/* Controls */}
+        <div className="flex-1 flex items-center justify-center">
           <div className="flex items-center gap-5">
             <button onClick={() => handleSeek(-30)} className="group flex flex-col items-center gap-0.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
               <RotateCcw className="w-4 h-4" />
@@ -221,19 +221,21 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
               <span className="text-[8px] font-black">30</span>
             </button>
           </div>
-          <div className="w-full max-w-lg flex items-center gap-2">
-            <span className="text-[9px] text-[var(--text-secondary)] tabular-nums w-8 text-right">{formatTime(currentTime)}</span>
-            <div className="relative flex-1 h-1 group cursor-pointer">
-              <input type="range" min="0" max={duration || 0} value={currentTime}
-                onChange={handleProgressChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-              <div className="w-full h-full bg-[var(--text-primary)]/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full transition-all duration-100"
-                  style={{ width: `${progress}%` }} />
-              </div>
+        </div>
+
+        {/* Floating Progress Bar at the bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 flex items-center gap-2 group cursor-pointer px-4">
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-6 left-4 text-[9px] bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-white tabular-nums border border-white/10">{formatTime(currentTime)}</span>
+          <div className="relative flex-1 h-1">
+            <input type="range" min="0" max={duration || 0} value={currentTime}
+              onChange={handleProgressChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+            <div className="w-full h-full bg-[var(--text-primary)]/10 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full transition-all duration-100"
+                style={{ width: `${progress}%` }} />
             </div>
-            <span className="text-[9px] text-[var(--text-secondary)] tabular-nums w-8">{formatTime(duration)}</span>
           </div>
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-6 right-4 text-[9px] bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-white tabular-nums border border-white/10">{formatTime(duration)}</span>
         </div>
 
         {/* Right actions */}
