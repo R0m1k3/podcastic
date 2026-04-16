@@ -39,9 +39,10 @@ export default function Library() {
       queryClient.setQueryData(
         ['podcasts', 'subscriptions'],
         (old: any) => {
-          if (!old) return old;
-          const filtered = old.podcasts.filter((p: any) => p._id !== podcastId);
-          return { podcasts: filtered, count: filtered.length };
+          if (!old || !old.podcasts) return old;
+          // Ensure we compare strings to avoid type issues
+          const filtered = old.podcasts.filter((p: any) => String(p._id) !== String(podcastId));
+          return { ...old, podcasts: filtered, count: filtered.length };
         }
       );
 
@@ -52,10 +53,12 @@ export default function Library() {
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
       queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     },
-    onError: (error: any, podcastId, context) => {
+    onError: (error: any) => {
       // Rollback: re-fetch the real data from server if the mutation failed
       queryClient.invalidateQueries({ queryKey: ['podcasts', 'subscriptions'] });
-      alert(`Erreur : ${error.response?.data?.message || 'Impossible de se désabonner'}`);
+      
+      const errorMessage = error.response?.data?.message || 'Erreur inconnue';
+      alert(`Erreur lors du désabonnement : ${errorMessage}`);
     },
   });
 
@@ -149,20 +152,55 @@ export default function Library() {
                 )}
 
                 {/* Info */}
-                <div className="flex-1">
-                  <h3 className="text-base font-bold text-light-900 mb-1 line-clamp-2">
-                    {podcast.title}
-                  </h3>
-                  {podcast.author && (
-                    <p className="text-sm text-light-500 mb-2">{podcast.author}</p>
-                  )}
-                  <div className="flex gap-3 text-xs text-light-400 mb-4">
-                    {podcast.episodeCount > 0 && (
-                      <span>{podcast.episodeCount} épisodes</span>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-bold text-light-900 mb-1 truncate">
+                      {podcast.title}
+                    </h3>
+                    {podcast.author && (
+                      <p className="text-xs text-light-500 mb-2 truncate">{podcast.author}</p>
                     )}
-                    {podcast.language && <span>{podcast.language}</span>}
+                    
+                    {/* Description preview */}
+                    {podcast.description && (
+                      <p className="text-xs text-light-400 line-clamp-2 mb-3 h-8 leading-relaxed">
+                        {podcast.description}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap gap-2 text-[10px] text-light-400 mb-4">
+                      {podcast.episodeCount > 0 && (
+                        <span className="bg-light-100 px-2 py-0.5 rounded-full">
+                          {podcast.episodeCount} épisodes
+                        </span>
+                      )}
+                      {podcast.language && (
+                        <span className="bg-light-100 px-2 py-0.5 rounded-full uppercase">
+                          {podcast.language}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Last Episode info */}
+                    {podcast.lastEpisodeTitle && (
+                      <div className="bg-blue-50/50 rounded-lg p-2.5 mb-2 border border-blue-100/50">
+                        <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider mb-1">
+                          Dernier épisode
+                        </p>
+                        <p className="text-xs font-medium text-light-800 line-clamp-1 mb-0.5">
+                          {podcast.lastEpisodeTitle}
+                        </p>
+                        {podcast.lastEpisodeDate && (
+                          <p className="text-[10px] text-light-400">
+                            {new Date(podcast.lastEpisodeDate).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
 
                 {/* Unsubscribe button */}
                 {confirmDeleteId === podcast._id ? (

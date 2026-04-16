@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Podcast } from '../models/Podcast';
 import { UserSubscription } from '../models/UserSubscription';
 import { Episode } from '../models/Episode';
@@ -106,15 +107,20 @@ export const unsubscribe = async (req: Request, res: Response) => {
 
     const { podcastId } = req.params;
 
+    // Log for debugging on the server
+    console.log(`[Unsubscribe] User ${req.user.id} attempting to unsubscribe from podcast ${podcastId}`);
+
     const subscription = await UserSubscription.findOneAndDelete({
-      userId: req.user.id,
-      podcastId,
+      userId: new mongoose.Types.ObjectId(req.user.id),
+      podcastId: new mongoose.Types.ObjectId(podcastId),
     });
 
     if (!subscription) {
+      console.warn(`[Unsubscribe] No subscription found for user ${req.user.id} and podcast ${podcastId}`);
       return res.status(404).json({ message: 'Subscription not found' });
     }
 
+    console.log(`[Unsubscribe] Successfully removed subscription for user ${req.user.id}`);
     res.json({ message: 'Unsubscribed successfully' });
   } catch (error) {
     console.error('Unsubscribe error:', error);
@@ -198,12 +204,10 @@ export const subscribeFromDiscovery = async (req: Request, res: Response) => {
       try {
         const result = await rssParserService.createPodcastFromRss(rssUrl, {
           title: title || 'Unknown Podcast',
-          description: '',
           author: author || '',
           imageUrl: imageUrl,
-          episodes: [],
         });
-        // Refetch as a proper Mongoose document (result.podcast is a plain object)
+        // Refetch as a proper Mongoose document
         podcast = await Podcast.findById(result.podcast._id);
       } catch (error: any) {
         if (error.message.includes('already in database')) {

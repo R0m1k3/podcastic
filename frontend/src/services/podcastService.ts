@@ -10,6 +10,8 @@ export interface Podcast {
   category: string[];
   language: string;
   episodeCount: number;
+  lastEpisodeTitle?: string;
+  lastEpisodeDate?: string;
   lastFetched: string;
 }
 

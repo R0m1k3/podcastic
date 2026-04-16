@@ -10,6 +10,8 @@ export interface IPodcast extends Document {
   language: string;
   lastFetched: Date;
   episodeCount: number;
+  lastEpisodeTitle?: string;
+  lastEpisodeDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +56,14 @@ const podcastSchema = new Schema<IPodcast>(
     episodeCount: {
       type: Number,
       default: 0,
+    },
+    lastEpisodeTitle: {
+      type: String,
+      default: '',
+    },
+    lastEpisodeDate: {
+      type: Date,
+      default: null,
     },
   },
   {

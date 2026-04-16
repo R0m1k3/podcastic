@@ -195,6 +195,12 @@ export const rssParserService = {
       // Update podcast metadata
       podcast.lastFetched = new Date();
       podcast.episodeCount = await Episode.countDocuments({ podcastId });
+      
+      if (episodes.length > 0) {
+        podcast.lastEpisodeTitle = episodes[0].title;
+        podcast.lastEpisodeDate = episodes[0].pubDate;
+      }
+      
       await podcast.save();
 
       const result = {
@@ -231,9 +237,10 @@ export const rssParserService = {
         throw new Error('Podcast already in database');
       }
 
-      // Parse feed if not provided
-      if (!feedData) {
-        feedData = await rssParserService.parseFeed(rssUrl);
+      // Always parse feed to get fresh description and episodes, even if partial data provided
+      if (!feedData || !feedData.description || !feedData.episodes || feedData.episodes.length === 0) {
+        const freshData = await rssParserService.parseFeed(rssUrl);
+        feedData = { ...feedData, ...freshData };
       }
 
       // Create podcast
@@ -275,6 +282,12 @@ export const rssParserService = {
 
       podcast.episodeCount = await Episode.countDocuments({ podcastId: podcast._id });
       podcast.lastFetched = new Date();
+      
+      if (episodes.length > 0) {
+        podcast.lastEpisodeTitle = episodes[0].title;
+        podcast.lastEpisodeDate = episodes[0].pubDate;
+      }
+      
       await podcast.save();
 
       return {
