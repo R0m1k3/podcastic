@@ -136,8 +136,10 @@ export const unsubscribe = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Subscription not found' });
     }
 
-    console.log(`[Unsubscribe] Successfully removed subscription ${subscription._id}`);
-    res.json({ message: 'Unsubscribed successfully', deletedId: subscription._id });
+    // Cast to any to avoid TypeScript error with ModifyResult in logs
+    const result = subscription as any;
+    console.log(`[Unsubscribe] Successfully removed subscription ${result._id}`);
+    res.json({ message: 'Unsubscribed successfully', deletedId: result._id });
   } catch (error) {
     console.error('Unsubscribe error:', error);
     res.status(500).json({ message: 'Failed to unsubscribe' });
