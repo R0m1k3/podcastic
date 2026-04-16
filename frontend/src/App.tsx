@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Trending from './pages/Trending';
 import AddPodcast from './pages/AddPodcast';
+import Library from './pages/Library';
 import Navigation from './components/Navigation';
 
 const queryClient = new QueryClient({
@@ -60,6 +61,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <AddPodcast />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/library"
+            element={
+              <ProtectedRoute>
+                <Library />
               </ProtectedRoute>
             }
           />

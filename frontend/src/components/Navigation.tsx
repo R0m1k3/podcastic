@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Flame, PlusCircle } from 'lucide-react';
+import { Home, Flame, PlusCircle, BookOpen } from 'lucide-react';
 
 export default function Navigation() {
   const location = useLocation();
@@ -41,6 +41,18 @@ export default function Navigation() {
           >
             <Flame className="w-5 h-5" />
             <span className="font-medium">Tendance</span>
+          </Link>
+
+          <Link
+            to="/library"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive('/library')
+                ? 'bg-blue-500 text-white'
+                : 'text-light-700 hover:bg-light-100'
+            }`}
+          >
+            <BookOpen className="w-5 h-5" />
+            <span className="font-medium">Bibliothèque</span>
           </Link>
 
           <Link
