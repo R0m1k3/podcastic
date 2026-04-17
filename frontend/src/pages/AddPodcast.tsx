@@ -153,7 +153,7 @@ export default function AddPodcast() {
         onLogout={() => {}}
       />
 
-      <main className="max-w-5xl mx-auto">
+      <main>
         {/* RSS Input Area */}
         <div className="premium-glass p-8 rounded-[var(--radius-panel)] mb-12 relative overflow-hidden">
            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent-primary)]/5 blur-[50px]" />
