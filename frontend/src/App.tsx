@@ -28,21 +28,11 @@ function AppContent() {
   const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
   const [user, setUser] = useState<any>(null);
 
-  // Load user for the player
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const { accessToken } = authService.getTokens();
-        if (accessToken) {
-          const response = await authService.getMe();
-          setUser(response.user);
-        }
-      } catch (error) {
-        console.error('Failed to load user for global player');
-      }
-    };
-    loadUser();
-  }, [currentEpisode]); // Reload if needed or on mount
+    const { accessToken } = authService.getTokens();
+    if (!accessToken) return;
+    authService.getMe().then(r => setUser(r.user)).catch(() => {});
+  }, [currentEpisode]);
 
   return (
     <>

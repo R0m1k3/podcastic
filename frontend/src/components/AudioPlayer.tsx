@@ -366,12 +366,7 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
   }
 
   return (
-    <div className={`fixed z-[100] transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${inverseTheme} text-[var(--text-primary)] ${
-      isExpanded
-        ? 'inset-0 rounded-none'
-        : 'bottom-6 left-1/2 -translate-x-1/2 w-[96%] max-w-5xl rounded-[2rem] h-[88px]'
-    } ${theme === 'light' ? 'bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-xl' : 'premium-glass'} border-[var(--border-color)] shadow-2xl overflow-hidden flex flex-col`}>
-
+    <>
       <audio
         ref={audioRef}
         src={episode.audioUrl}
@@ -395,82 +390,89 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
         }}
       />
 
-      {/* ── COMPACT BAR ── */}
-      <div className={`flex items-center gap-4 px-5 h-[88px] shrink-0 ${isExpanded ? 'hidden' : 'flex'}`}>
+      {/* ── COMPACT UNIFIED MINI-BAR (same design as Dashboard sticky bar) ── */}
+      {!isExpanded && (
+        <div className="fixed bottom-6 left-4 right-4 sm:left-6 sm:right-6 lg:left-auto lg:right-8 lg:bottom-8 lg:w-[calc(100%-22rem)] xl:w-[calc(100%-24rem)] z-[90] max-w-5xl mx-auto animate-slide-up">
+          <div className="premium-glass rounded-[var(--radius-card)] border border-[var(--border-color)] shadow-2xl overflow-hidden">
+            <div className="flex items-center gap-3 px-4 h-[72px]">
+              {/* Artwork */}
+              <div className="w-11 h-11 rounded-xl overflow-hidden border border-[var(--border-color)] shrink-0">
+                {(episode.imageUrl || podcast?.imageUrl)
+                  ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
+                  : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-lg">🎙️</div>
+                }
+              </div>
 
-        {/* Artwork + info */}
-        <div className="flex items-center gap-3 min-w-0 flex-1 max-w-[280px]">
-          <div className="w-12 h-12 rounded-xl overflow-hidden border border-[var(--border-color)] shrink-0 shadow-lg">
-            {(episode.imageUrl || podcast?.imageUrl)
-              ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
-              : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-xl">🎙️</div>
-            }
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-bold truncate leading-tight">{episode.title}</p>
-            {isResuming ? (
-               <p className="text-[9px] text-[var(--accent-primary)] font-black uppercase animate-pulse">Reprise de lecture...</p>
-            ) : (
-               <p className="text-[10px] text-[var(--text-secondary)] font-bold truncate uppercase tracking-wider">{podcast?.title || ''}</p>
-            )}
-          </div>
-        </div>
+              {/* Title */}
+              <div className="min-w-0 flex-1 hidden sm:block">
+                <p className="text-xs font-bold truncate leading-tight">{episode.title}</p>
+                {isResuming ? (
+                  <p className="text-[9px] text-[var(--accent-primary)] font-black uppercase animate-pulse">Reprise de lecture...</p>
+                ) : (
+                  <p className="text-[9px] text-[var(--text-secondary)] font-bold truncate uppercase tracking-wider">{podcast?.title || ''}</p>
+                )}
+              </div>
 
-        {/* Controls */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex items-center gap-5">
-            <button onClick={() => handleSeek(-30)} className="group flex flex-col items-center gap-0.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-              <RotateCcw className="w-4 h-4" />
-              <span className="text-[8px] font-black">30</span>
-            </button>
-            <button onClick={handlePlayPause}
-              className="w-11 h-11 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] flex items-center justify-center shadow-glow-indigo hover:scale-105 active:scale-95 transition-transform">
-              {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-            </button>
-            <button onClick={() => handleSeek(30)} className="group flex flex-col items-center gap-0.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-              <RotateCw className="w-4 h-4" />
-              <span className="text-[8px] font-black">30</span>
-            </button>
-          </div>
-        </div>
+              {/* Controls */}
+              <div className="flex items-center gap-3 shrink-0">
+                <button onClick={() => handleSeek(-30)} className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors" aria-label="-30s">
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <button onClick={handlePlayPause}
+                  className="w-10 h-10 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-glow-indigo hover:scale-105 active:scale-95 transition-transform">
+                  {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                </button>
+                <button onClick={() => handleSeek(30)} className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors" aria-label="+30s">
+                  <RotateCw className="w-4 h-4" />
+                </button>
+              </div>
 
-        {/* Floating Progress Bar at the bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 flex items-center gap-2 group cursor-pointer px-4">
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-6 left-4 text-[9px] bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-white tabular-nums border border-white/10">{formatTime(currentTime)}</span>
-          <div className="relative flex-1 h-1">
-            <input type="range" min="0" max={duration || 0} value={currentTime}
-              onChange={handleProgressChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-            <div className="w-full h-full bg-[var(--text-primary)]/10 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full transition-all duration-100"
-                style={{ width: `${progress}%` }} />
+              {/* Time */}
+              <div className="hidden md:flex items-center gap-2 shrink-0 text-[10px] text-[var(--text-secondary)] tabular-nums font-bold">
+                <span>{formatTime(currentTime)}</span>
+                <span className="opacity-40">/</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+
+              {/* Speed + Volume + Expand + Close */}
+              <div className="flex items-center gap-1 shrink-0">
+                <button onClick={changeSpeed} className="hidden sm:block px-2 py-1 rounded-lg bg-[var(--bg-secondary)] text-[10px] font-black text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-all uppercase tracking-tighter w-10">
+                  {playbackSpeed}x
+                </button>
+                <button onClick={toggleMute} className="hidden sm:block p-2 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors">
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </button>
+                <button onClick={() => setIsExpanded(true)}
+                  className="p-2 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-all"
+                  aria-label="Agrandir">
+                  <Maximize2 className="w-4 h-4" />
+                </button>
+                <button onClick={onClose}
+                  className="p-2 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-accent-rose transition-all"
+                  aria-label="Fermer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="relative h-1 group cursor-pointer">
+              <input type="range" min="0" max={duration || 0} value={currentTime}
+                onChange={handleProgressChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+              <div className="w-full h-full bg-[var(--text-primary)]/10">
+                <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] transition-all duration-100"
+                  style={{ width: `${progress}%` }} />
+              </div>
             </div>
           </div>
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-6 right-4 text-[9px] bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-white tabular-nums border border-white/10">{formatTime(duration)}</span>
         </div>
+      )}
 
-        {/* Right actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          <button onClick={changeSpeed} className="px-2 py-1 rounded-lg bg-[var(--bg-secondary)] text-[10px] font-black text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-all uppercase tracking-tighter w-10">
-            {playbackSpeed}x
-          </button>
-          <button onClick={toggleMute} className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors">
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </button>
-          <button onClick={() => setIsExpanded(true)}
-            className="p-2 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 transition-all">
-            <Maximize2 className="w-4 h-4" />
-          </button>
-          <button onClick={onClose}
-            className="p-2 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-accent-rose hover:bg-accent-rose/10 transition-all">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* ── EXPANDED VIEW ── */}
+      {/* ── EXPANDED VIEW (wrapper for fullscreen) ── */}
       {isExpanded && (
-        <div className="flex-1 flex flex-col p-8 lg:p-16 overflow-y-auto">
+        <div className={`fixed inset-0 z-[100] ${inverseTheme} text-[var(--text-primary)] ${theme === 'light' ? 'bg-gradient-to-r from-slate-800/95 to-slate-900/95 backdrop-blur-xl' : 'premium-glass'} overflow-hidden flex flex-col`}>
+          <div className="flex-1 flex flex-col p-8 lg:p-16 overflow-y-auto">
           {/* Top bar */}
           <div className="flex items-center justify-between mb-10">
             <button onClick={() => setIsExpanded(false)}
@@ -553,7 +555,8 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
             </div>
           </div>
         </div>
+        </div>
       )}
-    </div>
+    </>
   );
 }
