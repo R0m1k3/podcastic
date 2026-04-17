@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import './styles/globals.css';
@@ -24,6 +24,8 @@ const queryClient = new QueryClient({
 // App Content Wrapper to access AudioContext
 function AppContent() {
   const { currentEpisode, closePlayer } = useAudio();
+  const location = useLocation();
+  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
   const [user, setUser] = useState<any>(null);
 
   // Load user for the player
@@ -82,7 +84,7 @@ function AppContent() {
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
 
-      {currentEpisode && (
+      {currentEpisode && !isDashboard && (
         <AudioPlayer
           episode={currentEpisode}
           onClose={closePlayer}

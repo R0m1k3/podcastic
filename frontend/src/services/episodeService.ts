@@ -10,6 +10,10 @@ export interface Episode {
   duration: number;
   guid: string;
   imageUrl?: string;
+  progress?: {
+    position: number;
+    isCompleted: boolean;
+  } | null;
 }
 
 export interface EpisodeResponse {

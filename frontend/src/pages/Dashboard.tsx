@@ -8,10 +8,11 @@ import EpisodeCard from '../components/EpisodeCard';
 import EpisodeDetails from '../components/EpisodeDetails';
 import { useAudio } from '../context/AudioContext';
 import AlertModal, { AlertType } from '../components/AlertModal';
+import AudioPlayer from '../components/AudioPlayer';
 import { Sparkles, Play, Clock, TrendingUp, Loader, RefreshCcw } from 'lucide-react';
 
 export default function Dashboard() {
-  const { playEpisode } = useAudio();
+  const { playEpisode, currentEpisode, closePlayer } = useAudio();
   const [user, setUser] = useState<any>(null);
   const [detailsEpisode, setDetailsEpisode] = useState<Episode | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -122,40 +123,51 @@ export default function Dashboard() {
       />
 
       <main className="">
-        {/* Welcome Section / Hero */}
-        <div className="premium-glass rounded-[var(--radius-panel)] p-8 lg:p-12 mb-12 relative overflow-hidden group">
-           <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--accent-glow)] blur-[80px] -mr-32 -mt-32 group-hover:bg-[var(--accent-primary)]/20 transition-all duration-700" />
-           <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-glow)] border border-[var(--border-color)] text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest mb-4">
-                 <Sparkles className="w-3 h-3" />
-                 Podcastic Premium
-              </div>
-              <h2 className="text-4xl lg:text-5xl font-display font-black mb-4 tracking-tight leading-tight max-w-2xl text-[var(--text-primary)]">
-                 Découvrez les nouveautés de votre univers audio.
-              </h2>
-              <p className="text-[var(--text-secondary)] text-lg mb-8 max-w-xl leading-relaxed font-medium">
-                 Vous avez des nouveaux épisodes qui n'attendent que vous. Prêt pour une immersion ?
-              </p>
-              <div className="flex flex-wrap gap-4">
-                 {episodesInProgress.length > 0 ? (
-                    <button 
-                      onClick={() => setSelectedEpisode(episodesInProgress[0])}
-                      className="neon-button flex items-center gap-2"
-                    >
-                       <Play className="w-4 h-4 fill-current" />
-                       Reprendre : {episodesInProgress[0].title.substring(0, 20)}...
-                    </button>
-                 ) : (
-                    <button className="neon-button flex items-center gap-2">
-                       <TrendingUp className="w-4 h-4" />
-                       Découvrir
-                    </button>
-                 )}
-                 <Link to="/trending" className="px-6 py-3 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-bold text-sm hover:bg-[var(--accent-primary)]/10 transition-all border border-[var(--border-color)] flex items-center justify-center">
-                    Parcourir les tendances
-                 </Link>
-              </div>
-           </div>
+        {/* Welcome Section / Hero — becomes audio player when playing */}
+        <div className="mb-12">
+          {currentEpisode ? (
+            <AudioPlayer
+              episode={currentEpisode}
+              onClose={closePlayer}
+              userId={user?._id}
+              mode="inline"
+            />
+          ) : (
+            <div className="premium-glass rounded-[var(--radius-panel)] p-8 lg:p-12 relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--accent-glow)] blur-[80px] -mr-32 -mt-32 group-hover:bg-[var(--accent-primary)]/20 transition-all duration-700" />
+               <div className="relative z-10">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-glow)] border border-[var(--border-color)] text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest mb-4">
+                     <Sparkles className="w-3 h-3" />
+                     Podcastic Premium
+                  </div>
+                  <h2 className="text-4xl lg:text-5xl font-display font-black mb-4 tracking-tight leading-tight max-w-2xl text-[var(--text-primary)]">
+                     Découvrez les nouveautés de votre univers audio.
+                  </h2>
+                  <p className="text-[var(--text-secondary)] text-lg mb-8 max-w-xl leading-relaxed font-medium">
+                     Vous avez des nouveaux épisodes qui n'attendent que vous. Prêt pour une immersion ?
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                     {episodesInProgress.length > 0 ? (
+                        <button
+                          onClick={() => playEpisode(episodesInProgress[0])}
+                          className="neon-button flex items-center gap-2"
+                        >
+                           <Play className="w-4 h-4 fill-current" />
+                           Reprendre : {episodesInProgress[0].title.substring(0, 20)}...
+                        </button>
+                     ) : (
+                        <Link to="/trending" className="neon-button flex items-center gap-2">
+                           <TrendingUp className="w-4 h-4" />
+                           Découvrir
+                        </Link>
+                     )}
+                     <Link to="/trending" className="px-6 py-3 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-bold text-sm hover:bg-[var(--accent-primary)]/10 transition-all border border-[var(--border-color)] flex items-center justify-center">
+                        Parcourir les tendances
+                     </Link>
+                  </div>
+               </div>
+            </div>
+          )}
         </div>
 
         {/* Continue Listening Section (Only if progression exists) */}

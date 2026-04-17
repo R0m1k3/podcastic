@@ -1,6 +1,6 @@
 import React from 'react';
 import { Episode } from '../services/episodeService';
-import { Play, Calendar, Activity } from 'lucide-react';
+import { Play, Calendar, Activity, Check, Sparkles } from 'lucide-react';
 import { useAudio } from '../context/AudioContext';
 
 interface EpisodeCardProps {
@@ -20,6 +20,12 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
   });
 
   const durationMinutes = Math.floor(episode.duration / 60);
+
+  // Badges
+  const isCompleted = episode.progress?.isCompleted === true;
+  const isNew =
+    !episode.progress &&
+    Date.now() - new Date(episode.pubDate).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   const handleDetailsClick = (e: React.MouseEvent) => {
     if (onDetails) {
@@ -50,6 +56,22 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
           <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-4xl">🎙️</div>
         )}
         
+        {/* Status Badges - top left */}
+        <div className="absolute top-3 left-3 flex items-center gap-2 z-10">
+          {isCompleted && (
+            <div className="px-2.5 py-1 rounded-lg bg-emerald-500/90 backdrop-blur-md border border-emerald-300/30 text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg">
+              <Check className="w-3 h-3" />
+              LU
+            </div>
+          )}
+          {isNew && (
+            <div className="px-2.5 py-1 rounded-lg bg-[var(--accent-gold)]/90 backdrop-blur-md border border-white/20 text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg animate-pulse">
+              <Sparkles className="w-3 h-3" />
+              NOUVEAU
+            </div>
+          )}
+        </div>
+
         {/* Hover Play Button Overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
           <div 

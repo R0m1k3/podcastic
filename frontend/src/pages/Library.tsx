@@ -225,13 +225,28 @@ export default function Library() {
                        <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-2 bg-[var(--bg-secondary)] text-[var(--text-secondary)] rounded-xl text-[11px] font-black uppercase hover:bg-[var(--bg-primary)]">Annuler</button>
                     </div>
                  ) : (
-                    <button
-                      onClick={() => setConfirmDeleteId(podcast.subscriptionId || podcast._id)}
-                      className="ml-auto flex items-center gap-2 text-[10px] font-bold text-[var(--text-secondary)] hover:text-accent-rose transition-all uppercase tracking-widest"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                      Désabonner
-                    </button>
+                    <div className="flex items-center gap-4 ml-auto">
+                      <button
+                        onClick={() => syncMutation.mutate(podcast._id)}
+                        disabled={syncMutation.isPending && syncMutation.variables === podcast._id}
+                        className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-all uppercase tracking-widest disabled:opacity-50"
+                        title="Resynchroniser les métadonnées et épisodes"
+                      >
+                        {syncMutation.isPending && syncMutation.variables === podcast._id ? (
+                          <Loader className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-3 h-3" />
+                        )}
+                        Resync
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(podcast.subscriptionId || podcast._id)}
+                        className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-secondary)] hover:text-accent-rose transition-all uppercase tracking-widest"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Désabonner
+                      </button>
+                    </div>
                  )}
               </div>
             </div>

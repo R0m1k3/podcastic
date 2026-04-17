@@ -241,7 +241,24 @@ export const rssParserService = {
       // Update podcast metadata
       podcast.lastFetched = new Date();
       podcast.episodeCount = await Episode.countDocuments({ podcastId });
-      
+
+      // Refresh podcast metadata from fresh RSS data (fixes "Unknown Podcast" legacy records)
+      if (feedData.title && feedData.title !== 'Unknown Podcast') {
+        podcast.title = feedData.title;
+      }
+      if (feedData.author && (!podcast.author || podcast.author.trim() === '' || force)) {
+        podcast.author = feedData.author;
+      }
+      if (feedData.imageUrl && (!podcast.imageUrl || force)) {
+        podcast.imageUrl = feedData.imageUrl;
+      }
+      if (feedData.description && (!podcast.description || force)) {
+        podcast.description = feedData.description;
+      }
+      if (feedData.language && (!podcast.language || force)) {
+        podcast.language = feedData.language;
+      }
+
       if (episodes.length > 0) {
         podcast.lastEpisodeTitle = episodes[0].title;
         podcast.lastEpisodeDate = episodes[0].pubDate;

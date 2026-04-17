@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Episode } from '../services/episodeService';
 import { episodeService } from '../services/episodeService';
 import { useAudio } from '../context/AudioContext';
@@ -21,9 +22,10 @@ interface AudioPlayerProps {
   episode: Episode | null;
   onClose: () => void;
   userId?: string;
+  mode?: 'floating' | 'inline';
 }
 
-export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerProps) {
+export default function AudioPlayer({ episode, onClose, userId, mode = 'floating' }: AudioPlayerProps) {
   const { isPlaying, setIsPlaying, togglePlay } = useAudio();
   const { theme } = useTheme();
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -35,6 +37,8 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
   const [isExpanded, setIsExpanded] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showMiniBar, setShowMiniBar] = useState(false);
+  const inlineWrapperRef = useRef<HTMLDivElement>(null);
   
   // Refs for stable tracking without re-renders
   const currentTimeRef = useRef(0);
@@ -87,6 +91,19 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
       }
     };
   }, [episode?._id, userId, isPlaying]); // Restart if episode or isPlaying changes to maintain correct interval behavior
+
+  // IntersectionObserver: show mini-bar when inline player scrolls out of view
+  useEffect(() => {
+    if (mode !== 'inline' || !inlineWrapperRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowMiniBar(!entry.isIntersecting);
+      },
+      { threshold: 0, rootMargin: '-40px 0px 0px 0px' }
+    );
+    observer.observe(inlineWrapperRef.current);
+    return () => observer.disconnect();
+  }, [mode, episode?._id]);
 
   // Load previous progress
   useEffect(() => {
@@ -153,6 +170,200 @@ export default function AudioPlayer({ episode, onClose, userId }: AudioPlayerPro
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const inverseTheme = theme === 'light' ? 'dark-theme' : 'light-theme';
+
+  // ── INLINE MODE (embedded in hero card) ──
+  if (mode === 'inline') {
+    return (
+      <>
+      <div ref={inlineWrapperRef} className="premium-glass rounded-[var(--radius-panel)] p-8 lg:p-10 relative overflow-hidden border border-[var(--border-color)]">
+        <audio
+          ref={audioRef}
+          src={episode.audioUrl}
+          onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
+          onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => setIsPlaying(false)}
+          onError={() => setError("Impossible de charger ce fichier audio. Le lien est peut-être expiré ou protégé.")}
+          autoPlay
+        />
+
+        <AlertModal
+          isOpen={!!error}
+          title="Erreur de lecture"
+          message={error || ""}
+          type="error"
+          onClose={() => {
+            setError(null);
+            onClose();
+          }}
+        />
+
+        {/* Glow backdrop */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--accent-glow)] blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row gap-8 items-start lg:items-center">
+          {/* Artwork */}
+          <div className="relative shrink-0">
+            <div className="w-36 h-36 lg:w-44 lg:h-44 rounded-[var(--radius-card)] overflow-hidden shadow-2xl border border-[var(--border-color)]">
+              {(episode.imageUrl || podcast?.imageUrl)
+                ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
+                : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-5xl">🎙️</div>
+              }
+            </div>
+            {isPlaying && (
+              <div className="absolute -bottom-2 -right-2 px-3 py-1 rounded-full bg-[var(--accent-primary)] text-white text-[9px] font-black uppercase tracking-widest shadow-glow-indigo animate-pulse">
+                En cours
+              </div>
+            )}
+          </div>
+
+          {/* Info + controls */}
+          <div className="flex-1 w-full min-w-0">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-glow)] border border-[var(--border-color)] text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest mb-3">
+                  Lecture en cours
+                </div>
+                <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1 truncate">
+                  {podcast?.title || ''}
+                </p>
+                <h2 className="text-2xl lg:text-3xl font-display font-black leading-tight mb-2 line-clamp-2">
+                  {episode.title}
+                </h2>
+                {isResuming && (
+                  <p className="text-[10px] text-[var(--accent-primary)] font-black uppercase animate-pulse">Reprise de lecture...</p>
+                )}
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-accent-rose hover:bg-accent-rose/10 transition-all shrink-0"
+                aria-label="Fermer le lecteur"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Progress */}
+            <div className="mb-5">
+              <div className="relative h-1.5 group cursor-pointer mb-2">
+                <input type="range" min="0" max={duration || 0} value={currentTime}
+                  onChange={handleProgressChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                <div className="w-full h-full bg-[var(--text-primary)]/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full transition-all duration-100"
+                    style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+              <div className="flex justify-between text-[10px] text-[var(--text-secondary)] tabular-nums font-bold">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-5">
+                <button onClick={() => handleSeek(-30)}
+                  className="flex flex-col items-center gap-0.5 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors">
+                  <RotateCcw className="w-5 h-5" />
+                  <span className="text-[8px] font-black">-30s</span>
+                </button>
+                <button onClick={handlePlayPause}
+                  className="w-14 h-14 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-glow-indigo hover:scale-105 active:scale-95 transition-transform">
+                  {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+                </button>
+                <button onClick={() => handleSeek(30)}
+                  className="flex flex-col items-center gap-0.5 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors">
+                  <RotateCw className="w-5 h-5" />
+                  <span className="text-[8px] font-black">+30s</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button onClick={changeSpeed}
+                  className="px-3 py-2 rounded-xl bg-[var(--bg-secondary)] text-[10px] font-black text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-all uppercase tracking-widest">
+                  {playbackSpeed}x
+                </button>
+                <button onClick={toggleMute}
+                  className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors">
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </button>
+                <input type="range" min="0" max="1" step="0.05" value={isMuted ? 0 : volume}
+                  onChange={handleVolumeChange}
+                  className="w-20 h-1 bg-[var(--text-primary)]/10 rounded-full appearance-none cursor-pointer accent-[var(--accent-primary)]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Mini sticky bar appears when inline player scrolls out of view */}
+      {showMiniBar && createPortal(
+        <div className="fixed bottom-6 left-4 right-4 sm:left-6 sm:right-6 lg:left-auto lg:right-8 lg:bottom-8 lg:w-[calc(100%-22rem)] xl:w-[calc(100%-24rem)] z-[90] max-w-5xl mx-auto animate-slide-up">
+          <div className="premium-glass rounded-[var(--radius-card)] border border-[var(--border-color)] shadow-2xl overflow-hidden">
+            <div className="flex items-center gap-3 px-4 h-[72px]">
+              {/* Artwork */}
+              <div className="w-11 h-11 rounded-xl overflow-hidden border border-[var(--border-color)] shrink-0">
+                {(episode.imageUrl || podcast?.imageUrl)
+                  ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
+                  : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-lg">🎙️</div>
+                }
+              </div>
+
+              {/* Title */}
+              <div className="min-w-0 flex-1 hidden sm:block">
+                <p className="text-xs font-bold truncate leading-tight">{episode.title}</p>
+                <p className="text-[9px] text-[var(--text-secondary)] font-bold truncate uppercase tracking-wider">{podcast?.title || ''}</p>
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center gap-3 shrink-0">
+                <button onClick={() => handleSeek(-30)} className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors" aria-label="-30s">
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <button onClick={handlePlayPause}
+                  className="w-10 h-10 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-glow-indigo hover:scale-105 active:scale-95 transition-transform">
+                  {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                </button>
+                <button onClick={() => handleSeek(30)} className="text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors" aria-label="+30s">
+                  <RotateCw className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Time + close */}
+              <div className="hidden md:flex items-center gap-3 shrink-0 text-[10px] text-[var(--text-secondary)] tabular-nums font-bold">
+                <span>{formatTime(currentTime)}</span>
+                <span className="opacity-40">/</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+
+              <button onClick={() => inlineWrapperRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="p-2 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-all shrink-0"
+                aria-label="Remonter au lecteur"
+                title="Remonter au lecteur">
+                <ChevronDown className="w-4 h-4 rotate-180" />
+              </button>
+            </div>
+
+            {/* Progress bar */}
+            <div className="relative h-1 group cursor-pointer">
+              <input type="range" min="0" max={duration || 0} value={currentTime}
+                onChange={handleProgressChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+              <div className="w-full h-full bg-[var(--text-primary)]/10">
+                <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] transition-all duration-100"
+                  style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      </>
+    );
+  }
 
   return (
     <div className={`fixed z-[100] transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${inverseTheme} text-[var(--text-primary)] ${
