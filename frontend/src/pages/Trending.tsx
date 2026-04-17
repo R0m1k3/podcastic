@@ -199,7 +199,7 @@ export default function Trending() {
           </div>
         ) : podcasts.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-24 stagger-grid">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-24 stagger-grid">
               {podcasts.map((podcast, index) => (
                 <div key={`${skip}-${podcast.id}`} className="group premium-card premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500 border border-[var(--border-color)]">
                   <div className="relative aspect-square overflow-hidden bg-black/5">

@@ -43,7 +43,7 @@ export default function Header({ title, subtitle, user, onLogout }: HeaderProps)
                   <span className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-widest">Premium Member</span>
                </div>
                <div className="relative group/profile">
-                  <div className="w-12 h-12 rounded-2xl p-[1px] bg-gradient-to-tr from-[var(--accent-primary)]/50 to-[var(--accent-secondary)]/50 group-hover/profile:from-[var(--accent-primary)] group-hover/profile:to-[var(--accent-secondary)] transition-all">
+                  <div className="w-12 h-12 rounded-2xl p-[1px] bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--accent-secondary)] transition-all">
                     <div className="w-full h-full rounded-2xl bg-[var(--bg-primary)] flex items-center justify-center overflow-hidden">
                       {user.avatar ? (
                         <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />

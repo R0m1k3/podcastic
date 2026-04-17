@@ -231,11 +231,11 @@ export default function AddPodcast() {
 
         {/* Dynamic Results Grid */}
         {(isSearching || isSearchingEpisodes || isTrendingLoading) ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
              {[1,2,3,4,5,6].map(i => <div key={i} className="premium-glass rounded-[var(--radius-card)] h-64 animate-pulse opacity-50" />)}
           </div>
         ) : searchType === 'podcasts' && (searchQuery.length > 0 ? searchResults?.podcasts : trendingResults?.podcasts) ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-32">
             {(searchQuery.length > 0 ? searchResults?.podcasts : trendingResults?.podcasts).map((podcast: any) => (
               <div key={podcast.id} className="group premium-card premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500 border-[var(--border-color)]">
                 <div className="relative aspect-[16/10] overflow-hidden">
@@ -267,7 +267,7 @@ export default function AddPodcast() {
             ))}
           </div>
         ) : searchType === 'episodes' && episodeResults?.episodes ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-32">
             {episodeResults.episodes.map((episode) => (
               <EpisodeCard 
                 key={episode._id}

@@ -69,12 +69,6 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
               LU
             </div>
           )}
-          {isNew && (
-            <div className="px-2.5 py-1 rounded-lg bg-[var(--accent-gold)]/90 backdrop-blur-md border border-white/20 text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg animate-pulse">
-              <Sparkles className="w-3 h-3" />
-              NOUVEAU
-            </div>
-          )}
         </div>
 
         {/* Hover Play Button Overlay */}

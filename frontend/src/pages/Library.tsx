@@ -147,7 +147,7 @@ export default function Library() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 pb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-10">
           {podcasts.map((podcast) => (
             <div key={podcast._id} className="group premium-card premium-glass rounded-[var(--radius-card)] p-6 hover:bg-[var(--bg-secondary)] transition-all duration-500 flex flex-col h-full border-[var(--border-color)]">
               <div className="flex gap-6 mb-6">
