@@ -12,7 +12,7 @@ import AudioPlayer from '../components/AudioPlayer';
 import { Sparkles, Play, Clock, TrendingUp, Loader, RefreshCcw } from 'lucide-react';
 
 export default function Dashboard() {
-  const { playEpisode, currentEpisode, closePlayer } = useAudio();
+  const { playEpisode, currentEpisode, closePlayer, setUserId } = useAudio();
   const [user, setUser] = useState<any>(null);
   const [detailsEpisode, setDetailsEpisode] = useState<Episode | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -46,6 +46,7 @@ export default function Dashboard() {
       try {
         const response = await authService.getMe();
         setUser(response.user);
+        setUserId(response.user._id);
       } catch (error) {
         console.error('Failed to load user:', error);
       } finally {
@@ -102,8 +103,12 @@ export default function Dashboard() {
     }
   };
 
-  // Extract episodes in progress (using all loaded episodes)
-  const episodesInProgress = episodes?.filter(e => e.progress && !e.progress.isCompleted) || [];
+  // Episodes in progress: has progress, not completed, not ≥90%
+  const episodesInProgress = episodes?.filter(e => {
+    if (!e.progress || e.progress.isCompleted) return false;
+    if (e.duration > 0 && e.progress.position / e.duration >= 0.9) return false;
+    return e.progress.position > 0;
+  }) || [];
 
   if (loading) {
     return (

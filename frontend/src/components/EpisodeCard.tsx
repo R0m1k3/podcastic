@@ -21,8 +21,13 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
 
   const durationMinutes = Math.floor(episode.duration / 60);
 
-  // Badges
-  const isCompleted = episode.progress?.isCompleted === true;
+  // Badges — consider completed if flagged OR if ≥90% listened
+  const progressPercent =
+    episode.progress && episode.duration > 0
+      ? episode.progress.position / episode.duration
+      : 0;
+  const isCompleted =
+    episode.progress?.isCompleted === true || progressPercent >= 0.9;
   const isNew =
     !episode.progress &&
     Date.now() - new Date(episode.pubDate).getTime() < 7 * 24 * 60 * 60 * 1000;
@@ -118,7 +123,7 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
       </div>
 
       {/* Local Progress Bar */}
-      {episode.progress && !episode.progress.isCompleted && (
+      {episode.progress && !isCompleted && (
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/5 rounded-b-[2rem] overflow-hidden">
            <div 
              className="h-full bg-[var(--accent-primary)] shadow-glow-indigo transition-all duration-1000"
