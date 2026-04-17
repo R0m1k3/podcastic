@@ -8,7 +8,8 @@ import EpisodeCard from '../components/EpisodeCard';
 import EpisodeDetails from '../components/EpisodeDetails';
 import { useAudio } from '../context/AudioContext';
 import AlertModal, { AlertType } from '../components/AlertModal';
-import { Search, Plus, Loader, Rss, Check, Globe, Sparkles, PlusCircle, LayoutGrid, ListMusic } from 'lucide-react';
+import { Search, Loader, Rss, Globe, Sparkles, PlusCircle, LayoutGrid, ListMusic } from 'lucide-react';
+import PodcastCard from '../components/PodcastCard';
 import { authService } from '../services/authService';
 import SuccessModal from '../components/SuccessModal';
 
@@ -237,33 +238,15 @@ export default function AddPodcast() {
         ) : searchType === 'podcasts' && (searchQuery.length > 0 ? searchResults?.podcasts : trendingResults?.podcasts) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-32">
             {(searchQuery.length > 0 ? searchResults?.podcasts : trendingResults?.podcasts).map((podcast: any) => (
-              <div key={podcast.id} className="group premium-card premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500 border-[var(--border-color)]">
-                <div className="relative aspect-[16/10] overflow-hidden">
-                   {podcast.imageUrl ? (
-                     <img src={podcast.imageUrl} alt={podcast.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                   ) : (
-                     <div className="w-full h-full bg-gradient-to-br from-slate-800 to-obsidian flex items-center justify-center text-4xl">🎙️</div>
-                   )}
-                   <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-transparent to-transparent opacity-60" />
-                </div>
-
-                <div className="p-6 flex flex-col flex-1">
-                  <h3 className="text-lg font-bold mb-2 line-clamp-2 leading-tight group-hover:text-[var(--accent-primary)] transition-colors">{podcast.title}</h3>
-                  <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4 truncate">{podcast.author || 'Inconnu'}</p>
-                  
-                  <button
-                    onClick={() => handleSubscribe(podcast)}
-                    disabled={subscribingId === podcast.id || subscribeMutation.isPending || isSubscribed(podcast.rssUrl)}
-                    className={`mt-auto w-full py-3.5 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all duration-300 flex items-center justify-center gap-2 ${
-                      isSubscribed(podcast.rssUrl)
-                        ? 'bg-[var(--accent-secondary)]/10 text-[var(--accent-secondary)] border border-[var(--accent-secondary)]/20'
-                        : 'bg-[var(--text-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-primary)] hover:text-white'
-                    }`}
-                  >
-                    {subscribingId === podcast.id ? <Loader className="w-4 h-4 animate-spin" /> : isSubscribed(podcast.rssUrl) ? <><Check className="w-4 h-4" /> Membre</> : <><Plus className="w-4 h-4" /> S'abonner</>}
-                  </button>
-                </div>
-              </div>
+              <PodcastCard
+                key={podcast.id}
+                title={podcast.title}
+                author={podcast.author}
+                imageUrl={podcast.imageUrl}
+                onSubscribe={() => handleSubscribe(podcast)}
+                isSubscribed={isSubscribed(podcast.rssUrl)}
+                isSubscribing={subscribingId === podcast.id}
+              />
             ))}
           </div>
         ) : searchType === 'episodes' && episodeResults?.episodes ? (

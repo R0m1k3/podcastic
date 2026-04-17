@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { discoveryService, DiscoveryPodcast } from '../services/discoveryService';
 import { podcastService } from '../services/podcastService';
 import Header from '../components/Header';
-import { Loader, Plus, Flame, Check, Sparkles, TrendingUp } from 'lucide-react';
+import { Loader, Flame, Sparkles, TrendingUp } from 'lucide-react';
+import PodcastCard from '../components/PodcastCard';
 import { authService } from '../services/authService';
 import SuccessModal from '../components/SuccessModal';
 import AlertModal, { AlertType } from '../components/AlertModal';
@@ -201,56 +202,16 @@ export default function Trending() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-24 stagger-grid">
               {podcasts.map((podcast, index) => (
-                <div key={`${skip}-${podcast.id}`} className="group premium-card premium-glass rounded-[var(--radius-card)] overflow-hidden flex flex-col hover:bg-[var(--bg-secondary)] transition-all duration-500 border border-[var(--border-color)]">
-                  <div className="relative aspect-square overflow-hidden bg-black/5">
-                     {podcast.imageUrl ? (
-                       <img
-                         src={podcast.imageUrl}
-                         alt={podcast.title}
-                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                       />
-                     ) : (
-                       <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-4xl">🎙️</div>
-                     )}
-                     <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-black text-white uppercase tracking-widest shadow-lg z-10">
-                        Rank #{index + 1}
-                     </div>
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-
-                  <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="text-sm font-bold mb-2 line-clamp-2 leading-tight group-hover:text-[var(--accent-primary)] transition-colors min-h-[40px]">
-                      {podcast.title}
-                    </h3>
-                    {podcast.author && (
-                      <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-4 truncate">{podcast.author}</p>
-                    )}
-                    
-                    <button
-                      onClick={() => handleSubscribe(podcast)}
-                      disabled={subscribingId === podcast.id || subscribeMutation.isPending || isSubscribed(podcast.rssUrl)}
-                      className={`mt-auto w-full py-3 rounded-xl font-bold uppercase tracking-widest text-[9px] transition-all duration-300 flex items-center justify-center gap-2 ${
-                        isSubscribed(podcast.rssUrl)
-                          ? 'bg-[var(--accent-secondary)]/10 text-[var(--accent-secondary)] border border-[var(--accent-secondary)]/20'
-                          : 'bg-[var(--text-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-primary)] hover:text-white shadow-lg active:scale-95'
-                      }`}
-                    >
-                      {subscribingId === podcast.id ? (
-                        <Loader className="w-3.5 h-3.5 animate-spin" />
-                      ) : isSubscribed(podcast.rssUrl) ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          Abonné
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-3.5 h-3.5" />
-                          S'abonner
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
+                <PodcastCard
+                  key={`${skip}-${podcast.id}`}
+                  title={podcast.title}
+                  author={podcast.author}
+                  imageUrl={podcast.imageUrl}
+                  rank={index + 1}
+                  onSubscribe={() => handleSubscribe(podcast)}
+                  isSubscribed={isSubscribed(podcast.rssUrl)}
+                  isSubscribing={subscribingId === podcast.id}
+                />
               ))}
             </div>
 
