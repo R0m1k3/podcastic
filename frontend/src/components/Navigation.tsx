@@ -1,8 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Flame, PlusCircle, Library } from 'lucide-react';
+import { Home, Flame, PlusCircle, Library, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Navigation() {
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -53,9 +55,23 @@ export default function Navigation() {
           })}
         </div>
 
-        {/* Footer */}
-        <div className="mt-auto pt-6 border-t border-[var(--border-color)]">
-          <p className="px-2 text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-widest opacity-50">Podcastic Premium v1.0</p>
+        {/* Footer — theme toggle + version */}
+        <div className="mt-auto pt-6 border-t border-[var(--border-color)] flex items-center justify-between">
+          <p className="px-2 text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-widest opacity-50">
+            Podcastic v1.0
+          </p>
+          <button
+            onClick={toggleTheme}
+            aria-label="Changer de thème"
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300
+                       hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]
+                       border border-transparent hover:border-[var(--border-color)]"
+          >
+            {theme === 'dark'
+              ? <Sun className="w-4 h-4" />
+              : <Moon className="w-4 h-4" />
+            }
+          </button>
         </div>
       </nav>
 

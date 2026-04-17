@@ -214,14 +214,40 @@ export const getPodcast = async (req: Request, res: Response) => {
 export const discoverPodcasts = async (req: Request, res: Response) => {
   try {
     const { q, limit = 20 } = searchSchema.parse(req.query);
+    const query = q as string;
+    const lim = limit as number;
 
-    const results = await podcastIndexService.searchPodcasts(q as string, limit as number);
+    // 1. Try iTunes Search API
+    try {
+      const results = await podcastIndexService.searchPodcasts(query, lim);
+      if (results.length > 0) {
+        return res.json({ source: 'itunes', podcasts: results, count: results.length });
+      }
+      console.log(`[Discover] iTunes returned 0 results for "${query}", trying local DB`);
+    } catch (itunesError: any) {
+      console.error(`[Discover] iTunes failed for "${query}":`, itunesError.message);
+    }
 
-    res.json({
-      source: 'itunes',
-      podcasts: results,
-      count: results.length,
-    });
+    // 2. Fallback: search local DB podcasts already in the system
+    const localPodcasts = await Podcast.find({
+      $or: [
+        { title: { $regex: query, $options: 'i' } },
+        { author: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } },
+      ],
+    }).limit(lim);
+
+    const mapped = localPodcasts.map((p: any) => ({
+      id: p._id.toString(),
+      title: p.title,
+      rssUrl: p.rssUrl,
+      description: p.description || '',
+      author: p.author || '',
+      imageUrl: p.imageUrl,
+      episodeCount: p.episodeCount,
+    }));
+
+    return res.json({ source: 'local', podcasts: mapped, count: mapped.length });
   } catch (error: any) {
     console.error('Discover podcasts error:', error.message);
     res.json({ source: 'itunes', podcasts: [], count: 0 });

@@ -3,127 +3,110 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* ── Midnight Aura (Default/Dark) ── */
-    --bg-primary: #080d1a;
-    --bg-secondary: rgba(255, 255, 255, 0.025);
-    --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
-    --accent-primary: #6366f1; /* Indigo */
-    --accent-secondary: #06b6d4; /* Cyan */
-    --accent-glow: rgba(99, 102, 241, 0.35);
-    --border-color: rgba(255, 255, 255, 0.07);
-    --glass-blur: blur(24px) saturate(180%);
-    --radius-card: 1rem;      /* 16px - Sharper, Industrial */
-    --radius-panel: 1.25rem;  /* 20px */
-    --shadow-premium: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.1);
-    --shadow-hover: 0 30px 70px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.2);
-  }
-
-  /* ── Premium Gold (Light Theme) ── */
-  :root.light-theme, .light-theme {
-    --bg-primary: #ffffff; /* Pure white for maximum clarity */
-    --bg-secondary: #f8fafc; /* Slate 50 tint */
-    --text-primary: #0f172a; /* Slate 900 */
-    --text-secondary: #64748b; /* Slate 500 */
-    --accent-primary: #6366f1; /* Consistent Indigo across themes for brand */
-    --accent-secondary: #06b6d4; 
-    --accent-glow: rgba(99, 102, 241, 0.1);
-    --border-color: #e2e8f0; /* Soft slate border */
-    --glass-blur: blur(12px);
-    --shadow-premium: 0 12px 30px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04);
-    --shadow-hover: 0 25px 50px rgba(0, 0, 0, 0.12), 0 10px 20px rgba(0, 0, 0, 0.05);
-    --radius-card: 1rem;
-    --radius-panel: 1.25rem;
-    --input-bg: #f1f5f9;
-  }
-
-  /* ── Explicit Dark Theme (for nesting/inversion) ── */
+  /* ──────────────────────────────────────────────────
+     DARK THEME — Default
+  ────────────────────────────────────────────────── */
+  :root,
+  :root.dark-theme,
   .dark-theme {
-    --bg-primary: #000000; /* Solid Black */
-    --bg-secondary: #0a0a0a;
-    --text-primary: #ffffff;
+    --bg-primary:     #080d1a;
+    --bg-secondary:   rgba(255, 255, 255, 0.025);
+    --text-primary:   #f1f5f9;
     --text-secondary: #94a3b8;
     --accent-primary: #6366f1;
     --accent-secondary: #06b6d4;
-    --accent-glow: rgba(99, 102, 241, 0.4);
-    --border-color: rgba(255, 255, 255, 0.15);
-    --input-bg: rgba(255, 255, 255, 0.05);
-    --shadow-premium: 0 30px 100px rgba(0, 0, 0, 0.9), 0 0 1px rgba(255, 255, 255, 0.2);
-    --glass-blur: none; /* No transparency for the player */
+    --accent-gold:    #d4a843;
+    --accent-glow:    rgba(99, 102, 241, 0.35);
+    --border-color:   rgba(255, 255, 255, 0.07);
+    --glass-blur:     blur(24px) saturate(180%);
+    --radius-card:    1rem;        /* 16px — sharp modern */
+    --radius-panel:   1.25rem;     /* 20px */
+    --shadow-premium: 0 8px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --shadow-hover:   0 16px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --input-bg:       rgba(255, 255, 255, 0.03);
   }
 
-  /* Explicit light override for dark mode player inversion */
+  /* ──────────────────────────────────────────────────
+     LIGHT THEME — Cream / Grey / Gold
+  ────────────────────────────────────────────────── */
+  :root.light-theme,
   .light-theme {
-    --bg-primary: #ffffff; /* Solid White */
-    --bg-secondary: #f8fafc;
-    --text-primary: #0f172a;
-    --text-secondary: #64748b;
-    --accent-primary: #6366f1;
-    --accent-secondary: #06b6d4;
-    --accent-glow: rgba(99, 102, 241, 0.15);
-    --border-color: #e2e8f0;
-    --input-bg: #f1f5f9;
-    --shadow-premium: 0 20px 60px rgba(0, 0, 0, 0.1), 0 0 1px rgba(0, 0, 0, 0.05);
-    --glass-blur: none;
+    --bg-primary:     #f7f3eb;   /* warm off-white cream */
+    --bg-secondary:   rgba(255, 255, 255, 0.85);
+    --text-primary:   #1e293b;   /* dark slate navy */
+    --text-secondary: #64748b;   /* medium grey */
+    --accent-primary: #5b5fc7;   /* slightly deeper indigo on white */
+    --accent-secondary: #0891b2;
+    --accent-gold:    #b8960c;   /* rich gold */
+    --accent-glow:    rgba(91, 95, 199, 0.15);
+    --border-color:   rgba(184, 150, 12, 0.16);  /* warm golden border */
+    --glass-blur:     blur(20px) saturate(150%);
+    --radius-card:    1rem;
+    --radius-panel:   1.25rem;
+    --shadow-premium: 0 4px 24px rgba(0, 0, 0, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    --shadow-hover:   0 12px 40px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+    --input-bg:       rgba(255, 255, 255, 0.82);
   }
 }
 
+/* ── Premium card hover ── */
 .premium-card {
   @apply transition-all duration-300;
   box-shadow: var(--shadow-premium);
 }
 .premium-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
   box-shadow: var(--shadow-hover);
 }
 
+/* ── Reset ── */
 * { @apply box-border; }
-
 html { @apply scroll-smooth; }
 
+/* ── Body ── */
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
-  transition: background-color 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.3s ease;
+  transition: background-color 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+              color 0.3s ease;
   @apply antialiased font-sans overflow-x-hidden;
 }
 
-/* Background Gradients */
+/* Dark background gradient (fixed pseudo-element) */
 body.dark-theme::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-image: 
+  pointer-events: none;
+  background-image:
     radial-gradient(ellipse 80% 40% at 10% 10%, rgba(99, 102, 241, 0.07) 0%, transparent 60%),
     radial-gradient(ellipse 60% 50% at 90% 90%, rgba(6, 182, 212, 0.06) 0%, transparent 60%);
-  pointer-events: none;
 }
 
+/* Light background gradient — cream with gold top-left, grey bottom-right */
 body.light-theme::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-image: 
-    radial-gradient(ellipse 80% 40% at 10% 10%, rgba(99, 102, 241, 0.03) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 90% 90%, rgba(255, 255, 255, 1) 0%, transparent 60%);
   pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 70% 45% at 5%  5%,  rgba(184, 150, 12,  0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 96% 96%, rgba(140, 152, 180, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 30% at 50% 100%, rgba(200, 190, 170, 0.06) 0%, transparent 50%);
 }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { 
-  background: var(--border-color);
-  border-radius: 99px; 
-}
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); opacity: 0.4; }
 
 /* ── Typography ── */
-h1, h2, h3, h4 { 
-  @apply font-display font-extrabold tracking-tight; 
+h1, h2, h3, h4 {
+  @apply font-display font-extrabold tracking-tight;
   color: var(--text-primary);
 }
 
@@ -133,31 +116,38 @@ h1, h2, h3, h4 {
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-premium), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-premium);
+  transition:
+    background 0.4s ease,
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
 }
 
 /* ── Inputs ── */
 .input-premium {
-  @apply w-full px-5 py-4 rounded-2xl transition-all outline-none;
+  @apply w-full px-5 py-4 rounded-xl transition-all outline-none;
   background: var(--input-bg);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
 }
+.input-premium::placeholder { color: var(--text-secondary); opacity: 0.7; }
 .input-premium:focus {
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 3px var(--accent-glow);
+  background: var(--bg-secondary);
 }
 
-/* ── Buttons ── */
+/* ── Neon button ── */
 .neon-button {
-  @apply relative inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl
+  @apply relative inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl
          font-bold text-white transition-all duration-300 active:scale-[0.97] select-none;
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  box-shadow: var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 .neon-button:hover {
   transform: translateY(-1px);
   filter: brightness(1.1);
+  box-shadow: 0 8px 28px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .neon-button:disabled {
   opacity: 0.5;
@@ -165,18 +155,145 @@ h1, h2, h3, h4 {
   cursor: not-allowed;
 }
 
-/* ── Animations ── */
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slide-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes reveal { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes aura-pulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.08); } }
+/* ── Light theme: inverse player background ── */
+.dark-theme {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+}
+/* Used as inverse wrapper inside AudioPlayer when in light mode */
+.player-inverse {
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --bg-secondary: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
 
-.reveal { animation: reveal 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.animate-slide-up { animation: slide-up 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.animate-fade-in { animation: fade-in 0.3s ease both; }
-.animate-aura { animation: aura-pulse 10s ease-in-out infinite; }
+/* ═══════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════ */
 
-/* ── Utility ── */
-.text-balance { text-wrap: balance; }
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.93); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes aura-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 0.75; transform: scale(1.1); }
+}
+
+@keyframes glow-beat {
+  0%, 100% { box-shadow: 0 0 16px var(--accent-glow); }
+  50%      { box-shadow: 0 0 36px var(--accent-glow); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes ping-slow {
+  0%       { transform: scale(1); opacity: 1; }
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes gold-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Animation utility classes ── */
+.reveal             { animation: reveal    0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-slide-up   { animation: slide-up  0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-slide-down { animation: slide-down 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-fade-in    { animation: fade-in   0.3s ease both; }
+.animate-scale-in   { animation: scale-in  0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-float      { animation: float     3.5s ease-in-out infinite; }
+.animate-aura       { animation: aura-pulse 10s ease-in-out infinite; }
+.animate-glow-beat  { animation: glow-beat  3s ease-in-out infinite; }
+.animate-spin-slow  { animation: spin-slow  10s linear infinite; }
+.animate-ping-slow  { animation: ping-slow  2.5s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+/* ── Shimmer loading skeleton ── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ── Gold shimmer accent (light theme decorative) ── */
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(184, 150, 12, 0.15),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: gold-shimmer 3s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════
+   STAGGER GRID
+   Add class "stagger-grid" to a grid container —
+   children animate in with a cascade delay.
+═══════════════════════════════════════════════════ */
+.stagger-grid > * {
+  animation: slide-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.stagger-grid > *:nth-child(1)    { animation-delay:   0ms; }
+.stagger-grid > *:nth-child(2)    { animation-delay:  65ms; }
+.stagger-grid > *:nth-child(3)    { animation-delay: 130ms; }
+.stagger-grid > *:nth-child(4)    { animation-delay: 195ms; }
+.stagger-grid > *:nth-child(5)    { animation-delay: 260ms; }
+.stagger-grid > *:nth-child(6)    { animation-delay: 325ms; }
+.stagger-grid > *:nth-child(7)    { animation-delay: 390ms; }
+.stagger-grid > *:nth-child(8)    { animation-delay: 455ms; }
+.stagger-grid > *:nth-child(9)    { animation-delay: 520ms; }
+.stagger-grid > *:nth-child(10)   { animation-delay: 585ms; }
+.stagger-grid > *:nth-child(11)   { animation-delay: 650ms; }
+.stagger-grid > *:nth-child(12)   { animation-delay: 715ms; }
+.stagger-grid > *:nth-child(n+13) { animation-delay: 780ms; }
+
+/* ── Utilities ── */
+.text-balance       { text-wrap: balance; }
+.shadow-glass       { box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4); }
 .shadow-glow-indigo { box-shadow: 0 0 20px var(--accent-glow); }
-.shadow-glow-cyan { box-shadow: 0 0 20px var(--accent-glow); }
+.shadow-glow-cyan   { box-shadow: 0 0 20px rgba(6, 182, 212, 0.35); }
+.shadow-glow-gold   { box-shadow: 0 0 20px rgba(184, 150, 12, 0.4); }

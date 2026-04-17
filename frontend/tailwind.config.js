@@ -18,6 +18,7 @@ export default {
           cyan: '#06b6d4',
           rose: '#f43f5e',
           violet: '#8b5cf6',
+          gold: '#b8960c',
         },
         light: {
           50: '#f8fafc',
@@ -37,9 +38,10 @@ export default {
         display: ['"Montserrat"', 'sans-serif'],
       },
       borderRadius: {
-        '2xl': '1.25rem',
-        '3xl': '2rem',
-        '4xl': '3rem',
+        'xl':  '0.75rem',   /* 12px */
+        '2xl': '1rem',      /* 16px — matches --radius-card */
+        '3xl': '1.25rem',   /* 20px — matches --radius-panel */
+        '4xl': '1.5rem',    /* 24px */
       },
       boxShadow: {
         'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
