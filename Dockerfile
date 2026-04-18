@@ -40,6 +40,10 @@ COPY --from=backend-builder /app/dist ./dist
 # Copy frontend build into public/ (backend will serve it as static files)
 COPY --from=frontend-builder /frontend/dist ./public
 
+# Run as non-root for defense in depth — node:alpine ships a "node" user (uid 1000)
+RUN chown -R node:node /app
+USER node
+
 EXPOSE 3579
 
 ENV NODE_ENV=production
