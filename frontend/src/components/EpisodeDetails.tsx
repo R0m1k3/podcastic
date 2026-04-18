@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import DOMPurify from 'dompurify';
 import { X, Play, Clock, Calendar, BarChart2 } from 'lucide-react';
 import { Episode } from '../services/episodeService';
 
@@ -109,9 +110,15 @@ export default function EpisodeDetails({ episode, isOpen, onClose, onPlay }: Epi
            {/* Description */}
            <div className="space-y-6">
               <h3 className="text-xl font-display font-black">À propos de cet épisode</h3>
-              <div 
+              <div
                 className="prose dark:prose-invert max-w-none text-[var(--text-secondary)] leading-relaxed text-lg"
-                dangerouslySetInnerHTML={{ __html: episode.description }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(episode.description || '', {
+                    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'blockquote', 'code', 'pre'],
+                    ALLOWED_ATTR: ['href', 'target', 'rel'],
+                    ALLOWED_URI_REGEXP: /^(?:https?|mailto):/i,
+                  }),
+                }}
               />
            </div>
 

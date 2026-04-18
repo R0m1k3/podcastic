@@ -17,12 +17,14 @@
     "@tanstack/react-query": "^5.1.0",
     "zustand": "^4.4.1",
     "@heroicons/react": "^2.0.18",
-    "axios": "^1.5.0",
-    "lucide-react": "^0.292.0"
+    "axios": "^1.7.9",
+    "lucide-react": "^0.292.0",
+    "dompurify": "^3.2.3"
   },
   "devDependencies": {
     "@types/react": "^18.2.28",
     "@types/react-dom": "^18.2.13",
+    "@types/dompurify": "^3.2.0",
     "@vitejs/plugin-react": "^4.1.0",
     "autoprefixer": "^10.4.16",
     "eslint": "^9.18.0",
