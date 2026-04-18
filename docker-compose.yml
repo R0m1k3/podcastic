@@ -5,12 +5,17 @@ services:
     image: mongo:8
     container_name: podcastic-mongodb
     restart: unless-stopped
+    command: ["--auth"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:?MONGO_USER is required}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?MONGO_PASSWORD is required}
+      MONGO_INITDB_DATABASE: podcastic
     volumes:
       - mongodb_data:/data/db
     networks:
       - podcastic_net
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--quiet", "-u", "${MONGO_USER}", "-p", "${MONGO_PASSWORD}", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,12 +25,13 @@ services:
     image: redis:7-alpine
     container_name: podcastic-redis
     restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"]
     volumes:
       - redis_data:/data
     networks:
       - podcastic_net
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -41,11 +47,12 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3579
-      MONGODB_URI: mongodb://mongodb:27017/podcastic
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      MONGODB_URI: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/podcastic?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required (min 32 chars, generate with: openssl rand -base64 32)}
       JWT_EXPIRES_IN: 7d
       JWT_REFRESH_EXPIRES_IN: 30d
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
       PODCAST_INDEX_API_KEY: ${PODCAST_INDEX_API_KEY:-}
       PODCAST_INDEX_API_SECRET: ${PODCAST_INDEX_API_SECRET:-}
     depends_on:
