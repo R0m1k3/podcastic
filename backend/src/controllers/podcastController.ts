@@ -5,6 +5,7 @@ import { UserSubscription } from '../models/UserSubscription';
 import { Episode } from '../models/Episode';
 import { podcastIndexService } from '../services/podcastIndexService';
 import { rssParserService } from '../services/rssParserService';
+import { validateExternalUrl } from '../utils/urlValidator';
 import { z } from 'zod';
 
 const subscribeSchema = z.object({
@@ -51,6 +52,13 @@ export const subscribe = async (req: Request, res: Response) => {
     }
 
     const { rssUrl } = subscribeSchema.parse(req.body);
+
+    // SSRF protection — block internal/private hosts
+    try {
+      await validateExternalUrl(rssUrl);
+    } catch (err: any) {
+      return res.status(400).json({ message: `URL refusée : ${err.message}` });
+    }
 
     // Check if podcast exists
     let podcast = await Podcast.findOne({ rssUrl });
