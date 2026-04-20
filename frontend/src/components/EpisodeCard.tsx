@@ -1,16 +1,17 @@
 import React from 'react';
 import { Episode } from '../services/episodeService';
-import { Play, Calendar, Activity, Check, Sparkles } from 'lucide-react';
+import { Play, Pause, Calendar, Activity, Check, CheckCircle2, Circle } from 'lucide-react';
 import { useAudio } from '../context/AudioContext';
 
 interface EpisodeCardProps {
   episode: Episode;
   onPlay: (episode: Episode) => void;
   onDetails?: (episode: Episode) => void;
+  onToggleRead?: (episode: Episode, completed: boolean) => void;
 }
 
-export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardProps) {
-  const { currentEpisode, isPlaying } = useAudio();
+export default function EpisodeCard({ episode, onPlay, onDetails, onToggleRead }: EpisodeCardProps) {
+  const { currentEpisode, isPlaying, togglePlay } = useAudio();
   const isCurrent = currentEpisode?._id === episode._id;
   const podcast = typeof episode.podcastId === 'object' ? episode.podcastId : null;
   const pubDate = new Date(episode.pubDate).toLocaleDateString('fr-FR', {
@@ -41,7 +42,16 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onPlay(episode);
+    if (isCurrent) {
+      togglePlay();
+    } else {
+      onPlay(episode);
+    }
+  };
+
+  const handleToggleRead = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onToggleRead) onToggleRead(episode, !isCompleted);
   };
 
   return (
@@ -72,12 +82,15 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
         </div>
 
         {/* Hover Play Button Overlay */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
-          <div 
+        <div className={`absolute inset-0 bg-black/40 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px] ${isCurrent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+          <div
             onClick={handlePlayClick}
             className="w-16 h-16 rounded-full bg-white text-obsidian flex items-center justify-center shadow-glow-indigo transform scale-90 group-hover:scale-100 transition-transform duration-500 active:scale-95"
           >
-            <Play className="w-6 h-6 fill-current ml-1" />
+            {isCurrent && isPlaying
+              ? <Pause className="w-6 h-6 fill-current" />
+              : <Play className="w-6 h-6 fill-current ml-1" />
+            }
           </div>
         </div>
         
@@ -113,6 +126,23 @@ export default function EpisodeCard({ episode, onPlay, onDetails }: EpisodeCardP
               <Calendar className="w-3.5 h-3.5" />
               <span>{pubDate}</span>
            </div>
+           {onToggleRead && (
+             <button
+               onClick={handleToggleRead}
+               title={isCompleted ? 'Marquer comme non lu' : 'Marquer comme lu'}
+               className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-all duration-200 border ${
+                 isCompleted
+                   ? 'text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10'
+                   : 'text-[var(--text-secondary)] border-transparent hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/10'
+               }`}
+             >
+               {isCompleted
+                 ? <CheckCircle2 className="w-3.5 h-3.5" />
+                 : <Circle className="w-3.5 h-3.5" />
+               }
+               <span>{isCompleted ? 'Lu' : 'Lu ?'}</span>
+             </button>
+           )}
         </div>
       </div>
 

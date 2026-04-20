@@ -40,6 +40,25 @@ export default function Dashboard() {
     setIsDetailsOpen(true);
   };
 
+  const handleToggleRead = async (episode: Episode, completed: boolean) => {
+    try {
+      await episodeService.saveProgress(
+        episode._id,
+        completed ? episode.duration : 0,
+        completed
+      );
+      setEpisodes(prev =>
+        prev.map(ep =>
+          ep._id === episode._id
+            ? { ...ep, progress: { position: completed ? ep.duration : 0, isCompleted: completed } }
+            : ep
+        )
+      );
+    } catch (error) {
+      console.error('Failed to toggle read state:', error);
+    }
+  };
+
   // Load user
   useEffect(() => {
     const loadUser = async () => {
@@ -191,6 +210,7 @@ export default function Dashboard() {
                     episode={episode}
                     onPlay={playEpisode}
                     onDetails={handleOpenDetails}
+                    onToggleRead={handleToggleRead}
                   />
                 ))}
              </div>
@@ -223,6 +243,7 @@ export default function Dashboard() {
                   episode={episode}
                   onPlay={playEpisode}
                   onDetails={handleOpenDetails}
+                  onToggleRead={handleToggleRead}
                 />
               ))}
             </div>
