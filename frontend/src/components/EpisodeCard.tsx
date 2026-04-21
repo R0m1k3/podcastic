@@ -139,7 +139,7 @@ export default function EpisodeCard({ episode, onPlay, onDetails, onToggleRead }
                  ? <CheckCircle2 className="w-3.5 h-3.5" />
                  : <Circle className="w-3.5 h-3.5" />
                }
-               <span>{isCompleted ? 'Lu' : 'Lu ?'}</span>
+               <span>{isCompleted ? 'Lu' : 'Marquer'}</span>
              </button>
            )}
         </div>
