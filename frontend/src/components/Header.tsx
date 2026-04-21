@@ -40,7 +40,7 @@ export default function Header({ title, subtitle, user, onLogout }: HeaderProps)
             <div className="flex items-center gap-4 sm:gap-6">
                <div className="hidden sm:flex flex-col items-end">
                   <span className="text-sm font-bold tracking-wide">{user.username}</span>
-                  <span className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-widest">Premium Member</span>
+                  <span className="text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-widest">Membre</span>
                </div>
                <div className="relative group/profile">
                   <div className="w-12 h-12 rounded-2xl p-[1px] bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--accent-secondary)] transition-all">

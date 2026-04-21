@@ -163,7 +163,7 @@ export default function Dashboard() {
            <div className="relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-glow)] border border-[var(--border-color)] text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest mb-4">
                  <Sparkles className="w-3 h-3" />
-                 Podcastic Premium
+                 Podcastic
               </div>
               <h2 className="text-4xl lg:text-5xl font-display font-black mb-4 tracking-tight leading-tight max-w-2xl text-[var(--text-primary)]">
                  Découvrez les nouveautés de votre univers audio.
