@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { episodeService, Episode } from '../services/episodeService';
 import { authService } from '../services/authService';
@@ -13,6 +13,7 @@ import { Sparkles, Play, Clock, TrendingUp, Loader, RefreshCcw } from 'lucide-re
 
 export default function Dashboard() {
   const { playEpisode, currentEpisode, closePlayer, setUserId } = useAudio();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<any>(null);
   const [detailsEpisode, setDetailsEpisode] = useState<Episode | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -41,21 +42,29 @@ export default function Dashboard() {
   };
 
   const handleToggleRead = async (episode: Episode, completed: boolean) => {
+    const newProgress = { position: completed ? episode.duration : 0, isCompleted: completed };
+    // Optimistic update: local state + all cached query pages
+    setEpisodes(prev =>
+      prev.map(ep => ep._id === episode._id ? { ...ep, progress: newProgress } : ep)
+    );
+    queryClient.setQueriesData<any>(
+      { queryKey: ['episodes', 'latest'], exact: false },
+      (old: any) => {
+        if (!old?.episodes) return old;
+        return {
+          ...old,
+          episodes: old.episodes.map((ep: Episode) =>
+            ep._id === episode._id ? { ...ep, progress: newProgress } : ep
+          ),
+        };
+      }
+    );
     try {
-      await episodeService.saveProgress(
-        episode._id,
-        completed ? episode.duration : 0,
-        completed
-      );
-      setEpisodes(prev =>
-        prev.map(ep =>
-          ep._id === episode._id
-            ? { ...ep, progress: { position: completed ? ep.duration : 0, isCompleted: completed } }
-            : ep
-        )
-      );
+      await episodeService.saveProgress(episode._id, newProgress.position, completed);
     } catch (error) {
       console.error('Failed to toggle read state:', error);
+      // Revert on error
+      queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     }
   };
 
@@ -163,7 +172,7 @@ export default function Dashboard() {
            <div className="relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-glow)] border border-[var(--border-color)] text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest mb-4">
                  <Sparkles className="w-3 h-3" />
-                 Podcastic Premium
+                 Podcastic
               </div>
               <h2 className="text-4xl lg:text-5xl font-display font-black mb-4 tracking-tight leading-tight max-w-2xl text-[var(--text-primary)]">
                  Découvrez les nouveautés de votre univers audio.
@@ -181,9 +190,9 @@ export default function Dashboard() {
                        Reprendre : {episodesInProgress[0].title.substring(0, 20)}...
                     </button>
                  ) : (
-                    <Link to="/trending" className="neon-button flex items-center gap-2">
+                    <Link to="/add" className="neon-button flex items-center gap-2">
                        <TrendingUp className="w-4 h-4" />
-                       Découvrir
+                       Découvrir des podcasts
                     </Link>
                  )}
                  <Link to="/trending" className="px-6 py-3 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-bold text-sm hover:bg-[var(--accent-primary)]/10 transition-all border border-[var(--border-color)] flex items-center justify-center">

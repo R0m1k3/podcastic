@@ -61,7 +61,7 @@ export default function Login() {
           <h1 className="text-5xl font-display font-black mb-3 tracking-tighter">PODCASTIC</h1>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-[0.2em]">
              <Sparkles className="w-3 h-3" />
-             Expérience Audio Premium
+             Votre espace audio
           </div>
         </div>
 

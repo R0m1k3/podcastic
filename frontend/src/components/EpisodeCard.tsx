@@ -1,6 +1,6 @@
 import React from 'react';
 import { Episode } from '../services/episodeService';
-import { Play, Pause, Calendar, Activity, Check, CheckCircle2, Circle } from 'lucide-react';
+import { Play, Pause, Calendar, Activity, CheckCircle2, Circle } from 'lucide-react';
 import { useAudio } from '../context/AudioContext';
 
 interface EpisodeCardProps {
@@ -75,7 +75,6 @@ export default function EpisodeCard({ episode, onPlay, onDetails, onToggleRead }
         <div className="absolute top-3 left-3 flex items-center gap-2 z-10">
           {isCompleted && (
             <div className="px-2.5 py-1 rounded-lg bg-emerald-500/90 backdrop-blur-md border border-emerald-300/30 text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg">
-              <Check className="w-3 h-3" />
               LU
             </div>
           )}
@@ -112,7 +111,7 @@ export default function EpisodeCard({ episode, onPlay, onDetails, onToggleRead }
       <div className="flex-1 flex flex-col">
         <div className="flex items-center gap-2 mb-2">
            <span className="text-[9px] font-black text-[var(--accent-primary)] uppercase tracking-[0.2em] truncate flex-1">
-             {podcast?.author || 'Artiste Premium'}
+             {podcast?.author || ''}
            </span>
         </div>
         
@@ -140,7 +139,7 @@ export default function EpisodeCard({ episode, onPlay, onDetails, onToggleRead }
                  ? <CheckCircle2 className="w-3.5 h-3.5" />
                  : <Circle className="w-3.5 h-3.5" />
                }
-               <span>{isCompleted ? 'Lu' : 'Lu ?'}</span>
+               <span>{isCompleted ? 'Lu' : 'Marquer'}</span>
              </button>
            )}
         </div>

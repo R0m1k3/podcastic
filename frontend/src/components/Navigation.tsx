@@ -26,7 +26,7 @@ export default function Navigation() {
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-display font-extrabold tracking-tight">PODCASTIC</span>
-            <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-[0.2em]">Premium Audio</span>
+            <span className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-[0.2em]">Your audio space</span>
           </div>
         </Link>
 
