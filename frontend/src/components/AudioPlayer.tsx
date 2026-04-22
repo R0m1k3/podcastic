@@ -14,6 +14,7 @@ import {
   RotateCw,
 } from 'lucide-react';
 import AlertModal from './AlertModal';
+import AudioVisualizer from './AudioVisualizer';
 import { useTheme } from '../context/ThemeContext';
 
 interface AudioPlayerProps {
@@ -127,21 +128,6 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
                 : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-5xl">🎙️</div>
               }
             </div>
-            {/* Barres égaliseur */}
-            {isPlaying && (
-              <div
-                className="absolute -bottom-1 -left-1 flex items-end gap-[3px] px-2 py-1.5 rounded-xl bg-[var(--bg-primary)]/70 backdrop-blur-sm border border-[var(--border-color)]"
-                aria-hidden="true"
-              >
-                {[0, 150, 300, 100].map((delay, i) => (
-                  <span
-                    key={i}
-                    className="block w-[3px] h-4 rounded-full bg-[var(--accent-primary)] animate-eq-bar opacity-90"
-                    style={{ animationDelay: `${delay}ms` }}
-                  />
-                ))}
-              </div>
-            )}
             {isPlaying && (
               <div className="absolute -bottom-2 -right-2 px-3 py-1 rounded-full bg-[var(--accent-primary)] text-white text-[9px] font-black uppercase tracking-widest shadow-glow-indigo animate-pulse">
                 En cours
@@ -190,6 +176,11 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
                 <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(duration)}</span>
               </div>
+            </div>
+
+            {/* Visualiseur audio */}
+            <div className="w-full flex justify-center my-5">
+              <AudioVisualizer barCount={28} height={80} gap={3} />
             </div>
 
             {/* Controls */}

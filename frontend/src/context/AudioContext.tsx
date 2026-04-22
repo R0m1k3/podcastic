@@ -24,6 +24,7 @@ interface AudioContextType {
   changeSpeed: () => void;
   setUserId: (id: string | null) => void;
   setError: (err: string | null) => void;
+  getFrequencyData: () => Uint8Array | null;
   // Legacy (kept for compatibility)
   setIsPlaying: (playing: boolean) => void;
 }
@@ -32,6 +33,9 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export function AudioProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const webAudioRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -103,6 +107,45 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }).catch(() => setIsResuming(false));
   }, [currentEpisode?._id, userId]);
 
+  // Initialize Web Audio Analyser when audio element is available
+  useEffect(() => {
+    if (!audioRef.current || !currentEpisode) return;
+
+    try {
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const ctx = new AudioCtx();
+      const source = ctx.createMediaElementSource(audioRef.current);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      webAudioRef.current = ctx;
+      analyserRef.current = analyser;
+      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
+    } catch {
+      // Fallback: audio plays without visualizer
+    }
+
+    return () => {
+      if (webAudioRef.current && webAudioRef.current.state !== 'closed') {
+        webAudioRef.current.close().catch(() => {});
+      }
+      analyserRef.current = null;
+      dataArrayRef.current = null;
+      webAudioRef.current = null;
+    };
+  }, [currentEpisode?._id]);
+
+  const getFrequencyData = () => {
+    if (!analyserRef.current || !dataArrayRef.current) return null;
+    analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+    return dataArrayRef.current;
+  };
+
   // Actions
   const playEpisode = (episode: Episode) => {
     setCurrentEpisode(episode);
@@ -111,6 +154,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const closePlayer = () => {
     if (audioRef.current) audioRef.current.pause();
+    if (webAudioRef.current && webAudioRef.current.state !== 'closed') {
+      webAudioRef.current.close().catch(() => {});
+    }
+    analyserRef.current = null;
+    dataArrayRef.current = null;
+    webAudioRef.current = null;
     setCurrentEpisode(null);
     setIsPlaying(false);
     setCurrentTime(0);
@@ -151,13 +200,15 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     <AudioContext.Provider value={{
       currentEpisode, isPlaying, currentTime, duration, volume, playbackSpeed, isMuted, isResuming, error,
       playEpisode, closePlayer, togglePlay, seek, seekRelative, setVolume, toggleMute, changeSpeed,
-      setUserId, setError, setIsPlaying,
+      setUserId, setError, getFrequencyData, setIsPlaying,
     }}>
       {/* Persistent audio element — lives at provider level so it survives page navigation */}
       {currentEpisode && (
         <audio
+          key={currentEpisode._id}
           ref={audioRef}
           src={currentEpisode.audioUrl}
+          crossOrigin="anonymous"
           onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
           onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
           onPlay={() => setIsPlaying(true)}
