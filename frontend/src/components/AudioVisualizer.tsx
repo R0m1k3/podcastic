@@ -8,9 +8,9 @@ interface AudioVisualizerProps {
 }
 
 export default function AudioVisualizer({
-  barCount = 32,
-  height = 64,
-  gap = 2,
+  barCount = 28,
+  height = 80,
+  gap = 3,
 }: AudioVisualizerProps) {
   const { isPlaying, getFrequencyData } = useAudio();
   const [heights, setHeights] = useState<number[]>(() => Array(barCount).fill(4));
@@ -18,27 +18,41 @@ export default function AudioVisualizer({
   const playingRef = useRef(isPlaying);
   const getDataRef = useRef(getFrequencyData);
 
-  // Keep refs in sync without triggering re-runs
   useEffect(() => { playingRef.current = isPlaying; }, [isPlaying]);
   useEffect(() => { getDataRef.current = getFrequencyData; }, [getFrequencyData]);
 
   useEffect(() => {
+    const half = Math.floor(barCount / 2);
+
     const animate = () => {
-      const data = getDataRef.current?.();
-      if (data && playingRef.current) {
-        const newHeights = Array.from({ length: barCount }, (_, i) => {
-          const idx = Math.floor((i / barCount) * data.length);
-          const value = data[idx] ?? 0;
-          // Boost mid-range frequencies for better podcast speech visuals
-          const boost = i > barCount * 0.2 && i < barCount * 0.8 ? 1.15 : 1;
-          return Math.max(4, Math.min(100, (value / 255) * 100 * boost));
-        });
+      const rawData = getDataRef.current?.();
+      if (rawData && playingRef.current) {
+        // Build symmetric mirrored heights
+        const newHeights: number[] = [];
+
+        for (let i = 0; i < barCount; i++) {
+          // Mirror index: distance from center
+          const distFromCenter = Math.abs(i - (barCount - 1) / 2);
+          const halfIdx = Math.floor(distFromCenter);
+          const dataIndex = Math.min(halfIdx, rawData.length - 1);
+
+          const value = rawData[dataIndex] ?? 0;
+
+          // Smooth falloff curve toward edges for aesthetic hill shape
+          const edgeFade = 1 - (distFromCenter / half) * 0.35;
+
+          // Boost mid frequencies for speech
+          const midBoost = distFromCenter < half * 0.5 ? 1.1 : 1;
+
+          const h = Math.max(4, Math.min(100, (value / 255) * 100 * edgeFade * midBoost));
+          newHeights.push(h);
+        }
+
         setHeights(newHeights);
       } else {
-        // Smooth decay when paused or no data
         setHeights(prev =>
           prev.map(h => {
-            const next = h * 0.85;
+            const next = h * 0.88;
             return next < 4.5 ? 4 : next;
           })
         );
@@ -50,8 +64,6 @@ export default function AudioVisualizer({
     return () => cancelAnimationFrame(rafRef.current);
   }, [barCount]);
 
-  const barWidth = Math.max(2, Math.floor((100 - (barCount - 1) * gap) / barCount));
-
   return (
     <div
       className="flex items-end justify-center"
@@ -61,12 +73,12 @@ export default function AudioVisualizer({
       {heights.map((h, i) => (
         <div
           key={i}
-          className="rounded-full bg-gradient-to-t from-[var(--accent-primary)] to-[var(--accent-secondary)] opacity-90"
+          className="rounded-full bg-gradient-to-t from-[var(--accent-primary)] to-[var(--accent-secondary)]"
           style={{
-            width: barWidth,
+            width: 3,
             height: `${h}%`,
-            transition: playingRef.current ? 'height 60ms linear' : 'height 200ms ease-out',
-            opacity: 0.5 + (h / 200),
+            transition: playingRef.current ? 'height 60ms linear' : 'height 220ms ease-out',
+            opacity: 0.45 + (h / 180),
           }}
         />
       ))}
