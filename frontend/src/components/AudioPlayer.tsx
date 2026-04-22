@@ -123,7 +123,8 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
                 ? <img
                     src={episode.imageUrl || podcast!.imageUrl}
                     alt=""
-                    className={`w-full h-full object-cover transition-all duration-500 ${isPlaying ? 'animate-spin-slow' : 'animate-spin-slow animate-spin-paused'}`}
+                    className="w-full h-full object-cover animate-spin-slow"
+                    style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}
                   />
                 : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-5xl">🎙️</div>
               }
