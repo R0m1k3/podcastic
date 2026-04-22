@@ -105,17 +105,43 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
         />
 
         {/* Glow backdrop */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--accent-glow)] blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+        <div className={`absolute top-0 right-0 w-64 h-64 bg-[var(--accent-glow)] blur-[80px] -mr-32 -mt-32 pointer-events-none transition-opacity duration-700 ${isPlaying ? 'animate-aura opacity-100' : 'opacity-40'}`} />
 
         <div className="relative z-10 flex flex-col lg:flex-row gap-8 items-start lg:items-center">
           {/* Artwork */}
           <div className="relative shrink-0">
+            {/* Halo aura derrière l'artwork */}
+            {isPlaying && (
+              <div
+                className="absolute inset-0 rounded-[var(--radius-card)] bg-[var(--accent-primary)]/20 blur-xl animate-aura scale-110 pointer-events-none -z-10"
+                aria-hidden="true"
+              />
+            )}
             <div className="w-36 h-36 lg:w-44 lg:h-44 rounded-[var(--radius-card)] overflow-hidden shadow-2xl border border-[var(--border-color)]">
               {(episode.imageUrl || podcast?.imageUrl)
-                ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
+                ? <img
+                    src={episode.imageUrl || podcast!.imageUrl}
+                    alt=""
+                    className={`w-full h-full object-cover transition-all duration-500 ${isPlaying ? 'animate-spin-slow' : 'animate-spin-slow animate-spin-paused'}`}
+                  />
                 : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-5xl">🎙️</div>
               }
             </div>
+            {/* Barres égaliseur */}
+            {isPlaying && (
+              <div
+                className="absolute -bottom-1 -left-1 flex items-end gap-[3px] px-2 py-1.5 rounded-xl bg-[var(--bg-primary)]/70 backdrop-blur-sm border border-[var(--border-color)]"
+                aria-hidden="true"
+              >
+                {[0, 150, 300, 100].map((delay, i) => (
+                  <span
+                    key={i}
+                    className="block w-[3px] h-4 rounded-full bg-[var(--accent-primary)] animate-eq-bar opacity-90"
+                    style={{ animationDelay: `${delay}ms` }}
+                  />
+                ))}
+              </div>
+            )}
             {isPlaying && (
               <div className="absolute -bottom-2 -right-2 px-3 py-1 rounded-full bg-[var(--accent-primary)] text-white text-[9px] font-black uppercase tracking-widest shadow-glow-indigo animate-pulse">
                 En cours
