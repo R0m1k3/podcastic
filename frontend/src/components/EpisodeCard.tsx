@@ -51,7 +51,7 @@ export default function EpisodeCard({ episode, onPlay, onDetails, onToggleRead }
         {/* Top left: completed badge */}
         <div className="absolute top-3 left-3">
           {isCompleted && (
-            <span className="px-2 py-1 rounded-md bg-[var(--accent-emerald)]/90 backdrop-blur-md text-white text-[0.6rem] font-extrabold uppercase tracking-wider border border-emerald-300/20">
+            <span className="px-2 py-1 rounded-md bg-[var(--accent-emerald)] backdrop-blur-md text-white text-[0.6rem] font-extrabold uppercase tracking-wider border border-emerald-400/30 shadow-sm">
               LU
             </span>
           )}
@@ -61,7 +61,7 @@ export default function EpisodeCard({ episode, onPlay, onDetails, onToggleRead }
         <div className={`absolute inset-0 bg-black/50 transition-opacity duration-300 flex items-center justify-center ${isCurrent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
           <div
             onClick={handlePlay}
-            className="w-14 h-14 rounded-full bg-white/90 text-[var(--bg-base)] flex items-center justify-center shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 active:scale-95"
+            className="w-14 h-14 rounded-full bg-black/85 text-white flex items-center justify-center shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 active:scale-95"
           >
             {isCurrent && isPlaying
               ? <Pause className="w-5 h-5 fill-current" />

@@ -48,7 +48,7 @@ export default function PodcastCard({
 
         {/* Overlay on hover */}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <div className="w-14 h-14 rounded-full bg-white/90 text-[var(--bg-base)] flex items-center justify-center shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+          <div className="w-14 h-14 rounded-full bg-black/85 text-white flex items-center justify-center shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
             <Play className="w-5 h-5 fill-current ml-0.5" />
           </div>
         </div>

@@ -30,14 +30,24 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
 
   useEffect(() => { setUserId(userId ?? null); }, [userId, setUserId]);
 
+  // IntersectionObserver with debounce to prevent flicker
+  const miniTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (mode !== 'inline' || !inlineRef.current) return;
     const obs = new IntersectionObserver(
-      ([entry]) => setShowMiniBar(!entry.isIntersecting),
-      { threshold: 0, rootMargin: '-40px 0px 0px 0px' }
+      ([entry]) => {
+        if (miniTimer.current) clearTimeout(miniTimer.current);
+        miniTimer.current = setTimeout(() => {
+          setShowMiniBar(!entry.isIntersecting);
+        }, 250);
+      },
+      { threshold: 0.1, rootMargin: '-80px 0px 0px 0px' }
     );
     obs.observe(inlineRef.current);
-    return () => obs.disconnect();
+    return () => {
+      obs.disconnect();
+      if (miniTimer.current) clearTimeout(miniTimer.current);
+    };
   }, [mode, episode?._id]);
 
   const podcast = typeof episode?.podcastId === 'object' ? episode.podcastId : null;
@@ -172,7 +182,7 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
 
               {/* Audio Visualizer */}
               <div className="w-full flex justify-center my-3">
-                <AudioVisualizer barCount={28} height={70} gap={3} />
+                <AudioVisualizer height={56} />
               </div>
 
               {/* Progress */}
@@ -268,7 +278,7 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
                   </p>
                 </div>
 
-                <AudioVisualizer barCount={36} height={80} gap={3} />
+                <AudioVisualizer height={72} />
 
                 <div>
                   <div className="relative h-1.5 group cursor-pointer mb-2">
