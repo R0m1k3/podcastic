@@ -6,7 +6,13 @@
       "Bash(git remote:*)",
       "Bash(git branch:*)",
       "Bash(git push:*)",
-      "Bash(ls -la /c/Claude/Podcastic/Dockerfile*)"
+      "Bash(ls -la /c/Claude/Podcastic/Dockerfile*)",
+      "Bash(npm run *)",
+      "WebFetch(domain:stitch.withgoogle.com)",
+      "Bash(npx tsc *)",
+      "Bash(git add *)",
+      "Bash(git pull *)",
+      "Bash(git stash *)"
     ]
   }
 }

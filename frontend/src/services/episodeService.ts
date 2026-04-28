@@ -75,4 +75,14 @@ export const episodeService = {
     const response = await api.get(`/episodes/progress/${episodeId}`);
     return response.data;
   },
+
+  searchEpisodes: async (
+    query: string,
+    limit: number = 40
+  ): Promise<EpisodeResponse> => {
+    const response = await api.get('/episodes/search', {
+      params: { q: query, limit },
+    });
+    return response.data;
+  },
 };

@@ -1,6 +1,5 @@
-import React from 'react';
-import { Episode } from '../services/episodeService';
 import { Play, Pause, Calendar, Activity, CheckCircle2, Circle } from 'lucide-react';
+import { Episode } from '../services/episodeService';
 import { useAudio } from '../context/AudioContext';
 
 interface EpisodeCardProps {
@@ -14,144 +13,114 @@ export default function EpisodeCard({ episode, onPlay, onDetails, onToggleRead }
   const { currentEpisode, isPlaying, togglePlay } = useAudio();
   const isCurrent = currentEpisode?._id === episode._id;
   const podcast = typeof episode.podcastId === 'object' ? episode.podcastId : null;
+
   const pubDate = new Date(episode.pubDate).toLocaleDateString('fr-FR', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
+    month: 'short', day: 'numeric', year: 'numeric'
   });
+  const durationMin = Math.floor(episode.duration / 60);
 
-  const durationMinutes = Math.floor(episode.duration / 60);
+  const progressPct = episode.progress && episode.duration > 0
+    ? (episode.progress.position / episode.duration) * 100 : 0;
+  const isCompleted = episode.progress?.isCompleted === true || progressPct >= 90;
+  const isInProgress = !isCompleted && episode.progress && episode.progress.position > 0;
 
-  // Badges — consider completed if flagged OR if ≥90% listened
-  const progressPercent =
-    episode.progress && episode.duration > 0
-      ? episode.progress.position / episode.duration
-      : 0;
-  const isCompleted =
-    episode.progress?.isCompleted === true || progressPercent >= 0.9;
-  const isNew =
-    !episode.progress &&
-    Date.now() - new Date(episode.pubDate).getTime() < 7 * 24 * 60 * 60 * 1000;
-
-  const handleDetailsClick = (e: React.MouseEvent) => {
-    if (onDetails) {
-      e.stopPropagation();
-      onDetails(episode);
-    }
-  };
-
-  const handlePlayClick = (e: React.MouseEvent) => {
+  const handleClick = () => onDetails?.(episode);
+  const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isCurrent) {
-      togglePlay();
-    } else {
-      onPlay(episode);
-    }
+    isCurrent ? togglePlay() : onPlay(episode);
   };
-
   const handleToggleRead = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onToggleRead) onToggleRead(episode, !isCompleted);
+    onToggleRead?.(episode, !isCompleted);
   };
 
   return (
-    <div 
-      className="group premium-card premium-glass rounded-[var(--radius-card)] p-4 hover:bg-[var(--bg-secondary)] transition-all duration-500 border border-[var(--border-color)] hover:border-[var(--accent-primary)]/30 flex flex-col h-full cursor-pointer relative"
-      onClick={handleDetailsClick}
+    <div
+      className="card rounded-[var(--radius-lg)] overflow-hidden flex flex-col h-full cursor-pointer group relative"
+      onClick={handleClick}
     >
-      {/* Visual Header */}
-      <div className="relative aspect-square rounded-xl overflow-hidden mb-5 shadow-xl border border-[var(--border-color)]">
+      {/* Image */}
+      <div className="relative aspect-square overflow-hidden">
         {(episode.imageUrl || podcast?.imageUrl) ? (
-          <img
-            src={episode.imageUrl || podcast!.imageUrl}
-            alt={episode.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
+          <img src={episode.imageUrl || podcast!.imageUrl} alt={episode.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-4xl">🎙️</div>
+          <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-3xl">🎙️</div>
         )}
-        
-        {/* Status Badges - top left */}
-        <div className="absolute top-3 left-3 flex items-center gap-2 z-10">
+
+        {/* Top left: completed badge */}
+        <div className="absolute top-3 left-3">
           {isCompleted && (
-            <div className="px-2.5 py-1 rounded-lg bg-emerald-500/90 backdrop-blur-md border border-emerald-300/30 text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-1 shadow-lg">
+            <span className="px-2 py-1 rounded-md bg-[var(--accent-emerald)]/90 backdrop-blur-md text-white text-[0.6rem] font-extrabold uppercase tracking-wider border border-emerald-300/20">
               LU
-            </div>
+            </span>
           )}
         </div>
 
-        {/* Hover Play Button Overlay */}
-        <div className={`absolute inset-0 bg-black/40 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px] ${isCurrent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        {/* Hover play overlay */}
+        <div className={`absolute inset-0 bg-black/50 transition-opacity duration-300 flex items-center justify-center ${isCurrent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
           <div
-            onClick={handlePlayClick}
-            className="w-16 h-16 rounded-full bg-white text-obsidian flex items-center justify-center shadow-glow-indigo transform scale-90 group-hover:scale-100 transition-transform duration-500 active:scale-95"
+            onClick={handlePlay}
+            className="w-14 h-14 rounded-full bg-white/90 text-[var(--bg-base)] flex items-center justify-center shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 active:scale-95"
           >
             {isCurrent && isPlaying
-              ? <Pause className="w-6 h-6 fill-current" />
-              : <Play className="w-6 h-6 fill-current ml-1" />
-            }
+              ? <Pause className="w-5 h-5 fill-current" />
+              : <Play className="w-5 h-5 fill-current ml-0.5" />}
           </div>
         </div>
-        
-        {/* Duration/Status Badge */}
-        <div className="absolute bottom-3 right-3 flex items-center gap-2">
-           {isCurrent && (
-             <div className="px-2 py-1 rounded-lg bg-[var(--accent-primary)] border border-[var(--accent-primary)]/20 text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-1.5 shadow-glow-indigo animate-pulse">
-                <Activity className="w-3 h-3" />
-                {isPlaying ? "EN COURS" : "EN PAUSE"}
-             </div>
-           )}
-           <div className="px-2 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-black text-white uppercase tracking-widest">
-              {durationMinutes} MIN
-           </div>
+
+        {/* Bottom right: now playing + duration */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+          {isCurrent && (
+            <span className={`px-2 py-1 rounded-md text-white text-[0.6rem] font-extrabold uppercase tracking-wider flex items-center gap-1 border animate-pulse ${
+              isPlaying
+                ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)]/30'
+                : 'bg-[var(--bg-elevated)] border-[var(--border-hover)]'
+            }`}>
+              <Activity className="w-3 h-3" />
+              {isPlaying ? 'En cours' : 'Pause'}
+            </span>
+          )}
+          <span className="px-2 py-1 rounded-md bg-black/60 backdrop-blur-md text-white text-[0.6rem] font-bold uppercase tracking-wider border border-white/10">
+            {durationMin} min
+          </span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col">
-        <div className="flex items-center gap-2 mb-2">
-           <span className="text-[9px] font-black text-[var(--accent-primary)] uppercase tracking-[0.2em] truncate flex-1">
-             {podcast?.author || ''}
-           </span>
-        </div>
-        
-        <h3 className="text-sm font-bold line-clamp-2 mb-4 leading-relaxed group-hover:text-[var(--accent-primary)] transition-colors flex-1">
+      <div className="flex-1 flex flex-col p-4">
+        <p className="text-[0.65rem] font-bold text-[var(--accent-primary)] uppercase tracking-wider truncate mb-1">
+          {podcast?.author || ''}
+        </p>
+        <h3 className="text-sm font-bold leading-snug line-clamp-2 mb-3 flex-1 group-hover:text-[var(--accent-primary)] transition-colors">
           {episode.title}
         </h3>
 
-        {/* Footer Meta */}
-        <div className="flex items-center justify-between pt-4 border-t border-[var(--border-color)] text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">
-           <div className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{pubDate}</span>
-           </div>
-           {onToggleRead && (
-             <button
-               onClick={handleToggleRead}
-               title={isCompleted ? 'Marquer comme non lu' : 'Marquer comme lu'}
-               className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-all duration-200 border ${
-                 isCompleted
-                   ? 'text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10'
-                   : 'text-[var(--text-secondary)] border-transparent hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/10'
-               }`}
-             >
-               {isCompleted
-                 ? <CheckCircle2 className="w-3.5 h-3.5" />
-                 : <Circle className="w-3.5 h-3.5" />
-               }
-               <span>{isCompleted ? 'Lu' : 'Marquer'}</span>
-             </button>
-           )}
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-3 border-t border-[var(--border-color)] text-[0.65rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+          <span className="flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5" />
+            {pubDate}
+          </span>
+          {onToggleRead && (
+            <button onClick={handleToggleRead}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md transition-all border ${
+                isCompleted
+                  ? 'text-[var(--accent-emerald)] border-[var(--accent-emerald)]/30 hover:bg-[var(--accent-emerald)]/10'
+                  : 'text-[var(--text-muted)] border-transparent hover:text-[var(--accent-emerald)] hover:border-[var(--accent-emerald)]/30 hover:bg-[var(--accent-emerald)]/10'
+              }`}>
+              {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
+              <span>{isCompleted ? 'Lu' : 'Marquer lu'}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Local Progress Bar */}
-      {episode.progress && !isCompleted && (
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/5 rounded-b-[2rem] overflow-hidden">
-           <div 
-             className="h-full bg-[var(--accent-primary)] shadow-glow-indigo transition-all duration-1000"
-             style={{ width: `${Math.min(100, (episode.progress.position / episode.duration) * 100)}%` }}
-           />
+      {/* Progress bar */}
+      {isInProgress && (
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[var(--border-color)]">
+          <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] transition-all duration-500"
+            style={{ width: `${Math.min(100, progressPct)}%` }} />
         </div>
       )}
     </div>

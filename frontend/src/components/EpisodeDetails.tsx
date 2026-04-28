@@ -1,4 +1,3 @@
-import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Play, Clock, Calendar, BarChart2 } from 'lucide-react';
 import { Episode } from '../services/episodeService';

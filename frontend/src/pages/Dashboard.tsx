@@ -9,7 +9,7 @@ import EpisodeDetails from '../components/EpisodeDetails';
 import { useAudio } from '../context/AudioContext';
 import AlertModal, { AlertType } from '../components/AlertModal';
 import AudioPlayer from '../components/AudioPlayer';
-import { Sparkles, Play, Clock, TrendingUp, Loader, RefreshCcw } from 'lucide-react';
+import { Sparkles, Play, Clock, Loader, ChevronDown } from 'lucide-react';
 
 export default function Dashboard() {
   const { playEpisode, currentEpisode, closePlayer, setUserId } = useAudio();
@@ -23,18 +23,9 @@ export default function Dashboard() {
   const [hasMore, setHasMore] = useState(true);
   const LIMIT = 32;
 
-  // Alert states
   const [alertConfig, setAlertConfig] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    type: AlertType;
-  }>({
-    isOpen: false,
-    title: '',
-    message: '',
-    type: 'error'
-  });
+    isOpen: boolean; title: string; message: string; type: AlertType;
+  }>({ isOpen: false, title: '', message: '', type: 'error' });
 
   const handleOpenDetails = (episode: Episode) => {
     setDetailsEpisode(episode);
@@ -43,7 +34,6 @@ export default function Dashboard() {
 
   const handleToggleRead = async (episode: Episode, completed: boolean) => {
     const newProgress = { position: completed ? episode.duration : 0, isCompleted: completed };
-    // Optimistic update: local state + all cached query pages
     setEpisodes(prev =>
       prev.map(ep => ep._id === episode._id ? { ...ep, progress: newProgress } : ep)
     );
@@ -61,31 +51,23 @@ export default function Dashboard() {
     );
     try {
       await episodeService.saveProgress(episode._id, newProgress.position, completed);
-    } catch (error) {
-      console.error('Failed to toggle read state:', error);
-      // Revert on error
+    } catch {
       queryClient.invalidateQueries({ queryKey: ['episodes', 'latest'] });
     }
   };
 
-  // Load user
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const response = await authService.getMe();
-        setUser(response.user);
-        setUserId(response.user._id);
-      } catch (error) {
-        console.error('Failed to load user:', error);
-      } finally {
-        setLoading(false);
-      }
+        const r = await authService.getMe();
+        setUser(r.user);
+        setUserId(r.user._id);
+      } catch { /* ignore */ }
+      finally { setLoading(false); }
     };
-
     loadUser();
   }, []);
 
-  // Fetch episodes with pagination
   const { data: episodesData, isLoading: episodesLoading, isFetching: episodesFetching } = useQuery({
     queryKey: ['episodes', 'latest', skip],
     queryFn: () => episodeService.getLatestEpisodes(LIMIT, skip),
@@ -99,11 +81,10 @@ export default function Dashboard() {
         setEpisodes(episodesData.episodes);
       } else {
         setEpisodes(prev => {
-          // Prevent duplicates
-          const newEpisodes = episodesData.episodes.filter(
-            (newEp: any) => !prev.some(oldEp => oldEp._id === newEp._id)
+          const fresh = episodesData.episodes.filter(
+            (e: any) => !prev.some(p => p._id === e._id)
           );
-          return [...prev, ...newEpisodes];
+          return [...prev, ...fresh];
         });
       }
       setHasMore(episodesData.episodes.length === LIMIT);
@@ -111,9 +92,7 @@ export default function Dashboard() {
   }, [episodesData, skip]);
 
   const loadMore = () => {
-    if (hasMore && !episodesFetching) {
-      setSkip(prev => prev + LIMIT);
-    }
+    if (hasMore && !episodesFetching) setSkip(prev => prev + LIMIT);
   };
 
   const handleLogout = async () => {
@@ -121,18 +100,14 @@ export default function Dashboard() {
       await authService.logout();
       authService.clearTokens();
       window.location.href = '/login';
-    } catch (error) {
+    } catch {
       setAlertConfig({
-        isOpen: true,
-        title: "Erreur de déconnexion",
-        message: "Une erreur s'est produite lors de la déconnexion. Veuillez rafraîchir la page.",
-        type: 'error'
+        isOpen: true, title: "Erreur", message: "Impossible de se déconnecter.", type: 'error'
       });
     }
   };
 
-  // Episodes in progress: has progress, not completed, not ≥90%
-  const episodesInProgress = episodes?.filter(e => {
+  const inProgress = episodes?.filter(e => {
     if (!e.progress || e.progress.isCompleted) return false;
     if (e.duration > 0 && e.progress.position / e.duration >= 0.9) return false;
     return e.progress.position > 0;
@@ -141,7 +116,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-4 border-[var(--border-color)] border-t-[var(--accent-primary)] animate-spin" />
+        <div className="w-10 h-10 rounded-full border-[3px] border-[var(--border-color)] border-t-[var(--accent-primary)] animate-spin" />
       </div>
     );
   }
@@ -149,154 +124,121 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen">
       <Header
-        title={`Bon retour, ${user?.username?.split(' ')[0] || 'Ami'} !`}
-        subtitle="VOTRE TABLEAU DE BORD"
+        title={`Bon retour, ${user?.username?.split(' ')[0] || 'ami'} !`}
+        subtitle="Votre tableau de bord"
         user={user}
         onLogout={handleLogout}
       />
 
-      <main className="">
-        {/* Welcome Section / Hero — becomes audio player when playing */}
+      <div>
+        {/* ── Hero / Now Playing ── */}
         {currentEpisode ? (
           <div className="mb-12">
-            <AudioPlayer
-              episode={currentEpisode}
-              onClose={closePlayer}
-              userId={user?._id}
-              mode="inline"
-            />
+            <AudioPlayer episode={currentEpisode} onClose={closePlayer} userId={user?._id} mode="inline" />
           </div>
         ) : (
-        <div className="premium-glass rounded-[var(--radius-panel)] p-8 lg:p-12 mb-12 relative overflow-hidden group">
-           <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--accent-glow)] blur-[80px] -mr-32 -mt-32 group-hover:bg-[var(--accent-primary)]/20 transition-all duration-700" />
-           <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-glow)] border border-[var(--border-color)] text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest mb-4">
-                 <Sparkles className="w-3 h-3" />
-                 Podcastic
-              </div>
-              <h2 className="text-4xl lg:text-5xl font-display font-black mb-4 tracking-tight leading-tight max-w-2xl text-[var(--text-primary)]">
-                 Découvrez les nouveautés de votre univers audio.
+          <div className="glass rounded-[var(--radius-xl)] p-8 lg:p-12 mb-12 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-72 h-72 bg-[var(--accent-primary)]/10 blur-[80px] -mr-20 -mt-20 pointer-events-none" />
+            <div className="absolute bottom-0 left-1/2 w-96 h-48 bg-[var(--accent-secondary)]/5 blur-[60px] pointer-events-none" />
+            <div className="relative z-10">
+              <span className="badge badge-accent mb-4">
+                <Sparkles className="w-3 h-3" /> Podcastic
+              </span>
+              <h2 className="text-3xl lg:text-4xl xl:text-5xl mb-4 max-w-2xl">
+                Découvrez les nouveautés de votre univers audio.
               </h2>
-              <p className="text-[var(--text-secondary)] text-lg mb-8 max-w-xl leading-relaxed font-medium">
-                 Vous avez des nouveaux épisodes qui n'attendent que vous. Prêt pour une immersion ?
+              <p className="text-[var(--text-secondary)] text-base lg:text-lg mb-8 max-w-xl leading-relaxed font-medium">
+                Vos nouveaux épisodes n'attendent que vous. Prêt pour l'immersion ?
               </p>
-              <div className="flex flex-wrap gap-4">
-                 {episodesInProgress.length > 0 ? (
-                    <button
-                      onClick={() => playEpisode(episodesInProgress[0])}
-                      className="neon-button flex items-center gap-2"
-                    >
-                       <Play className="w-4 h-4 fill-current" />
-                       Reprendre : {episodesInProgress[0].title.substring(0, 20)}...
-                    </button>
-                 ) : (
-                    <Link to="/add" className="neon-button flex items-center gap-2">
-                       <TrendingUp className="w-4 h-4" />
-                       Découvrir des podcasts
-                    </Link>
-                 )}
-                 <Link to="/trending" className="px-6 py-3 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-bold text-sm hover:bg-[var(--accent-primary)]/10 transition-all border border-[var(--border-color)] flex items-center justify-center">
-                    Parcourir les tendances
-                 </Link>
+              <div className="flex flex-wrap gap-3">
+                {inProgress.length > 0 ? (
+                  <button onClick={() => playEpisode(inProgress[0])} className="btn-primary">
+                    <Play className="w-4 h-4 fill-current" />
+                    Reprendre : {inProgress[0].title.substring(0, 24)}...
+                  </button>
+                ) : (
+                  <Link to="/add" className="btn-primary">
+                    <Sparkles className="w-4 h-4" />
+                    Découvrir des podcasts
+                  </Link>
+                )}
+                <Link to="/trending" className="btn-secondary">
+                  Parcourir les tendances
+                </Link>
               </div>
-           </div>
-        </div>
-        )}
-
-        {/* Continue Listening Section (Only if progression exists) */}
-        {episodesInProgress.length > 0 && (
-          <div className="mb-12 animate-fade-in">
-             <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-[var(--accent-glow)] flex items-center justify-center text-[var(--accent-primary)] shadow-glow-indigo">
-                   <Play className="w-5 h-5 fill-current" />
-                </div>
-                <h3 className="text-2xl font-display font-black">Continuer l'écoute</h3>
-             </div>
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {episodesInProgress.slice(0, 4).map((episode) => (
-                  <EpisodeCard
-                    key={`progress-${episode._id}`}
-                    episode={episode}
-                    onPlay={playEpisode}
-                    onDetails={handleOpenDetails}
-                    onToggleRead={handleToggleRead}
-                  />
-                ))}
-             </div>
+            </div>
           </div>
         )}
 
-        {/* Latest Episodes Section */}
-        <div className="flex items-center justify-between mb-8">
-           <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[var(--accent-glow)] flex items-center justify-center text-[var(--accent-primary)]">
-                 <Clock className="w-5 h-5" />
+        {/* ── Continuer l'écoute ── */}
+        {inProgress.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary)]/10 flex items-center justify-center text-[var(--accent-primary)]">
+                <Play className="w-5 h-5 fill-current" />
               </div>
-              <h3 className="text-2xl font-display font-black">Récemment Publiés</h3>
-           </div>
-           <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest px-3 py-1 rounded-lg border border-[var(--border-color)]">{episodes.length} CHARGÉS</span>
-        </div>
-
-        {episodesLoading && skip === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="premium-glass rounded-[var(--radius-card)] h-80 shimmer" />
-            ))}
-          </div>
-        ) : episodes.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-16 stagger-grid">
-              {episodes.map((episode) => (
-                <EpisodeCard
-                  key={`${skip}-${episode._id}`}
-                  episode={episode}
-                  onPlay={playEpisode}
-                  onDetails={handleOpenDetails}
-                  onToggleRead={handleToggleRead}
-                />
+              <h3 className="text-xl lg:text-2xl">Continuer l'écoute</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 stagger">
+              {inProgress.slice(0, 4).map(ep => (
+                <EpisodeCard key={`cp-${ep._id}`} episode={ep} onPlay={playEpisode} onDetails={handleOpenDetails} onToggleRead={handleToggleRead} />
               ))}
             </div>
-            
-            {hasMore && (
-              <div className="flex justify-center pb-20">
-                <button
-                  onClick={loadMore}
-                  disabled={episodesFetching}
-                  className="px-10 py-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[var(--accent-primary)]/10 hover:border-[var(--accent-primary)] transition-all flex items-center gap-3"
-                >
-                  {episodesFetching ? <Loader className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
-                  {episodesFetching ? 'Chargement...' : 'Charger la suite'}
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="premium-glass p-16 rounded-[var(--radius-panel)] text-center max-w-2xl mx-auto border-dashed border-[var(--border-color)]">
-            <div className="text-4xl mb-6 opacity-40">🧘</div>
-            <p className="font-bold text-lg mb-2 text-[var(--text-primary)]">Silence radio...</p>
-            <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-8">
-              Vous n'avez pas encore d'épisodes ici. Abonnez-vous à vos podcasts favoris pour commencer votre collection.
-            </p>
-            <Link to="/trending" className="neon-button">Explorer les podcasts</Link>
-          </div>
+          </section>
         )}
-      </main>
 
-      {/* Episode Slide-over Details */}
-      <EpisodeDetails 
-        episode={detailsEpisode}
-        isOpen={isDetailsOpen}
-        onClose={() => setIsDetailsOpen(false)}
-        onPlay={playEpisode}
-      />
+        {/* ── Récemment publiés ── */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[var(--bg-surface)] flex items-center justify-center text-[var(--text-secondary)] border border-[var(--border-color)]">
+                <Clock className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl lg:text-2xl">Récemment publiés</h3>
+            </div>
+            <span className="text-[0.6rem] font-bold text-[var(--text-muted)] uppercase tracking-[0.12em] px-3 py-1.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-color)]">
+              {episodes.length} chargés
+            </span>
+          </div>
 
-      <AlertModal
-        isOpen={alertConfig.isOpen}
-        title={alertConfig.title}
-        message={alertConfig.message}
-        type={alertConfig.type}
-        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
-      />
+          {episodesLoading && skip === 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[1,2,3,4].map(i => <div key={i} className="skeleton aspect-[3/4] rounded-[var(--radius-lg)]" />)}
+            </div>
+          ) : episodes.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 stagger">
+                {episodes.map(ep => (
+                  <EpisodeCard key={`${skip}-${ep._id}`} episode={ep} onPlay={playEpisode} onDetails={handleOpenDetails} onToggleRead={handleToggleRead} />
+                ))}
+              </div>
+              {hasMore && (
+                <div className="flex justify-center mt-10 pb-20">
+                  <button onClick={loadMore} disabled={episodesFetching}
+                    className="btn-secondary min-w-[200px]">
+                    {episodesFetching ? <Loader className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
+                    {episodesFetching ? 'Chargement...' : 'Charger la suite'}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="glass rounded-[var(--radius-xl)] p-16 text-center max-w-xl mx-auto border-dashed">
+              <div className="text-4xl mb-4 opacity-40">🎧</div>
+              <h3 className="text-lg mb-2">Silence radio...</h3>
+              <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6">
+                Abonnez-vous à vos podcasts favoris pour voir leurs épisodes ici.
+              </p>
+              <Link to="/trending" className="btn-primary">Explorer les podcasts</Link>
+            </div>
+          )}
+        </section>
+      </div>
+
+      <EpisodeDetails episode={detailsEpisode} isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)} onPlay={playEpisode} />
+
+      <AlertModal isOpen={alertConfig.isOpen} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))} />
     </div>
   );
 }

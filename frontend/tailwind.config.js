@@ -7,50 +7,41 @@ export default {
   theme: {
     extend: {
       colors: {
-        obsidian: {
-          DEFAULT: '#020617',
-          900: '#020617',
-          800: '#0f172a',
-          700: '#1e293b',
+        brand: {
+          indigo:  '#6366f1',
+          cyan:    '#06b6d4',
+          rose:    '#f43f5e',
+          gold:    '#f59e0b',
+          emerald: '#10b981',
+          violet:  '#8b5cf6',
         },
-        accent: {
-          indigo: '#6366f1',
-          cyan: '#06b6d4',
-          rose: '#f43f5e',
-          violet: '#8b5cf6',
-          gold: '#b8960c',
+        surface: {
+          base:    'var(--bg-base)',
+          surface: 'var(--bg-surface)',
+          elevated:'var(--bg-elevated)',
+          glass:   'var(--bg-glass)',
         },
-        light: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-        }
       },
       fontFamily: {
-        sans: ['"Outfit"', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        sans:    ['"Outfit"', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['"Montserrat"', 'sans-serif'],
       },
       borderRadius: {
-        'xl':  '0.75rem',   /* 12px */
-        '2xl': '1rem',      /* 16px — matches --radius-card */
-        '3xl': '1.25rem',   /* 20px — matches --radius-panel */
-        '4xl': '1.5rem',    /* 24px */
+        'sm': 'var(--radius-sm)',
+        'md': 'var(--radius-md)',
+        'lg': 'var(--radius-lg)',
+        'xl': 'var(--radius-xl)',
       },
-      boxShadow: {
-        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-        'glow-indigo': '0 0 20px rgba(99, 102, 241, 0.3)',
-        'glow-cyan': '0 0 20px rgba(6, 182, 212, 0.3)',
+      animation: {
+        'fade-in':    'fade-in 0.3s ease both',
+        'slide-up':   'slide-up 0.4s cubic-bezier(0.2,0.8,0.2,1) both',
+        'slide-down': 'slide-down 0.35s cubic-bezier(0.2,0.8,0.2,1) both',
+        'slide-left': 'slide-left 0.3s ease both',
+        'scale-in':   'scale-in 0.35s cubic-bezier(0.2,0.8,0.2,1) both',
+        'float':      'float 4s ease-in-out infinite',
+        'spin-slow':  'spin-slow 12s linear infinite',
+        'shimmer':    'shimmer 1.6s ease-in-out infinite',
       },
-      backdropBlur: {
-        'xs': '2px',
-      }
     },
   },
   plugins: [],

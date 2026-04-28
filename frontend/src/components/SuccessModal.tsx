@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronRight, BookOpen, Sparkles, X } from 'lucide-react';
+import { ChevronRight, BookOpen, Sparkles, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 

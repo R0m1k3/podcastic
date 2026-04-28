@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
-import { Sparkles, ArrowRight, Loader, Mail, Lock, User as UserIcon } from 'lucide-react';
+import { Sparkles, ArrowRight, Mail, Lock, User as UserIcon } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
