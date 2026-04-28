@@ -42,12 +42,12 @@ export default function Header({ title, subtitle, user, onLogout }: HeaderProps)
                 <p className="text-[0.6rem] text-[var(--text-muted)] font-semibold uppercase tracking-widest">Membre</p>
               </div>
               <div className="relative group">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] p-[2px]">
-                  <div className="w-full h-full rounded-[10px] bg-[var(--bg-base)] flex items-center justify-center overflow-hidden">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--accent-primary)] via-[var(--accent-secondary)] to-[var(--accent-primary)] p-[3px] shadow-[0_0_12px_var(--accent-glow)]">
+                  <div className="w-full h-full rounded-[9px] bg-[var(--bg-elevated)] flex items-center justify-center overflow-hidden">
                     {user.avatar ? (
                       <img src={user.avatar} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-base font-bold text-[var(--accent-primary)]">
+                      <span className="text-sm font-black bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] bg-clip-text text-transparent">
                         {user.username.charAt(0).toUpperCase()}
                       </span>
                     )}

@@ -29,7 +29,7 @@ export default function EpisodeDetails({ episode, isOpen, onClose, onPlay }: Epi
       />
 
       {/* Slide-over Panel */}
-      <div className={`fixed top-0 right-0 bottom-0 w-full max-w-2xl bg-[var(--bg-primary)] z-[120] shadow-2xl transform transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed top-0 right-0 bottom-0 w-full max-w-2xl bg-[var(--bg-elevated)] z-[120] shadow-2xl transform transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         
         {/* Header Image Area */}
         <div className="relative h-80 w-full overflow-hidden">
@@ -42,7 +42,7 @@ export default function EpisodeDetails({ episode, isOpen, onClose, onPlay }: Epi
            ) : (
              <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)]" />
            )}
-           <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/40 to-transparent" />
+           <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-elevated)] via-[var(--bg-elevated)]/40 to-transparent" />
            
            <button 
              onClick={onClose}

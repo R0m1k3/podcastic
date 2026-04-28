@@ -133,7 +133,7 @@ export default function Login() {
             </div>
 
             {error && (
-              <div className="p-4 rounded-2xl bg-accent-rose/10 border border-accent-rose/20 text-accent-rose text-[10px] font-black uppercase tracking-widest text-center animate-pulse">
+              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-widest text-center">
                  ⚠️ {error}
               </div>
             )}

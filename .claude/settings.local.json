@@ -12,7 +12,9 @@
       "Bash(npx tsc *)",
       "Bash(git add *)",
       "Bash(git pull *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(git fetch *)",
+      "Bash(rtk npx *)"
     ]
   }
 }

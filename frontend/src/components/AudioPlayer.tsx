@@ -30,16 +30,23 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
 
   useEffect(() => { setUserId(userId ?? null); }, [userId, setUserId]);
 
-  // IntersectionObserver with debounce to prevent flicker
+  // IntersectionObserver with debounce + hysteresis to prevent flicker
   const miniTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const miniVisibleSince = useRef<number>(0);
   useEffect(() => {
     if (mode !== 'inline' || !inlineRef.current) return;
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (miniTimer.current) clearTimeout(miniTimer.current);
+        const delay = entry.isIntersecting ? 400 : 150;
         miniTimer.current = setTimeout(() => {
-          setShowMiniBar(!entry.isIntersecting);
-        }, 250);
+          if (!entry.isIntersecting) {
+            miniVisibleSince.current = Date.now();
+            setShowMiniBar(true);
+          } else if (Date.now() - miniVisibleSince.current > 800) {
+            setShowMiniBar(false);
+          }
+        }, delay);
       },
       { threshold: 0.1, rootMargin: '-80px 0px 0px 0px' }
     );
@@ -72,7 +79,7 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
     <div className={`fixed z-[90] mx-auto animate-slide-up max-w-5xl ${fullWidth
       ? 'bottom-6 left-4 right-4 sm:left-6 sm:right-6 lg:left-auto lg:right-8 lg:bottom-8 lg:w-[calc(100%-22rem)] xl:w-[calc(100%-24rem)]'
       : 'bottom-6 left-4 right-4 sm:left-6 sm:right-6'}`}>
-      <div className="glass rounded-[var(--radius-lg)] shadow-2xl overflow-hidden">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-[var(--radius-lg)] shadow-2xl overflow-hidden">
         <div className="flex items-center gap-3 px-4 h-[68px]">
           <div className="w-10 h-10 rounded-lg overflow-hidden border border-[var(--border-color)] shrink-0 shadow-md">
             {(episode.imageUrl || podcast?.imageUrl)
