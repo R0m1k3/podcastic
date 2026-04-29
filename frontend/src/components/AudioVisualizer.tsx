@@ -54,8 +54,8 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       const progress = dur > 0 ? ct / dur : 0;
       const playing = playingRef.current;
 
-      // Update heights from frequency data
-      if (raw && playing && frame % 2 === 0) {
+      // Update heights from frequency data (every frame for fluidity)
+      if (raw && playing) {
         for (let i = 0; i < NUM_POINTS; i++) {
           const bucketSize = raw.length / NUM_POINTS;
           const startIdx = Math.floor(i * bucketSize);
@@ -68,60 +68,59 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
           }
           const avg = count > 0 ? sum / count : 0;
           const target = (avg / 255) * MAX_AMPLITUDE;
-          const rate = target > hts[i] ? 0.35 : 0.1;
-          hts[i] += (target - hts[i]) * rate;
+          hts[i] += (target - hts[i]) * 0.25;
         }
       } else if (!playing) {
         for (let i = 0; i < NUM_POINTS; i++) {
-          hts[i] += (0 - hts[i]) * 0.04;
+          hts[i] += (0 - hts[i]) * 0.08;
         }
       }
 
-      // Compute path: organic oscillation with alternating signs
+      // Compute path: smooth alternating oscillation
       const points: { x: number; y: number }[] = [];
       for (let i = 0; i < NUM_POINTS; i++) {
         const x = PADDING + i * step;
-        const sign = Math.sin(i * 2.1 + frame * 0.04) > 0 ? 1 : -1;
+        const phase = i * 2.1 + frame * 0.025;
+        const sign = Math.sin(phase) > 0.05 ? 1 : -1;
         const y = midY + sign * hts[i] * midY;
         points.push({ x, y });
       }
 
       ctx.clearRect(0, 0, displayW, displayH);
 
-      // ── Background muted waveform ──
-      drawSmoothPath(ctx, points, 'rgba(100, 116, 139, 0.15)', 1.5, displayW, midY);
+      // ── Background muted line ──
+      ctx.save();
+      ctx.globalAlpha = playing ? 0.18 : 0.22;
+      drawSmoothPath(ctx, points, 'rgb(148, 163, 184)', 1.5, displayW, midY);
+      ctx.restore();
 
       // ── Active glowing waveform ──
       ctx.save();
-      ctx.shadowColor = 'rgba(34, 211, 238, 0.35)';
-      ctx.shadowBlur = 10;
+      ctx.shadowColor = 'rgba(34, 211, 238, 0.3)';
+      ctx.shadowBlur = 8;
       const grad = ctx.createLinearGradient(PADDING, 0, displayW - PADDING, 0);
-      grad.addColorStop(0, '#22d3ee');
-      grad.addColorStop(0.5, '#818cf8');
+      grad.addColorStop(0, '#06b6d4');
+      grad.addColorStop(0.35, '#22d3ee');
+      grad.addColorStop(0.65, '#a78bfa');
       grad.addColorStop(1, '#c084fc');
-      drawSmoothPath(ctx, points, grad, 2.5, displayW, midY);
+      drawSmoothPath(ctx, points, grad, 2, displayW, midY);
       ctx.restore();
 
       // ── Progress indicator dot ──
-      if (progress > 0.005) {
+      if (progress > 0.01 && playing) {
         const dotX = PADDING + progress * drawW;
         const dotIdx = Math.floor(progress * (NUM_POINTS - 1));
         const clampedIdx = Math.min(dotIdx, NUM_POINTS - 1);
         const dotY = points[clampedIdx]?.y ?? midY;
 
-        const dotGlow = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 8);
-        dotGlow.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
-        dotGlow.addColorStop(0.3, 'rgba(255, 255, 255, 0.4)');
-        dotGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        ctx.fillStyle = dotGlow;
+        ctx.fillStyle = '#f1f5f9';
+        ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
+        ctx.shadowBlur = 6;
         ctx.beginPath();
-        ctx.arc(dotX, dotY, 8, 0, Math.PI * 2);
+        ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
         ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, 3.5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
       }
 
       rafRef.current = requestAnimationFrame(animate);
