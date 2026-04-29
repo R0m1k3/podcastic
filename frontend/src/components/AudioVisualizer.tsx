@@ -5,15 +5,14 @@ interface AudioVisualizerProps {
   height?: number;
 }
 
-const NUM_POINTS = 48;
-const BASE_AMPLITUDE = 0.06;
-const MAX_AMPLITUDE = 0.2;
+const NUM_POINTS = 64;
+const MAX_AMPLITUDE = 0.22;
 
 export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
   const { isPlaying, currentTime, duration, getFrequencyData } = useAudio();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
-  const heightsRef = useRef<number[]>(Array(NUM_POINTS).fill(BASE_AMPLITUDE));
+  const heightsRef = useRef<number[]>(Array(NUM_POINTS).fill(0));
   const playingRef = useRef(isPlaying);
   const getDataRef = useRef(getFrequencyData);
   const timeRef = useRef({ currentTime, duration });
@@ -51,9 +50,10 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       const step = displayW / (NUM_POINTS - 1);
       const { currentTime: ct, duration: dur } = timeRef.current;
       const progress = dur > 0 ? ct / dur : 0;
+      const playing = playingRef.current;
 
       // Update heights from frequency data
-      if (raw && playingRef.current && frame % 3 === 0) {
+      if (raw && playing && frame % 2 === 0) {
         for (let i = 0; i < NUM_POINTS; i++) {
           const bucketSize = raw.length / NUM_POINTS;
           const startIdx = Math.floor(i * bucketSize);
@@ -65,40 +65,39 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
             count++;
           }
           const avg = count > 0 ? sum / count : 0;
-          const target = BASE_AMPLITUDE + (avg / 255) * (MAX_AMPLITUDE - BASE_AMPLITUDE);
-          const rate = target > hts[i] ? 0.3 : 0.12;
+          const target = (avg / 255) * MAX_AMPLITUDE;
+          const rate = target > hts[i] ? 0.35 : 0.1;
           hts[i] += (target - hts[i]) * rate;
         }
-      } else if (!playingRef.current) {
+      } else if (!playing) {
         for (let i = 0; i < NUM_POINTS; i++) {
-          hts[i] += (BASE_AMPLITUDE - hts[i]) * 0.06;
+          hts[i] += (0 - hts[i]) * 0.04;
         }
       }
 
-      // Compute path points
+      // Compute path: organic oscillation around midline using sign from a sine wave
       const points: { x: number; y: number }[] = [];
       for (let i = 0; i < NUM_POINTS; i++) {
         const x = i * step;
-        const direction = i % 2 === 0 ? -1 : 1;
-        const y = midY + direction * hts[i] * midY;
+        const sign = Math.sin(i * 0.55 + frame * 0.03) > 0 ? 1 : -1;
+        const y = midY + sign * hts[i] * midY;
         points.push({ x, y });
       }
 
       ctx.clearRect(0, 0, displayW, displayH);
 
       // ── Background muted waveform ──
-      drawSmoothPath(ctx, points, 'rgba(100, 116, 139, 0.25)', 2, displayW, midY);
+      drawSmoothPath(ctx, points, 'rgba(100, 116, 139, 0.2)', 1.5, displayW, midY);
 
       // ── Active glowing waveform ──
-      // Outer glow
       ctx.save();
-      ctx.shadowColor = 'rgba(34, 211, 238, 0.6)';
-      ctx.shadowBlur = 14;
+      ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
+      ctx.shadowBlur = 12;
       const grad = ctx.createLinearGradient(0, 0, displayW, 0);
       grad.addColorStop(0, '#22d3ee');
       grad.addColorStop(0.5, '#818cf8');
       grad.addColorStop(1, '#c084fc');
-      drawSmoothPath(ctx, points, grad, 3, displayW, midY);
+      drawSmoothPath(ctx, points, grad, 2.5, displayW, midY);
       ctx.restore();
 
       // ── Progress indicator dot ──
@@ -107,7 +106,6 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       const clampedIdx = Math.min(dotIdx, NUM_POINTS - 1);
       const dotY = points[clampedIdx]?.y ?? midY;
 
-      // Outer glow
       const dotGlow = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 10);
       dotGlow.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
       dotGlow.addColorStop(0.3, 'rgba(255, 255, 255, 0.5)');
@@ -117,7 +115,6 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       ctx.arc(dotX, dotY, 10, 0, Math.PI * 2);
       ctx.fill();
 
-      // Core dot
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
@@ -153,12 +150,10 @@ function drawSmoothPath(
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
 
-  // First segment: control point is halfway between first two points at midY level
   const firstCpX = (points[0].x + points[1].x) / 2;
-  const firstCpY = midY + (midY - points[0].y); // reflect first point around midY
+  const firstCpY = midY + (midY - points[0].y);
   ctx.quadraticCurveTo(firstCpX, firstCpY, points[1].x, points[1].y);
 
-  // Subsequent segments: reflect previous control point for smoothness (SVG T command equivalent)
   let prevCpX = firstCpX;
   let prevCpY = firstCpY;
   let prevX = points[1].x;
