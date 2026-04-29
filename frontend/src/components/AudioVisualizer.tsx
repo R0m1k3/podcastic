@@ -5,8 +5,9 @@ interface AudioVisualizerProps {
   height?: number;
 }
 
-const NUM_POINTS = 64;
+const NUM_POINTS = 42;
 const MAX_AMPLITUDE = 0.22;
+const PADDING = 6;
 
 export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
   const { isPlaying, currentTime, duration, getFrequencyData } = useAudio();
@@ -39,6 +40,7 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
     ctx.scale(dpr, dpr);
 
     const midY = displayH / 2;
+    const drawW = displayW - PADDING * 2;
 
     let frame = 0;
 
@@ -47,7 +49,7 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       frame++;
       const raw = getDataRef.current?.();
       const hts = heightsRef.current;
-      const step = displayW / (NUM_POINTS - 1);
+      const step = drawW / (NUM_POINTS - 1);
       const { currentTime: ct, duration: dur } = timeRef.current;
       const progress = dur > 0 ? ct / dur : 0;
       const playing = playingRef.current;
@@ -75,11 +77,11 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
         }
       }
 
-      // Compute path: organic oscillation around midline using sign from a sine wave
+      // Compute path: organic oscillation with alternating signs
       const points: { x: number; y: number }[] = [];
       for (let i = 0; i < NUM_POINTS; i++) {
-        const x = i * step;
-        const sign = Math.sin(i * 0.55 + frame * 0.03) > 0 ? 1 : -1;
+        const x = PADDING + i * step;
+        const sign = Math.sin(i * 2.1 + frame * 0.04) > 0 ? 1 : -1;
         const y = midY + sign * hts[i] * midY;
         points.push({ x, y });
       }
@@ -87,13 +89,13 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       ctx.clearRect(0, 0, displayW, displayH);
 
       // ── Background muted waveform ──
-      drawSmoothPath(ctx, points, 'rgba(100, 116, 139, 0.2)', 1.5, displayW, midY);
+      drawSmoothPath(ctx, points, 'rgba(100, 116, 139, 0.15)', 1.5, displayW, midY);
 
       // ── Active glowing waveform ──
       ctx.save();
-      ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
-      ctx.shadowBlur = 12;
-      const grad = ctx.createLinearGradient(0, 0, displayW, 0);
+      ctx.shadowColor = 'rgba(34, 211, 238, 0.35)';
+      ctx.shadowBlur = 10;
+      const grad = ctx.createLinearGradient(PADDING, 0, displayW - PADDING, 0);
       grad.addColorStop(0, '#22d3ee');
       grad.addColorStop(0.5, '#818cf8');
       grad.addColorStop(1, '#c084fc');
@@ -101,24 +103,26 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       ctx.restore();
 
       // ── Progress indicator dot ──
-      const dotX = progress * displayW;
-      const dotIdx = Math.floor(progress * (NUM_POINTS - 1));
-      const clampedIdx = Math.min(dotIdx, NUM_POINTS - 1);
-      const dotY = points[clampedIdx]?.y ?? midY;
+      if (progress > 0.005) {
+        const dotX = PADDING + progress * drawW;
+        const dotIdx = Math.floor(progress * (NUM_POINTS - 1));
+        const clampedIdx = Math.min(dotIdx, NUM_POINTS - 1);
+        const dotY = points[clampedIdx]?.y ?? midY;
 
-      const dotGlow = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 10);
-      dotGlow.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-      dotGlow.addColorStop(0.3, 'rgba(255, 255, 255, 0.5)');
-      dotGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      ctx.fillStyle = dotGlow;
-      ctx.beginPath();
-      ctx.arc(dotX, dotY, 10, 0, Math.PI * 2);
-      ctx.fill();
+        const dotGlow = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 8);
+        dotGlow.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+        dotGlow.addColorStop(0.3, 'rgba(255, 255, 255, 0.4)');
+        dotGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = dotGlow;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 8, 0, Math.PI * 2);
+        ctx.fill();
 
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
-      ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       rafRef.current = requestAnimationFrame(animate);
     };
