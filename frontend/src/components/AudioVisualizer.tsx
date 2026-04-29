@@ -4,18 +4,20 @@ import { useAudio } from '../context/AudioContext';
 interface AudioVisualizerProps {
   width?: number;
   height?: number;
+  barCount?: number;
 }
 
 export default function AudioVisualizer({
   width,
-  height = 64,
+  height = 72,
+  barCount = 48,
 }: AudioVisualizerProps) {
   const { isPlaying, getFrequencyData } = useAudio();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
+  const heightsRef = useRef<number[]>(Array(barCount).fill(3));
   const playingRef = useRef(isPlaying);
   const getDataRef = useRef(getFrequencyData);
-  const historyRef = useRef<number[][]>([]);
 
   useEffect(() => { playingRef.current = isPlaying; }, [isPlaying]);
   useEffect(() => { getDataRef.current = getFrequencyData; }, [getFrequencyData]);
@@ -26,7 +28,6 @@ export default function AudioVisualizer({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size accounting for device pixel ratio
     const dpr = window.devicePixelRatio || 1;
     const displayW = width || canvas.parentElement?.clientWidth || 300;
     const displayH = height;
@@ -36,70 +37,107 @@ export default function AudioVisualizer({
     canvas.style.height = `${displayH}px`;
     ctx.scale(dpr, dpr);
 
-    // Init history with flatline
-    if (historyRef.current.length === 0) {
-      historyRef.current = Array.from({ length: 8 }, () =>
-        Array(Math.floor(displayW / 3)).fill(displayH / 2)
-      );
-    }
+    const half = barCount / 2;
+    const barW = Math.max(2, (displayW - barCount * 2) / barCount);
+    const gap = (displayW - barW * barCount) / (barCount + 1);
+    const midY = displayH / 2;
+
+    let frame = 0;
 
     const animate = () => {
       if (!ctx || !canvas) return;
+      frame++;
       const raw = getDataRef.current?.();
-      const w = displayW;
-      const h = displayH;
-      const mid = h / 2;
+      const currentHeights = heightsRef.current;
 
-      // Compute a new row from frequency data
-      const sampleCount = Math.floor(w / 3);
-      const newRow: number[] = [];
+      // Update target heights from frequency data
+      if (raw && playingRef.current && frame % 2 === 0) {
+        for (let i = 0; i < barCount; i++) {
+          const distFromCenter = Math.abs(i - (barCount - 1) / 2);
+          const halfIdx = Math.floor(distFromCenter);
+          const dataIndex = Math.min(halfIdx, raw.length - 1);
+          const value = raw[dataIndex] ?? 0;
 
-      if (raw && playingRef.current) {
-        for (let i = 0; i < sampleCount; i++) {
-          // Map sample across the frequency bins
-          const idx = Math.floor((i / sampleCount) * raw.length);
-          const val = raw[idx] ?? 0;
-          // Convert to y offset from center — stronger signal = bigger wave
-          const amplitude = (val / 255) * (h * 0.42);
-          newRow.push(mid + (Math.random() - 0.5) * amplitude * 2);
+          // Edge fade — center bars are taller
+          const edgeFade = 1 - (distFromCenter / half) * 0.25;
+          // Boost mid frequencies
+          const midBoost = distFromCenter < half * 0.5 ? 1.2 : 1;
+          const target = Math.max(4, Math.min(100, (value / 255) * 100 * edgeFade * midBoost));
+
+          // Smooth easing toward target
+          currentHeights[i] += (target - currentHeights[i]) * 0.35;
         }
-      } else {
-        // When paused, flatline decays to center
-        for (let i = 0; i < sampleCount; i++) {
-          newRow.push(mid);
+      } else if (!playingRef.current) {
+        // Gentle decay when paused
+        for (let i = 0; i < barCount; i++) {
+          currentHeights[i] += (3 - currentHeights[i]) * 0.08;
         }
       }
 
-      // Push new row, keep last 8 rows
-      historyRef.current.push(newRow);
-      if (historyRef.current.length > 12) historyRef.current.shift();
+      // Clear
+      ctx.clearRect(0, 0, displayW, displayH);
 
-      // Draw
-      ctx.clearRect(0, 0, w, h);
+      // Draw bars
+      for (let i = 0; i < barCount; i++) {
+        const h = currentHeights[i];
+        const barH = Math.max(2, (h / 100) * midY * 0.9);
+        const x = gap + i * (barW + gap);
+        const radius = barW / 2;
 
-      // Draw each row as a thin horizontal line, fading older ones
-      const rows = historyRef.current;
-      for (let r = 0; r < rows.length; r++) {
-        const row = rows[r];
-        const age = rows.length - 1 - r;
-        const alpha = 0.08 + (age / rows.length) * 0.75;
-        const thickness = 1 + (age / rows.length) * 1.5;
-
-        ctx.strokeStyle = r === rows.length - 1
-          ? `rgba(108, 111, 247, ${alpha + 0.15})`
-          : age < 3
-            ? `rgba(13, 197, 224, ${alpha})`
-            : `rgba(108, 111, 247, ${alpha * 0.6})`;
-
-        ctx.lineWidth = thickness;
-        ctx.beginPath();
-        for (let i = 0; i < row.length; i++) {
-          const x = (i / row.length) * w;
-          const y = row[i];
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
+        // Glow on taller bars
+        if (h > 25) {
+          const glowAlpha = Math.min(0.35, h / 300);
+          const glowGrad = ctx.createRadialGradient(x + barW / 2, midY, barW, x + barW / 2, midY, barH + barW);
+          glowGrad.addColorStop(0, `rgba(108, 111, 247, ${glowAlpha})`);
+          glowGrad.addColorStop(1, 'rgba(108, 111, 247, 0)');
+          ctx.fillStyle = glowGrad;
+          ctx.fillRect(x - barW, midY - barH - barW, barW * 3, barH * 2 + barW * 2);
         }
-        ctx.stroke();
+
+        // Bar gradient (top half = cyan, bottom half = indigo)
+        const barGrad = ctx.createLinearGradient(x, midY - barH, x, midY + barH);
+        barGrad.addColorStop(0, '#0dc5e0');
+        barGrad.addColorStop(0.4, '#6c6ff7');
+        barGrad.addColorStop(0.6, '#6c6ff7');
+        barGrad.addColorStop(1, '#0dc5e0');
+        ctx.fillStyle = barGrad;
+
+        // Draw upper bar (rounded top)
+        ctx.beginPath();
+        ctx.moveTo(x, midY);
+        ctx.lineTo(x, midY - barH + radius);
+        ctx.arcTo(x, midY - barH, x + barW, midY - barH, radius);
+        ctx.lineTo(x + barW, midY);
+        ctx.fill();
+
+        // Draw lower bar (mirrored, rounded bottom)
+        ctx.beginPath();
+        ctx.moveTo(x, midY);
+        ctx.lineTo(x, midY + barH - radius);
+        ctx.arcTo(x, midY + barH, x + barW, midY + barH, radius);
+        ctx.lineTo(x + barW, midY);
+        ctx.fill();
+
+        // Bright top highlight on peak bars
+        if (h > 50) {
+          ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.5, (h - 50) / 100)})`;
+          ctx.beginPath();
+          ctx.arc(x + barW / 2, midY - barH + radius, radius * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x + barW / 2, midY + barH - radius, radius * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Center line — thin subtle separator
+        if (i === 0) {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, midY);
+          ctx.lineTo(displayW, midY);
+          ctx.stroke();
+        }
       }
 
       rafRef.current = requestAnimationFrame(animate);
@@ -107,12 +145,12 @@ export default function AudioVisualizer({
 
     rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [width, height]);
+  }, [width, height, barCount]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="w-full rounded-lg"
+      className="w-full"
       aria-hidden="true"
     />
   );
