@@ -232,7 +232,7 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
 
               {/* Audio Visualizer */}
               <div className="my-4">
-                <AudioVisualizer height={56} />
+                <AudioVisualizer height={40} />
               </div>
 
               {/* Progress */}
@@ -328,7 +328,7 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
                   </p>
                 </div>
 
-                <AudioVisualizer height={72} />
+                <AudioVisualizer height={48} />
 
                 <div>
                   <div className="relative h-1.5 group cursor-pointer mb-2">

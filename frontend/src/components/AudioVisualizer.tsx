@@ -5,9 +5,9 @@ interface AudioVisualizerProps {
   height?: number;
 }
 
-const NUM_POINTS = 80;
-const BASE_AMPLITUDE = 0.12;
-const MAX_AMPLITUDE = 0.42;
+const NUM_POINTS = 48;
+const BASE_AMPLITUDE = 0.06;
+const MAX_AMPLITUDE = 0.2;
 
 export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
   const { isPlaying, currentTime, duration, getFrequencyData } = useAudio();
