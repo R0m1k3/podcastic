@@ -16,6 +16,103 @@ interface AudioPlayerProps {
   mode?: 'floating' | 'inline';
 }
 
+// Extracted as stable component to prevent remount on every currentTime update
+interface MiniPlayerProps {
+  episode: Episode;
+  podcast: { title: string; imageUrl?: string } | null;
+  isPlaying: boolean;
+  isResuming: boolean;
+  currentTime: number;
+  duration: number;
+  playbackSpeed: number;
+  progress: number;
+  fullWidth?: boolean;
+  onTogglePlay: () => void;
+  onSeekRelative: (delta: number) => void;
+  onChangeSpeed: () => void;
+  onExpand: () => void;
+  onClose: () => void;
+  onProgressChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function MiniPlayer({
+  episode, podcast, isPlaying, isResuming,
+  currentTime, duration, playbackSpeed, progress, fullWidth,
+  onTogglePlay, onSeekRelative, onChangeSpeed, onExpand, onClose, onProgressChange,
+}: MiniPlayerProps) {
+  const fmt = (s: number) => {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className={`fixed z-[90] mx-auto max-w-5xl ${fullWidth
+      ? 'bottom-6 left-4 right-4 sm:left-6 sm:right-6 lg:left-auto lg:right-8 lg:bottom-8 lg:w-[calc(100%-22rem)] xl:w-[calc(100%-24rem)]'
+      : 'bottom-6 left-4 right-4 sm:left-6 sm:right-6'}`}>
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-[var(--radius-lg)] shadow-2xl overflow-hidden">
+        <div className="flex items-center gap-3 px-4 h-[68px]">
+          <div className="w-10 h-10 rounded-lg overflow-hidden border border-[var(--border-color)] shrink-0 shadow-md">
+            {(episode.imageUrl || podcast?.imageUrl)
+              ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
+              : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-base">🎙️</div>}
+          </div>
+
+          <div className="min-w-0 flex-1 hidden sm:block">
+            <p className="text-xs font-bold truncate leading-tight">{episode.title}</p>
+            {isResuming
+              ? <p className="text-[0.6rem] text-[var(--accent-primary)] font-bold uppercase">Reprise...</p>
+              : <p className="text-[0.6rem] text-[var(--text-muted)] font-semibold truncate uppercase tracking-wider">{podcast?.title || ''}</p>}
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => onSeekRelative(-30)} className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors" aria-label="-30s">
+              <RotateCcw className="w-4 h-4" />
+            </button>
+            <button onClick={onTogglePlay}
+              className="w-10 h-10 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-lg shadow-[var(--accent-primary)]/20 hover:scale-105 active:scale-95 transition-transform">
+              {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+            </button>
+            <button onClick={() => onSeekRelative(30)} className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors" aria-label="+30s">
+              <RotateCw className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="hidden md:flex items-center gap-1.5 shrink-0 text-[0.65rem] text-[var(--text-secondary)] tabular-nums font-semibold">
+            <span>{fmt(currentTime)}</span><span className="opacity-30">/</span><span>{fmt(duration)}</span>
+          </div>
+
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button onClick={onChangeSpeed} className="hidden sm:block px-2 py-1 rounded-md text-[0.6rem] font-bold text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-surface)] transition-all uppercase">
+              {playbackSpeed}x
+            </button>
+            <button onClick={onExpand}
+              className="p-1.5 rounded-md text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-surface)] transition-all"
+              aria-label="Agrandir">
+              <Maximize2 className="w-4 h-4" />
+            </button>
+            <button onClick={onClose}
+              className="p-1.5 rounded-md text-[var(--text-secondary)] hover:text-[var(--accent-rose)] hover:bg-[var(--bg-surface)] transition-all"
+              aria-label="Fermer">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <div className="relative h-[3px] group cursor-pointer">
+          <input type="range" min="0" max={duration || 0} value={currentTime}
+            onChange={onProgressChange}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+          <div className="w-full h-full bg-[var(--border-color)]">
+            <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] transition-all duration-150"
+              style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AudioPlayer({ episode, onClose, userId, mode = 'floating' }: AudioPlayerProps) {
   const {
     isPlaying, currentTime, duration, volume, playbackSpeed,
@@ -75,70 +172,16 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
 
   const closeAlert = () => { setError(null); onClose(); };
 
-  const MiniPlayer = ({ fullWidth }: { fullWidth?: boolean }) => (
-    <div className={`fixed z-[90] mx-auto animate-slide-up max-w-5xl ${fullWidth
-      ? 'bottom-6 left-4 right-4 sm:left-6 sm:right-6 lg:left-auto lg:right-8 lg:bottom-8 lg:w-[calc(100%-22rem)] xl:w-[calc(100%-24rem)]'
-      : 'bottom-6 left-4 right-4 sm:left-6 sm:right-6'}`}>
-      <div className="bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-[var(--radius-lg)] shadow-2xl overflow-hidden">
-        <div className="flex items-center gap-3 px-4 h-[68px]">
-          <div className="w-10 h-10 rounded-lg overflow-hidden border border-[var(--border-color)] shrink-0 shadow-md">
-            {(episode.imageUrl || podcast?.imageUrl)
-              ? <img src={episode.imageUrl || podcast!.imageUrl} alt="" className="w-full h-full object-cover" />
-              : <div className="w-full h-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-base">🎙️</div>}
-          </div>
-
-          <div className="min-w-0 flex-1 hidden sm:block">
-            <p className="text-xs font-bold truncate leading-tight">{episode.title}</p>
-            {isResuming
-              ? <p className="text-[0.6rem] text-[var(--accent-primary)] font-bold uppercase animate-pulse">Reprise...</p>
-              : <p className="text-[0.6rem] text-[var(--text-muted)] font-semibold truncate uppercase tracking-wider">{podcast?.title || ''}</p>}
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => seekRelative(-30)} className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors" aria-label="-30s">
-              <RotateCcw className="w-4 h-4" />
-            </button>
-            <button onClick={togglePlay}
-              className="w-10 h-10 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-lg shadow-[var(--accent-primary)]/20 hover:scale-105 active:scale-95 transition-transform">
-              {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-            </button>
-            <button onClick={() => seekRelative(30)} className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors" aria-label="+30s">
-              <RotateCw className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="hidden md:flex items-center gap-1.5 shrink-0 text-[0.65rem] text-[var(--text-secondary)] tabular-nums font-semibold">
-            <span>{fmt(currentTime)}</span><span className="opacity-30">/</span><span>{fmt(duration)}</span>
-          </div>
-
-          <div className="flex items-center gap-0.5 shrink-0">
-            <button onClick={changeSpeed} className="hidden sm:block px-2 py-1 rounded-md text-[0.6rem] font-bold text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-surface)] transition-all uppercase">
-              {playbackSpeed}x
-            </button>
-            <button onClick={() => setIsExpanded(true)}
-              className="p-1.5 rounded-md text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-surface)] transition-all"
-              aria-label="Agrandir">
-              <Maximize2 className="w-4 h-4" />
-            </button>
-            <button onClick={onClose}
-              className="p-1.5 rounded-md text-[var(--text-secondary)] hover:text-[var(--accent-rose)] hover:bg-[var(--bg-surface)] transition-all"
-              aria-label="Fermer">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-        <div className="relative h-[3px] group cursor-pointer">
-          <input type="range" min="0" max={duration || 0} value={currentTime}
-            onChange={handleProgress}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-          <div className="w-full h-full bg-[var(--border-color)]">
-            <div className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] transition-all duration-150"
-              style={{ width: `${progress}%` }} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const miniPlayerProps = {
+    episode, podcast, isPlaying, isResuming, currentTime, duration,
+    playbackSpeed, progress,
+    onTogglePlay: togglePlay,
+    onSeekRelative: seekRelative,
+    onChangeSpeed: changeSpeed,
+    onExpand: () => setIsExpanded(true),
+    onClose,
+    onProgressChange: handleProgress,
+  };
 
   // ── INLINE MODE ──
   if (mode === 'inline') {
@@ -240,7 +283,7 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
           </div>
         </div>
 
-        {showMiniBar && createPortal(<MiniPlayer fullWidth />, document.body)}
+        {showMiniBar && createPortal(<MiniPlayer {...miniPlayerProps} fullWidth />, document.body)}
       </>
     );
   }
@@ -251,7 +294,7 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
       <AlertModal isOpen={!!error} title="Erreur de lecture" message={error || ""} type="error" onClose={closeAlert} />
 
       {!isExpanded ? (
-        <MiniPlayer />
+        <MiniPlayer {...miniPlayerProps} />
       ) : (
         <div className="fixed inset-0 z-[100] bg-[var(--bg-base)]/95 backdrop-blur-2xl overflow-hidden flex flex-col">
           <div className="flex-1 flex flex-col p-8 lg:p-16 overflow-y-auto">
