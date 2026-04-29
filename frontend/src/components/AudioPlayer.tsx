@@ -231,7 +231,7 @@ export default function AudioPlayer({ episode, onClose, userId, mode = 'floating
               </div>
 
               {/* Audio Visualizer */}
-              <div className="w-full flex justify-center my-3">
+              <div className="my-4">
                 <AudioVisualizer height={56} />
               </div>
 
