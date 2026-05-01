@@ -33,9 +33,6 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export function AudioProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const webAudioRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -107,44 +104,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }).catch(() => setIsResuming(false));
   }, [currentEpisode?._id, userId]);
 
-  // Initialize Web Audio Analyser when audio element is available
-  useEffect(() => {
-    if (!audioRef.current || !currentEpisode) return;
-
-    try {
-      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-
-      const ctx = new AudioCtx();
-      const source = ctx.createMediaElementSource(audioRef.current);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.8;
-      source.connect(analyser);
-      analyser.connect(ctx.destination);
-
-      webAudioRef.current = ctx;
-      analyserRef.current = analyser;
-      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
-    } catch {
-      // Fallback: audio plays without visualizer
-    }
-
-    return () => {
-      if (webAudioRef.current && webAudioRef.current.state !== 'closed') {
-        webAudioRef.current.close().catch(() => {});
-      }
-      analyserRef.current = null;
-      dataArrayRef.current = null;
-      webAudioRef.current = null;
-    };
-  }, [currentEpisode?._id]);
-
-  const getFrequencyData = () => {
-    if (!analyserRef.current || !dataArrayRef.current) return null;
-    analyserRef.current.getByteFrequencyData(dataArrayRef.current as Uint8Array<ArrayBuffer>);
-    return dataArrayRef.current;
-  };
+  // getFrequencyData returns null — visualizer uses simulated data
+  const getFrequencyData = () => null;
 
   // Actions
   const playEpisode = (episode: Episode) => {
@@ -154,12 +115,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const closePlayer = () => {
     if (audioRef.current) audioRef.current.pause();
-    if (webAudioRef.current && webAudioRef.current.state !== 'closed') {
-      webAudioRef.current.close().catch(() => {});
-    }
-    analyserRef.current = null;
-    dataArrayRef.current = null;
-    webAudioRef.current = null;
     setCurrentEpisode(null);
     setIsPlaying(false);
     setCurrentTime(0);
