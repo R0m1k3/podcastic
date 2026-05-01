@@ -14,7 +14,12 @@
       "Bash(git pull *)",
       "Bash(git stash *)",
       "Bash(git fetch *)",
-      "Bash(rtk npx *)"
+      "Bash(rtk npx *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(git -c core.editor=\"echo\" rebase --continue)",
+      "Bash(cat .git/rebase-merge/interactive)",
+      "Bash(ls .git/rebase-merge/)",
+      "Bash(git *)"
     ]
   }
 }

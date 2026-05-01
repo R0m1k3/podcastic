@@ -142,7 +142,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const getFrequencyData = () => {
     if (!analyserRef.current || !dataArrayRef.current) return null;
-    analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+    analyserRef.current.getByteFrequencyData(dataArrayRef.current as Uint8Array<ArrayBuffer>);
     return dataArrayRef.current;
   };
 
@@ -208,7 +208,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
           key={currentEpisode._id}
           ref={audioRef}
           src={currentEpisode.audioUrl}
-          crossOrigin="anonymous"
           onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
           onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
           onPlay={() => setIsPlaying(true)}

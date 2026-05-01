@@ -17,6 +17,7 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
   const playingRef = useRef(isPlaying);
   const getDataRef = useRef(getFrequencyData);
   const timeRef = useRef({ currentTime, duration });
+  const hasRealDataRef = useRef(false);
 
   useEffect(() => { playingRef.current = isPlaying; }, [isPlaying]);
   useEffect(() => { getDataRef.current = getFrequencyData; }, [getFrequencyData]);
@@ -54,21 +55,38 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       const progress = dur > 0 ? ct / dur : 0;
       const playing = playingRef.current;
 
-      // Update heights from frequency data (every frame for fluidity)
+      // Detect if real frequency data is available (CORS allows it)
       if (raw && playing) {
-        for (let i = 0; i < NUM_POINTS; i++) {
-          const bucketSize = raw.length / NUM_POINTS;
-          const startIdx = Math.floor(i * bucketSize);
-          const endIdx = Math.floor((i + 1) * bucketSize);
-          let sum = 0;
-          let count = 0;
-          for (let j = startIdx; j < endIdx && j < raw.length; j++) {
-            sum += raw[j];
-            count++;
+        const sum = raw.reduce((a, b) => a + b, 0);
+        hasRealDataRef.current = sum > 0;
+      }
+
+      // Update heights
+      if (playing) {
+        if (raw && hasRealDataRef.current) {
+          // Real frequency data from Web Audio API
+          for (let i = 0; i < NUM_POINTS; i++) {
+            const bucketSize = raw.length / NUM_POINTS;
+            const startIdx = Math.floor(i * bucketSize);
+            const endIdx = Math.floor((i + 1) * bucketSize);
+            let sum = 0;
+            let count = 0;
+            for (let j = startIdx; j < endIdx && j < raw.length; j++) {
+              sum += raw[j];
+              count++;
+            }
+            const avg = count > 0 ? sum / count : 0;
+            const target = (avg / 255) * MAX_AMPLITUDE;
+            hts[i] += (target - hts[i]) * 0.25;
           }
-          const avg = count > 0 ? sum / count : 0;
-          const target = (avg / 255) * MAX_AMPLITUDE;
-          hts[i] += (target - hts[i]) * 0.25;
+        } else {
+          // Simulated visualization for cross-origin audio (no CORS)
+          for (let i = 0; i < NUM_POINTS; i++) {
+            const wave = Math.sin(frame * 0.04 + i * 0.35) * 0.5 + 0.5;
+            const noise = Math.sin(frame * 0.07 + i * 1.7) * 0.3 + 0.7;
+            const target = MAX_AMPLITUDE * 0.6 * (0.5 + wave * noise);
+            hts[i] += (target - hts[i]) * 0.18;
+          }
         }
       } else if (!playing) {
         for (let i = 0; i < NUM_POINTS; i++) {
