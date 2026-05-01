@@ -33,6 +33,9 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export function AudioProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const webAudioRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -43,6 +46,9 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const [isResuming, setIsResuming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+
+  // CORS retry: start with CORS for real frequency data, fall back if blocked
+  const [corsMode, setCorsMode] = useState<'cors' | 'no-cors'>('cors');
 
   // Refs for interval-based progress saving
   const currentTimeRef = useRef(0);
@@ -104,21 +110,66 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }).catch(() => setIsResuming(false));
   }, [currentEpisode?._id, userId]);
 
-  // getFrequencyData returns null — visualizer uses simulated data
-  const getFrequencyData = () => null;
+  // Initialize Web Audio Analyser (only in CORS mode)
+  useEffect(() => {
+    if (corsMode !== 'cors' || !audioRef.current || !currentEpisode) return;
+
+    try {
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const ctx = new AudioCtx();
+      const source = ctx.createMediaElementSource(audioRef.current);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      webAudioRef.current = ctx;
+      analyserRef.current = analyser;
+      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
+    } catch {
+      // Fallback: audio plays without visualizer
+    }
+
+    return () => {
+      if (webAudioRef.current && webAudioRef.current.state !== 'closed') {
+        webAudioRef.current.close().catch(() => {});
+      }
+      analyserRef.current = null;
+      dataArrayRef.current = null;
+      webAudioRef.current = null;
+    };
+  }, [currentEpisode?._id, corsMode]);
+
+  const getFrequencyData = () => {
+    if (!analyserRef.current || !dataArrayRef.current) return null;
+    analyserRef.current.getByteFrequencyData(dataArrayRef.current as Uint8Array<ArrayBuffer>);
+    return dataArrayRef.current;
+  };
 
   // Actions
   const playEpisode = (episode: Episode) => {
+    setCorsMode('cors');
+    setError(null);
     setCurrentEpisode(episode);
     setIsPlaying(true);
   };
 
   const closePlayer = () => {
     if (audioRef.current) audioRef.current.pause();
+    if (webAudioRef.current && webAudioRef.current.state !== 'closed') {
+      webAudioRef.current.close().catch(() => {});
+    }
+    analyserRef.current = null;
+    dataArrayRef.current = null;
+    webAudioRef.current = null;
     setCurrentEpisode(null);
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+    setCorsMode('cors');
   };
 
   const togglePlay = () => {
@@ -151,6 +202,16 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setPlaybackSpeedState(prev => speeds[(speeds.indexOf(prev) + 1) % speeds.length]);
   };
 
+  const handleAudioError = () => {
+    if (corsMode === 'cors') {
+      // CORS blocked the audio — retry without CORS (sound works, no real frequency data)
+      setCorsMode('no-cors');
+      setError(null);
+    } else {
+      setError("Impossible de charger ce fichier audio. Le lien est peut-être expiré ou protégé.");
+    }
+  };
+
   return (
     <AudioContext.Provider value={{
       currentEpisode, isPlaying, currentTime, duration, volume, playbackSpeed, isMuted, isResuming, error,
@@ -160,15 +221,16 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       {/* Persistent audio element — lives at provider level so it survives page navigation */}
       {currentEpisode && (
         <audio
-          key={currentEpisode._id}
+          key={`${currentEpisode._id}-${corsMode}`}
           ref={audioRef}
           src={currentEpisode.audioUrl}
+          crossOrigin={corsMode === 'cors' ? 'anonymous' : undefined}
           onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
           onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={() => setIsPlaying(false)}
-          onError={() => setError("Impossible de charger ce fichier audio. Le lien est peut-être expiré ou protégé.")}
+          onError={handleAudioError}
           autoPlay
         />
       )}
