@@ -37,6 +37,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const savedPositionRef = useRef<number | null>(null);
+  const shouldResumeCtxRef = useRef(false); // set when user plays before Web Audio effect runs
 
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -130,6 +131,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         webAudioRef.current = ctx;
         analyserRef.current = analyser;
         dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
+        // If main audio already started playing before this effect ran, resume now
+        if (shouldResumeCtxRef.current || (audioRef.current && !audioRef.current.paused)) {
+          ctx.resume();
+          analysisRef.current?.play().catch(() => {});
+        }
       } catch {
         // Proxy unavailable — visualizer falls back to simulation
       }
@@ -161,6 +167,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const handleMainPlay = () => {
     setIsPlaying(true);
+    shouldResumeCtxRef.current = true;
     if (webAudioRef.current?.state === 'suspended') webAudioRef.current.resume();
     const el = analysisRef.current;
     if (el) {
@@ -181,6 +188,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   // Actions
   const playEpisode = (episode: Episode) => {
+    shouldResumeCtxRef.current = false;
     setError(null);
     setCurrentEpisode(episode);
     setIsPlaying(true);
@@ -268,6 +276,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
             src={proxyUrl}
             crossOrigin="anonymous"
             muted
+            autoPlay
             preload="auto"
             onError={() => { /* proxy fail: visualizer uses simulation */ }}
           />
