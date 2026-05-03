@@ -249,7 +249,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
               savedPositionRef.current = null;
             }
           }}
-          onPlay={() => setIsPlaying(true)}
+          onPlay={() => {
+            setIsPlaying(true);
+            if (webAudioRef.current?.state === 'suspended') {
+              webAudioRef.current.resume();
+            }
+          }}
           onPause={() => setIsPlaying(false)}
           onEnded={() => setIsPlaying(false)}
           onError={handleAudioError}
