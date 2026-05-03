@@ -11,6 +11,7 @@ import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/authRoutes';
 import podcastRoutes from './routes/podcastRoutes';
 import episodeRoutes from './routes/episodeRoutes';
+import audioRoutes from './routes/audioRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -70,6 +71,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/podcasts', apiLimiter, podcastRoutes);
 app.use('/api/episodes', apiLimiter, episodeRoutes);
+app.use('/api/audio', audioRoutes);
 
 // Serve frontend static files in production
 const frontendDist = path.join(__dirname, '..', 'public');

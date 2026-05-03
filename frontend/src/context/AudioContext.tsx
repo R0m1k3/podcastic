@@ -48,8 +48,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // CORS retry: start with CORS for real frequency data, fall back if blocked
-  const [corsMode, setCorsMode] = useState<'cors' | 'no-cors'>('cors');
+  // Audio source mode: direct CORS → backend proxy (always CORS) → give up
+  const [corsMode, setCorsMode] = useState<'cors' | 'proxy' | 'no-cors'>('cors');
 
   // Refs for interval-based progress saving
   const currentTimeRef = useRef(0);
@@ -118,9 +118,9 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }).catch(() => setIsResuming(false));
   }, [currentEpisode?._id, userId]);
 
-  // Initialize Web Audio Analyser (only in CORS mode)
+  // Initialize Web Audio Analyser (CORS or proxy mode — both have CORS headers)
   useEffect(() => {
-    if (corsMode !== 'cors' || !audioRef.current || !currentEpisode) return;
+    if (corsMode === 'no-cors' || !audioRef.current || !currentEpisode) return;
 
     try {
       const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
@@ -212,7 +212,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const handleAudioError = () => {
     if (corsMode === 'cors') {
-      // CORS blocked the audio — retry without CORS (sound works, no real frequency data)
+      // Direct CORS failed — retry via backend proxy (adds CORS headers, Web Audio works)
+      setCorsMode('proxy');
+      setError(null);
+    } else if (corsMode === 'proxy') {
+      // Proxy also failed — last resort: plain audio, no Web Audio analysis
       setCorsMode('no-cors');
       setError(null);
     } else {
@@ -231,8 +235,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         <audio
           key={`${currentEpisode._id}-${corsMode}`}
           ref={audioRef}
-          src={currentEpisode.audioUrl}
-          crossOrigin={corsMode === 'cors' ? 'anonymous' : undefined}
+          src={corsMode === 'proxy'
+            ? `/api/audio/proxy?url=${encodeURIComponent(currentEpisode.audioUrl)}`
+            : currentEpisode.audioUrl}
+          crossOrigin={corsMode !== 'no-cors' ? 'anonymous' : undefined}
           onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
           onLoadedMetadata={() => {
             if (!audioRef.current) return;
