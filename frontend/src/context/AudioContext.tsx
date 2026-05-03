@@ -112,32 +112,34 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   // Web Audio analyser — uses the hidden analysis element (proxy URL → always CORS)
   useEffect(() => {
     if (!analysisRef.current || !currentEpisode) return;
+    _gotRealDataLoggedRef.current = false;
 
     let ctx: AudioContext | null = null;
     const setup = () => {
       try {
         const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (!AudioCtx || !analysisRef.current) return;
+        if (!AudioCtx || !analysisRef.current) { console.warn('[WA] setup: no AudioCtx or analysisRef'); return; }
         ctx = new AudioCtx();
+        console.log('[WA] ctx created, state:', ctx.state);
         const source = ctx.createMediaElementSource(analysisRef.current);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
         analyser.smoothingTimeConstant = 0.55;
         const sink = ctx.createGain();
-        sink.gain.value = 0; // silent output — but graph stays active so analyser gets data
+        sink.gain.value = 0;
         source.connect(analyser);
         analyser.connect(sink);
         sink.connect(ctx.destination);
         webAudioRef.current = ctx;
         analyserRef.current = analyser;
         dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
-        // If main audio already started playing before this effect ran, resume now
+        console.log('[WA] graph ready. shouldResume:', shouldResumeCtxRef.current, 'mainPaused:', audioRef.current?.paused);
         if (shouldResumeCtxRef.current || (audioRef.current && !audioRef.current.paused)) {
-          ctx.resume();
-          analysisRef.current?.play().catch(() => {});
+          ctx.resume().then(() => console.log('[WA] ctx resumed from setup'));
+          analysisRef.current?.play().catch(e => console.warn('[WA] analysis play failed (setup):', e));
         }
-      } catch {
-        // Proxy unavailable — visualizer falls back to simulation
+      } catch (e) {
+        console.error('[WA] setup failed:', e);
       }
     };
     setup();
@@ -150,9 +152,14 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     };
   }, [currentEpisode?._id]);
 
+  const _gotRealDataLoggedRef = useRef(false);
   const getFrequencyData = () => {
     if (!analyserRef.current || !dataArrayRef.current) return null;
     analyserRef.current.getByteFrequencyData(dataArrayRef.current as Uint8Array<ArrayBuffer>);
+    if (!_gotRealDataLoggedRef.current) {
+      const sum = dataArrayRef.current.reduce((a, b) => a + b, 0);
+      if (sum > 0) { console.log('[WA] first real frequency data, sum:', sum); _gotRealDataLoggedRef.current = true; }
+    }
     return dataArrayRef.current;
   };
 
@@ -168,11 +175,14 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const handleMainPlay = () => {
     setIsPlaying(true);
     shouldResumeCtxRef.current = true;
-    if (webAudioRef.current?.state === 'suspended') webAudioRef.current.resume();
+    console.log('[WA] handleMainPlay, ctx state:', webAudioRef.current?.state ?? 'null');
+    if (webAudioRef.current?.state === 'suspended') {
+      webAudioRef.current.resume().then(() => console.log('[WA] ctx resumed from handleMainPlay'));
+    }
     const el = analysisRef.current;
     if (el) {
       syncAnalysis(audioRef.current?.currentTime);
-      el.play().catch(() => {});
+      el.play().catch(e => console.warn('[WA] analysis play failed (handleMainPlay):', e));
     }
   };
 
@@ -269,14 +279,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
             onError={() => setError("Impossible de charger ce fichier audio. Le lien est peut-être expiré ou protégé.")}
             autoPlay
           />
-          {/* Analysis audio: proxy URL, muted, Web Audio source only */}
+          {/* Analysis audio: proxy URL, Web Audio source only (GainNode silences output) */}
           <audio
             key={`analysis-${currentEpisode._id}`}
             ref={analysisRef}
             src={proxyUrl}
             crossOrigin="anonymous"
-            muted
-            autoPlay
             preload="auto"
             onError={() => { /* proxy fail: visualizer uses simulation */ }}
           />
