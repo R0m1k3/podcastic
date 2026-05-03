@@ -77,20 +77,20 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
             }
             const avg = count > 0 ? sum / count : 0;
             const target = (avg / 255) * MAX_AMPLITUDE;
-            hts[i] += (target - hts[i]) * 0.25;
+            hts[i] += (target - hts[i]) * 0.15;
           }
         } else {
           // Simulated visualization (no CORS or no Web Audio)
           for (let i = 0; i < NUM_POINTS; i++) {
-            const wave = Math.sin(frame * 0.04 + i * 0.35) * 0.5 + 0.5;
-            const noise = Math.sin(frame * 0.07 + i * 1.7) * 0.3 + 0.7;
-            const target = MAX_AMPLITUDE * 0.6 * (0.5 + wave * noise);
-            hts[i] += (target - hts[i]) * 0.18;
+            const wave = Math.sin(frame * 0.03 + i * 0.4) * 0.5 + 0.5;
+            const mod = Math.sin(frame * 0.05 + i * 0.9) * 0.25 + 0.75;
+            const target = MAX_AMPLITUDE * 0.65 * wave * mod;
+            hts[i] += (target - hts[i]) * 0.12;
           }
         }
       } else {
         for (let i = 0; i < NUM_POINTS; i++) {
-          hts[i] += (0 - hts[i]) * 0.08;
+          hts[i] += (0 - hts[i]) * 0.1;
         }
       }
 
@@ -98,9 +98,8 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       const points: { x: number; y: number }[] = [];
       for (let i = 0; i < NUM_POINTS; i++) {
         const x = PADDING + i * step;
-        const phase = i * 2.1 + frame * 0.025;
-        const sign = Math.sin(phase) > 0.05 ? 1 : -1;
-        const y = midY + sign * hts[i] * midY;
+        const phase = i * 1.4 + frame * 0.022;
+        const y = midY + Math.sin(phase) * hts[i] * midY;
         points.push({ x, y });
       }
 
