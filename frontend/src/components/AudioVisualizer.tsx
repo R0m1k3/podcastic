@@ -6,7 +6,7 @@ interface AudioVisualizerProps {
 }
 
 const NUM_POINTS = 42;
-const MAX_AMPLITUDE = 0.22;
+const MAX_AMPLITUDE = 0.42;
 const PADDING = 6;
 
 export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
@@ -76,16 +76,20 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
               count++;
             }
             const avg = count > 0 ? sum / count : 0;
-            const target = (avg / 255) * MAX_AMPLITUDE;
-            hts[i] += (target - hts[i]) * 0.15;
+            // boost low values so speech is always visible
+            const normalized = avg / 255;
+            const boosted = Math.pow(normalized, 0.6);
+            const target = boosted * MAX_AMPLITUDE;
+            hts[i] += (target - hts[i]) * 0.22;
           }
         } else {
           // Simulated visualization (no CORS or no Web Audio)
           for (let i = 0; i < NUM_POINTS; i++) {
-            const wave = Math.sin(frame * 0.03 + i * 0.4) * 0.5 + 0.5;
-            const mod = Math.sin(frame * 0.05 + i * 0.9) * 0.25 + 0.75;
-            const target = MAX_AMPLITUDE * 0.65 * wave * mod;
-            hts[i] += (target - hts[i]) * 0.12;
+            const slow = Math.sin(frame * 0.025 + i * 0.38) * 0.5 + 0.5;
+            const fast = Math.sin(frame * 0.08 + i * 1.1) * 0.35 + 0.65;
+            const pulse = Math.sin(frame * 0.012) * 0.2 + 0.8;
+            const target = MAX_AMPLITUDE * slow * fast * pulse;
+            hts[i] += (target - hts[i]) * 0.18;
           }
         }
       } else {
