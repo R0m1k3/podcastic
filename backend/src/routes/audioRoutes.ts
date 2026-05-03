@@ -18,10 +18,31 @@ function isBlocked(hostname: string): boolean {
   return BLOCKED.some(r => r.test(hostname));
 }
 
+// Keep-alive agents reuse TLS connections across requests
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 32 });
+const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 32 });
+
+// Cache resolved final URLs (skip redirect chain on range/seek requests)
+// TTL: 10 minutes
+const urlCache = new Map<string, { finalUrl: string; expiresAt: number }>();
+const URL_CACHE_TTL = 10 * 60 * 1000;
+
+function getCachedUrl(original: string): string | null {
+  const entry = urlCache.get(original);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) { urlCache.delete(original); return null; }
+  return entry.finalUrl;
+}
+
+function setCachedUrl(original: string, finalUrl: string): void {
+  urlCache.set(original, { finalUrl, expiresAt: Date.now() + URL_CACHE_TTL });
+}
+
 const REDIRECT_CODES = new Set([301, 302, 303, 307, 308]);
 
 function fetchAudio(
   url: string,
+  originalUrl: string,
   headers: Record<string, string>,
   res: Response,
   depth: number,
@@ -48,17 +69,22 @@ function fetchAudio(
     return;
   }
 
+  const agent = parsed.protocol === 'https:' ? httpsAgent : httpAgent;
   const lib = parsed.protocol === 'https:' ? https : http;
 
-  const proxyReq = lib.request(url, { headers }, (proxyRes: IncomingMessage) => {
+  const proxyReq = lib.request(url, { headers, agent }, (proxyRes: IncomingMessage) => {
     const status = proxyRes.statusCode ?? 200;
 
-    // Follow redirects server-side so browser never sees non-CORS domains
     if (REDIRECT_CODES.has(status) && proxyRes.headers.location) {
       const next = new URL(proxyRes.headers.location, url).toString();
-      proxyRes.resume(); // drain to free socket
-      fetchAudio(next, headers, res, depth + 1);
+      proxyRes.resume();
+      fetchAudio(next, originalUrl, headers, res, depth + 1);
       return;
+    }
+
+    // Cache resolved URL so next range request skips redirect chain
+    if (depth > 0 && originalUrl !== url) {
+      setCachedUrl(originalUrl, url);
     }
 
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -107,7 +133,9 @@ router.get('/proxy', (req: Request, res: Response) => {
 
   req.on('close', () => res.destroy());
 
-  fetchAudio(raw, upstream, res, 0);
+  // Use cached final URL if available (skips redirect chain — critical for seeks)
+  const startUrl = getCachedUrl(raw) ?? raw;
+  fetchAudio(startUrl, raw, upstream, res, 0);
 });
 
 export default router;
