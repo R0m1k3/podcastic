@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useRef, useEffect, ReactNode } fro
 import { Episode, episodeService } from '../services/episodeService';
 
 interface AudioContextType {
-  // State
   currentEpisode: Episode | null;
   isPlaying: boolean;
   currentTime: number;
@@ -12,8 +11,6 @@ interface AudioContextType {
   isMuted: boolean;
   isResuming: boolean;
   error: string | null;
-
-  // Actions
   playEpisode: (episode: Episode) => void;
   closePlayer: () => void;
   togglePlay: () => void;
@@ -25,18 +22,22 @@ interface AudioContextType {
   setUserId: (id: string | null) => void;
   setError: (err: string | null) => void;
   getFrequencyData: () => Uint8Array | null;
-  // Legacy (kept for compatibility)
   setIsPlaying: (playing: boolean) => void;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export function AudioProvider({ children }: { children: ReactNode }) {
+  // Main audio: direct URL, plays instantly
   const audioRef = useRef<HTMLAudioElement>(null);
+  // Analysis audio: proxy URL, muted, Web Audio source only
+  const analysisRef = useRef<HTMLAudioElement>(null);
+
   const webAudioRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const savedPositionRef = useRef<number | null>(null);
+
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -48,10 +49,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Audio source mode: proxy (always CORS) → no-cors fallback
-  const [corsMode, setCorsMode] = useState<'proxy' | 'no-cors'>('proxy');
-
-  // Refs for interval-based progress saving
   const currentTimeRef = useRef(0);
   const durationRef = useRef(0);
   const episodeIdRef = useRef<string | null>(null);
@@ -62,24 +59,25 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   useEffect(() => { episodeIdRef.current = currentEpisode?._id || null; }, [currentEpisode]);
   useEffect(() => { userIdRef.current = userId; }, [userId]);
 
-  // Apply volume / speed to the audio element
+  // Apply volume / speed to main audio only
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = isMuted ? 0 : volume;
       audioRef.current.playbackRate = playbackSpeed;
     }
+    if (analysisRef.current) {
+      analysisRef.current.playbackRate = playbackSpeed;
+    }
   }, [volume, isMuted, playbackSpeed, currentEpisode]);
 
-  // Persist volume / speed to localStorage
   useEffect(() => {
     localStorage.setItem('podcastic-volume', volume.toString());
     localStorage.setItem('podcastic-speed', playbackSpeed.toString());
   }, [volume, playbackSpeed]);
 
-  // Periodic + unmount progress saving. Considered completed at >= 90%.
+  // Periodic progress saving
   useEffect(() => {
     if (!currentEpisode || !userId) return;
-
     const saveNow = () => {
       if (!episodeIdRef.current || !userIdRef.current) return;
       const pos = Math.floor(currentTimeRef.current);
@@ -87,19 +85,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       const completed = d > 0 && (pos / d) >= 0.9;
       episodeService.saveProgress(episodeIdRef.current, pos, completed).catch(() => {});
     };
-
-    const interval = setInterval(() => {
-      if (isPlaying) saveNow();
-    }, 20000);
-
-    return () => {
-      clearInterval(interval);
-      saveNow();
-    };
+    const interval = setInterval(() => { if (isPlaying) saveNow(); }, 20000);
+    return () => { clearInterval(interval); saveNow(); };
   }, [currentEpisode?._id, userId, isPlaying]);
 
-  // Resume at previous position: store in ref, applied on loadedmetadata
-  // (handles the case where CORS failure remounts the audio element)
+  // Resume at saved position — applied on loadedmetadata so it survives element remounts
   useEffect(() => {
     if (!currentEpisode || !userId) return;
     savedPositionRef.current = null;
@@ -118,38 +108,38 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     }).catch(() => setIsResuming(false));
   }, [currentEpisode?._id, userId]);
 
-  // Initialize Web Audio Analyser (CORS or proxy mode — both have CORS headers)
+  // Web Audio analyser — uses the hidden analysis element (proxy URL → always CORS)
   useEffect(() => {
-    if (corsMode === 'no-cors' || !audioRef.current || !currentEpisode) return;
+    if (!analysisRef.current || !currentEpisode) return;
 
-    try {
-      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-
-      const ctx = new AudioCtx();
-      const source = ctx.createMediaElementSource(audioRef.current);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.55;
-      source.connect(analyser);
-      analyser.connect(ctx.destination);
-
-      webAudioRef.current = ctx;
-      analyserRef.current = analyser;
-      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
-    } catch {
-      // Fallback: audio plays without visualizer
-    }
+    let ctx: AudioContext | null = null;
+    const setup = () => {
+      try {
+        const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx || !analysisRef.current) return;
+        ctx = new AudioCtx();
+        const source = ctx.createMediaElementSource(analysisRef.current);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.55;
+        source.connect(analyser);
+        // Do NOT connect to destination — analysis element is silent via Web Audio too
+        webAudioRef.current = ctx;
+        analyserRef.current = analyser;
+        dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
+      } catch {
+        // Proxy unavailable — visualizer falls back to simulation
+      }
+    };
+    setup();
 
     return () => {
-      if (webAudioRef.current && webAudioRef.current.state !== 'closed') {
-        webAudioRef.current.close().catch(() => {});
-      }
+      if (ctx && ctx.state !== 'closed') ctx.close().catch(() => {});
       analyserRef.current = null;
       dataArrayRef.current = null;
       webAudioRef.current = null;
     };
-  }, [currentEpisode?._id, corsMode]);
+  }, [currentEpisode?._id]);
 
   const getFrequencyData = () => {
     if (!analyserRef.current || !dataArrayRef.current) return null;
@@ -157,16 +147,45 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     return dataArrayRef.current;
   };
 
+  // Sync analysis element to main audio on play/pause/seek
+  const syncAnalysis = (time?: number) => {
+    const el = analysisRef.current;
+    if (!el) return;
+    if (time !== undefined && Math.abs(el.currentTime - time) > 1) {
+      el.currentTime = time;
+    }
+  };
+
+  const handleMainPlay = () => {
+    setIsPlaying(true);
+    if (webAudioRef.current?.state === 'suspended') webAudioRef.current.resume();
+    const el = analysisRef.current;
+    if (el) {
+      syncAnalysis(audioRef.current?.currentTime);
+      el.play().catch(() => {});
+    }
+  };
+
+  const handleMainPause = () => {
+    setIsPlaying(false);
+    analysisRef.current?.pause();
+  };
+
+  const handleMainSeeked = () => {
+    const t = audioRef.current?.currentTime;
+    if (t !== undefined) syncAnalysis(t);
+  };
+
   // Actions
   const playEpisode = (episode: Episode) => {
-    setCorsMode('proxy');
     setError(null);
     setCurrentEpisode(episode);
     setIsPlaying(true);
   };
 
   const closePlayer = () => {
-    if (audioRef.current) audioRef.current.pause();
+    audioRef.current?.pause();
+    analysisRef.current?.pause();
     if (webAudioRef.current && webAudioRef.current.state !== 'closed') {
       webAudioRef.current.close().catch(() => {});
     }
@@ -177,7 +196,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
-    setCorsMode('proxy');
   };
 
   const togglePlay = () => {
@@ -190,35 +208,24 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     if (!audioRef.current) return;
     audioRef.current.currentTime = time;
     setCurrentTime(time);
+    syncAnalysis(time);
   };
 
   const seekRelative = (delta: number) => {
     if (!audioRef.current) return;
-    const t = Math.max(0, Math.min(duration, audioRef.current.currentTime + delta));
-    seek(t);
+    seek(Math.max(0, Math.min(duration, audioRef.current.currentTime + delta)));
   };
 
-  const setVolume = (v: number) => {
-    setVolumeState(v);
-    setIsMuted(v === 0);
-  };
-
+  const setVolume = (v: number) => { setVolumeState(v); setIsMuted(v === 0); };
   const toggleMute = () => setIsMuted(m => !m);
-
   const changeSpeed = () => {
     const speeds = [1, 1.25, 1.5, 2, 0.75];
     setPlaybackSpeedState(prev => speeds[(speeds.indexOf(prev) + 1) % speeds.length]);
   };
 
-  const handleAudioError = () => {
-    if (corsMode === 'proxy') {
-      // Proxy failed — last resort: plain audio, no Web Audio analysis
-      setCorsMode('no-cors');
-      setError(null);
-    } else {
-      setError("Impossible de charger ce fichier audio. Le lien est peut-être expiré ou protégé.");
-    }
-  };
+  const proxyUrl = currentEpisode
+    ? `/api/audio/proxy?url=${encodeURIComponent(currentEpisode.audioUrl)}`
+    : '';
 
   return (
     <AudioContext.Provider value={{
@@ -226,36 +233,42 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       playEpisode, closePlayer, togglePlay, seek, seekRelative, setVolume, toggleMute, changeSpeed,
       setUserId, setError, getFrequencyData, setIsPlaying,
     }}>
-      {/* Persistent audio element — lives at provider level so it survives page navigation */}
       {currentEpisode && (
-        <audio
-          key={`${currentEpisode._id}-${corsMode}`}
-          ref={audioRef}
-          src={corsMode === 'proxy'
-            ? `/api/audio/proxy?url=${encodeURIComponent(currentEpisode.audioUrl)}`
-            : currentEpisode.audioUrl}
-          crossOrigin={corsMode !== 'no-cors' ? 'anonymous' : undefined}
-          onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
-          onLoadedMetadata={() => {
-            if (!audioRef.current) return;
-            setDuration(audioRef.current.duration);
-            if (savedPositionRef.current !== null) {
-              audioRef.current.currentTime = savedPositionRef.current;
-              setCurrentTime(savedPositionRef.current);
-              savedPositionRef.current = null;
-            }
-          }}
-          onPlay={() => {
-            setIsPlaying(true);
-            if (webAudioRef.current?.state === 'suspended') {
-              webAudioRef.current.resume();
-            }
-          }}
-          onPause={() => setIsPlaying(false)}
-          onEnded={() => setIsPlaying(false)}
-          onError={handleAudioError}
-          autoPlay
-        />
+        <>
+          {/* Main audio: direct URL, instant start */}
+          <audio
+            key={`main-${currentEpisode._id}`}
+            ref={audioRef}
+            src={currentEpisode.audioUrl}
+            onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
+            onLoadedMetadata={() => {
+              if (!audioRef.current) return;
+              setDuration(audioRef.current.duration);
+              if (savedPositionRef.current !== null) {
+                audioRef.current.currentTime = savedPositionRef.current;
+                setCurrentTime(savedPositionRef.current);
+                syncAnalysis(savedPositionRef.current);
+                savedPositionRef.current = null;
+              }
+            }}
+            onPlay={handleMainPlay}
+            onPause={handleMainPause}
+            onSeeked={handleMainSeeked}
+            onEnded={() => { setIsPlaying(false); analysisRef.current?.pause(); }}
+            onError={() => setError("Impossible de charger ce fichier audio. Le lien est peut-être expiré ou protégé.")}
+            autoPlay
+          />
+          {/* Analysis audio: proxy URL, muted, Web Audio source only */}
+          <audio
+            key={`analysis-${currentEpisode._id}`}
+            ref={analysisRef}
+            src={proxyUrl}
+            crossOrigin="anonymous"
+            muted
+            preload="auto"
+            onError={() => { /* proxy fail: visualizer uses simulation */ }}
+          />
+        </>
       )}
       {children}
     </AudioContext.Provider>
@@ -264,8 +277,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
 export function useAudio() {
   const context = useContext(AudioContext);
-  if (context === undefined) {
-    throw new Error('useAudio must be used within an AudioProvider');
-  }
+  if (context === undefined) throw new Error('useAudio must be used within an AudioProvider');
   return context;
 }
