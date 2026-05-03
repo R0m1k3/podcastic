@@ -122,8 +122,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
         analyser.smoothingTimeConstant = 0.55;
+        const sink = ctx.createGain();
+        sink.gain.value = 0; // silent output — but graph stays active so analyser gets data
         source.connect(analyser);
-        // Do NOT connect to destination — analysis element is silent via Web Audio too
+        analyser.connect(sink);
+        sink.connect(ctx.destination);
         webAudioRef.current = ctx;
         analyserRef.current = analyser;
         dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
