@@ -10,18 +10,16 @@ const MAX_AMPLITUDE = 0.42;
 const PADDING = 6;
 
 export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
-  const { isPlaying, currentTime, duration, getFrequencyData } = useAudio();
+  const { isPlaying, getFrequencyData } = useAudio();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const heightsRef = useRef<number[]>(Array(NUM_POINTS).fill(0));
   const playingRef = useRef(isPlaying);
   const getDataRef = useRef(getFrequencyData);
-  const timeRef = useRef({ currentTime, duration });
   const hasRealDataRef = useRef(false);
 
   useEffect(() => { playingRef.current = isPlaying; }, [isPlaying]);
   useEffect(() => { getDataRef.current = getFrequencyData; }, [getFrequencyData]);
-  useEffect(() => { timeRef.current = { currentTime, duration }; }, [currentTime, duration]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -52,8 +50,6 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       const raw = getDataRef.current?.();
       const hts = heightsRef.current;
       const step = drawW / (NUM_POINTS - 1);
-      const { currentTime: ct, duration: dur } = timeRef.current;
-      const progress = dur > 0 ? ct / dur : 0;
       const playing = playingRef.current;
 
       // Detect if real frequency data is available
@@ -129,22 +125,6 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
       drawSmoothPath(ctx, points, grad, 2, displayW, midY);
       ctx.restore();
 
-      // ── Progress indicator dot ──
-      if (progress > 0.01 && playing) {
-        const dotX = PADDING + progress * drawW;
-        const dotIdx = Math.floor(progress * (NUM_POINTS - 1));
-        const clampedIdx = Math.min(dotIdx, NUM_POINTS - 1);
-        const dotY = points[clampedIdx]?.y ?? midY;
-
-        ctx.fillStyle = '#f1f5f9';
-        ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
-        ctx.shadowBlur = 6;
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-      }
 
       rafRef.current = requestAnimationFrame(animate);
     };
