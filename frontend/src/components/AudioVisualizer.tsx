@@ -43,6 +43,7 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
     const midY = displayH / 2;
     const drawW = displayW - PADDING * 2;
 
+    const HALF = Math.floor(NUM_POINTS / 2); // 21 — center outward
     let frame = 0;
 
     const animate = () => {
@@ -61,12 +62,12 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
         hasRealDataRef.current = sum > 0;
       }
 
-      // Update heights
+      // Update heights — only HALF entries, mirrored in point computation
       if (playing) {
         if (raw && hasRealDataRef.current) {
-          // Real frequency data from Web Audio API (CORS allowed)
-          for (let i = 0; i < NUM_POINTS; i++) {
-            const bucketSize = raw.length / NUM_POINTS;
+          // Real frequency data: index 0 = center (low freq), HALF-1 = edge (high freq)
+          for (let i = 0; i < HALF; i++) {
+            const bucketSize = raw.length / HALF;
             const startIdx = Math.floor(i * bucketSize);
             const endIdx = Math.floor((i + 1) * bucketSize);
             let sum = 0;
@@ -76,15 +77,13 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
               count++;
             }
             const avg = count > 0 ? sum / count : 0;
-            // boost low values so speech is always visible
-            const normalized = avg / 255;
-            const boosted = Math.pow(normalized, 0.6);
+            const boosted = Math.pow(avg / 255, 0.6);
             const target = boosted * MAX_AMPLITUDE;
             hts[i] += (target - hts[i]) * 0.22;
           }
         } else {
-          // Simulated visualization (no CORS or no Web Audio)
-          for (let i = 0; i < NUM_POINTS; i++) {
+          // Simulated — symmetric wave emanating from center
+          for (let i = 0; i < HALF; i++) {
             const slow = Math.sin(frame * 0.025 + i * 0.38) * 0.5 + 0.5;
             const fast = Math.sin(frame * 0.08 + i * 1.1) * 0.35 + 0.65;
             const pulse = Math.sin(frame * 0.012) * 0.2 + 0.8;
@@ -93,17 +92,20 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
           }
         }
       } else {
-        for (let i = 0; i < NUM_POINTS; i++) {
+        for (let i = 0; i < HALF; i++) {
           hts[i] += (0 - hts[i]) * 0.1;
         }
       }
 
-      // Compute path: smooth alternating oscillation
+      // Compute mirrored path: center (i=20/21) → edges (i=0/41)
+      const centerIdx = (NUM_POINTS - 1) / 2;
       const points: { x: number; y: number }[] = [];
       for (let i = 0; i < NUM_POINTS; i++) {
         const x = PADDING + i * step;
-        const phase = i * 1.4 + frame * 0.022;
-        const y = midY + Math.sin(phase) * hts[i] * midY;
+        const dist = Math.abs(i - centerIdx);
+        const htIdx = Math.min(Math.floor(dist), HALF - 1);
+        const phase = dist * 0.7 + frame * 0.022;
+        const y = midY + Math.sin(phase) * hts[htIdx] * midY;
         points.push({ x, y });
       }
 
