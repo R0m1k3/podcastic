@@ -14,6 +14,7 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const heightsRef = useRef<number[]>(Array(NUM_POINTS).fill(0));
+  const bandMaxRef = useRef<number[]>(Array(NUM_POINTS).fill(1));
   const playingRef = useRef(isPlaying);
   const getDataRef = useRef(getFrequencyData);
   const hasRealDataRef = useRef(false);
@@ -42,6 +43,7 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
     const drawW = displayW - PADDING * 2;
 
     const HALF = Math.floor(NUM_POINTS / 2); // 21 — center outward
+    const bandMax = bandMaxRef.current;
     let frame = 0;
 
     const animate = () => {
@@ -73,8 +75,11 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
               count++;
             }
             const avg = count > 0 ? sum / count : 0;
-            const boosted = Math.pow(avg / 255, 0.6);
-            const target = boosted * MAX_AMPLITUDE;
+            // Per-band normalization: each band moves relative to its own history
+            // so treble (quiet by nature) animates as much as bass
+            bandMax[i] = Math.max(avg, bandMax[i] * 0.994, 8);
+            const normalized = avg / bandMax[i];
+            const target = Math.pow(normalized, 0.7) * MAX_AMPLITUDE;
             hts[i] += (target - hts[i]) * 0.22;
           }
         } else {
