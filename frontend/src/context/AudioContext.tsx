@@ -48,8 +48,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Audio source mode: direct CORS → backend proxy (always CORS) → give up
-  const [corsMode, setCorsMode] = useState<'cors' | 'proxy' | 'no-cors'>('cors');
+  // Audio source mode: proxy (always CORS) → no-cors fallback
+  const [corsMode, setCorsMode] = useState<'proxy' | 'no-cors'>('proxy');
 
   // Refs for interval-based progress saving
   const currentTimeRef = useRef(0);
@@ -159,7 +159,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   // Actions
   const playEpisode = (episode: Episode) => {
-    setCorsMode('cors');
+    setCorsMode('proxy');
     setError(null);
     setCurrentEpisode(episode);
     setIsPlaying(true);
@@ -177,7 +177,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
-    setCorsMode('cors');
+    setCorsMode('proxy');
   };
 
   const togglePlay = () => {
@@ -211,12 +211,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   };
 
   const handleAudioError = () => {
-    if (corsMode === 'cors') {
-      // Direct CORS failed — retry via backend proxy (adds CORS headers, Web Audio works)
-      setCorsMode('proxy');
-      setError(null);
-    } else if (corsMode === 'proxy') {
-      // Proxy also failed — last resort: plain audio, no Web Audio analysis
+    if (corsMode === 'proxy') {
+      // Proxy failed — last resort: plain audio, no Web Audio analysis
       setCorsMode('no-cors');
       setError(null);
     } else {
