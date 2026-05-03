@@ -36,6 +36,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const webAudioRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
+  const savedPositionRef = useRef<number | null>(null);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -97,14 +98,21 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     };
   }, [currentEpisode?._id, userId, isPlaying]);
 
-  // Resume at previous position when episode loads
+  // Resume at previous position: store in ref, applied on loadedmetadata
+  // (handles the case where CORS failure remounts the audio element)
   useEffect(() => {
     if (!currentEpisode || !userId) return;
+    savedPositionRef.current = null;
     setIsResuming(true);
     episodeService.getProgress(currentEpisode._id).then(r => {
-      if (r.progress?.position && audioRef.current) {
-        audioRef.current.currentTime = r.progress.position;
-        setCurrentTime(r.progress.position);
+      const pos = r.progress?.position;
+      if (pos && pos > 5) {
+        savedPositionRef.current = pos;
+        if (audioRef.current && audioRef.current.readyState >= 1) {
+          audioRef.current.currentTime = pos;
+          setCurrentTime(pos);
+          savedPositionRef.current = null;
+        }
       }
       setIsResuming(false);
     }).catch(() => setIsResuming(false));
@@ -121,8 +129,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       const ctx = new AudioCtx();
       const source = ctx.createMediaElementSource(audioRef.current);
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.8;
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.55;
       source.connect(analyser);
       analyser.connect(ctx.destination);
 
@@ -226,7 +234,15 @@ export function AudioProvider({ children }: { children: ReactNode }) {
           src={currentEpisode.audioUrl}
           crossOrigin={corsMode === 'cors' ? 'anonymous' : undefined}
           onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
-          onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
+          onLoadedMetadata={() => {
+            if (!audioRef.current) return;
+            setDuration(audioRef.current.duration);
+            if (savedPositionRef.current !== null) {
+              audioRef.current.currentTime = savedPositionRef.current;
+              setCurrentTime(savedPositionRef.current);
+              savedPositionRef.current = null;
+            }
+          }}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={() => setIsPlaying(false)}

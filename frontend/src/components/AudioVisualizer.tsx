@@ -78,13 +78,17 @@ export default function AudioVisualizer({ height = 80 }: AudioVisualizerProps) {
             hts[i] += (target - hts[i]) * 0.22;
           }
         } else {
-          // Simulated — symmetric wave emanating from center
+          // Simulated speech-like: syllabic rhythm ~4/sec at 60fps
+          const syllable = Math.max(0, Math.sin(frame * 0.038)) ** 2;
+          const breathGroup = Math.sin(frame * 0.007) * 0.25 + 0.75;
+          const consonant = Math.random() < 0.025 ? Math.random() * 0.6 : 0;
           for (let i = 0; i < HALF; i++) {
-            const slow = Math.sin(frame * 0.025 + i * 0.38) * 0.5 + 0.5;
-            const fast = Math.sin(frame * 0.08 + i * 1.1) * 0.35 + 0.65;
-            const pulse = Math.sin(frame * 0.012) * 0.2 + 0.8;
-            const target = MAX_AMPLITUDE * slow * fast * pulse;
-            hts[i] += (target - hts[i]) * 0.18;
+            const t = i / (HALF - 1); // 0=center(bass), 1=edge(treble)
+            // bass tracks syllables, treble spikes on consonants
+            const lowEnergy = syllable * breathGroup * (1 - t * 0.5);
+            const highEnergy = (consonant + syllable * 0.3) * (0.3 + t * 0.7);
+            const target = MAX_AMPLITUDE * (lowEnergy * 0.7 + highEnergy * 0.3);
+            hts[i] += (target - hts[i]) * 0.2;
           }
         }
       } else {
