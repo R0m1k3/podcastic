@@ -21,9 +21,9 @@ echo ⚠️  Make sure MongoDB and Redis are running!
 echo.
 
 REM Start backend
-echo 🚀 Starting Backend (Express.js)...
+echo 🚀 Starting Backend (Rust)...
 cd backend
-start "Podcastic Backend" npm run dev
+start "Podcastic Backend" cmd /c "set PORT=5000&& cargo run"
 cd ..
 
 timeout /t 2 /nobreak

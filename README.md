@@ -63,8 +63,7 @@ docker-compose up -d
 #### Backend
 ```bash
 cd backend
-npm install
-npm run dev  # Starts on port 5000
+cargo run  # Starts on port 5000 (set PORT=5000)
 ```
 
 #### Frontend
@@ -87,15 +86,9 @@ Podcastic/
 │   │   └── styles/
 │   └── Dockerfile
 │
-├── backend/           # Express.js API
-│   ├── src/
-│   │   ├── routes/
-│   │   ├── controllers/
-│   │   ├── models/
-│   │   ├── middleware/
-│   │   ├── services/
-│   │   └── config/
-│   └── Dockerfile
+├── backend/           # Rust (axum) API
+│   ├── Cargo.toml
+│   └── src/           # main, auth, podcasts, episodes, feeds, itunes, db
 │
 ├── docker-compose.yml
 ├── .env.example

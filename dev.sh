@@ -42,7 +42,7 @@ echo ""
 # Start backend in background
 echo "→ Backend starting on port 5000..."
 cd backend
-npm run dev &
+PORT=5000 PUBLIC_DIR=../frontend/dist cargo run &
 BACKEND_PID=$!
 cd ..
 

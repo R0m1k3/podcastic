@@ -8,41 +8,43 @@ RUN npm install
 
 COPY frontend/ ./
 
-# Build with /api as the API base URL (served by Express on same host)
+# Build with /api as the API base URL (served by the Rust backend on same host)
 ENV VITE_API_URL=/api
 RUN npm run build
 
-# Stage 2: Build backend
-FROM node:20-alpine AS backend-builder
+# Stage 2: Build Rust backend
+FROM rust:1-bookworm AS backend-builder
 
 WORKDIR /app
 
-COPY backend/package*.json ./
-RUN npm install
+# Cache dependencies separately from sources
+COPY backend/Cargo.toml backend/Cargo.lock* ./
+RUN mkdir src && echo "fn main() {}" > src/main.rs \
+    && cargo build --release \
+    && rm -rf src
 
-COPY backend/tsconfig.json ./
 COPY backend/src ./src
-
-RUN npm run build
+RUN touch src/main.rs && cargo build --release
 
 # Stage 3: Production image
-FROM node:20-alpine
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --no-create-home podcastic
 
 WORKDIR /app
 
-# Copy backend production deps
-COPY backend/package*.json ./
-RUN npm install --omit=dev
-
-# Copy compiled backend
-COPY --from=backend-builder /app/dist ./dist
-
-# Copy frontend build into public/ (backend will serve it as static files)
+COPY --from=backend-builder /app/target/release/podcastic ./podcastic
 COPY --from=frontend-builder /frontend/dist ./public
+
+USER podcastic
 
 EXPOSE 3579
 
-ENV NODE_ENV=production
 ENV PORT=3579
+ENV PUBLIC_DIR=/app/public
+ENV RUST_LOG=podcastic=info,tower_http=warn
 
-CMD ["node", "dist/index.js"]
+CMD ["/app/podcastic"]

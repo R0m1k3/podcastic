@@ -30,12 +30,14 @@ services:
 
   app:
     image: ghcr.io/r0m1k3/podcastic:latest
+    # Always fetch the newest image when the stack (re)starts
+    pull_policy: always
     container_name: podcastic-app
     restart: unless-stopped
     ports:
       - "${PORT:-3579}:3579"
     environment:
-      NODE_ENV: production
+      RUST_LOG: podcastic=info,tower_http=warn
       PORT: 3579
       MONGODB_URI: mongodb://mongodb:27017/podcastic
       REDIS_URL: redis://redis:6379

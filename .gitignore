@@ -40,3 +40,6 @@ coverage/
 
 # Docker
 .dockerignore
+
+# Rust
+target/

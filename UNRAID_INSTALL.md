@@ -1,12 +1,12 @@
 # Podcastic - Unraid Installation Guide
 
-Single container on port **3579** — includes backend, frontend, and serves everything via Express.
+Single container on port **3579** — includes backend, frontend, and serves everything via the Rust backend.
 
 ## What's Included
 
 This single Docker container includes:
-- **Backend**: Node.js + Express.js API
-- **Frontend**: React web interface (served by Express as static files)
+- **Backend**: Rust (axum) API
+- **Frontend**: React web interface (served by the Rust backend as static files)
 - **Database**: MongoDB (separate container, managed by Compose)
 - **Cache**: Redis (separate container, managed by Compose)
 
@@ -55,7 +55,7 @@ Open: `http://your-unraid-ip:3579`
 ```
 docker-compose services:
 ├── podcastic (port 3579)
-│   ├── Express.js API  →  /api/*
+│   ├── Rust (axum) API →  /api/*
 │   └── React frontend  →  /* (static files)
 ├── podcastic-mongodb   →  internal :27017
 └── podcastic-redis     →  internal :6379
