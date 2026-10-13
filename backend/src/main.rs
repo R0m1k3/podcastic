@@ -1,3 +1,4 @@
+mod audio;
 mod auth;
 mod db;
 mod episodes;
@@ -40,6 +41,8 @@ pub struct AppState {
     pub redis: ConnectionManager,
     pub http: reqwest::Client,
     pub jwt: Arc<JwtConfig>,
+    pub audio_http: reqwest::Client,
+    pub audio_urls: Arc<audio::UrlCache>,
     limiter: Arc<RateLimiter>,
 }
 
@@ -138,6 +141,7 @@ fn api_router(state: &AppState) -> Router<AppState> {
         .nest("/auth", auth)
         .nest("/podcasts", podcasts)
         .nest("/episodes", episodes)
+        .route("/audio/proxy", get(audio::proxy))
 }
 
 #[tokio::main]
@@ -176,6 +180,8 @@ async fn main() -> anyhow::Result<()> {
             &var("JWT_REFRESH_EXPIRES_IN", "30d"),
         )),
         limiter: Arc::new(RateLimiter::new(Duration::from_secs(15 * 60), 300)),
+        audio_http: audio::client()?,
+        audio_urls: Arc::new(audio::UrlCache::default()),
     };
 
     feeds::start_background_sync(state.clone());
