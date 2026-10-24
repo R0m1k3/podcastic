@@ -206,8 +206,14 @@ See `.env.example` for all available options. Key ones:
 - `NODE_ENV` - development/production
 - `MONGODB_URI` - MongoDB connection string
 - `REDIS_URL` - Redis connection URL
-- `JWT_SECRET` - Secret for signing tokens
+- `JWT_SECRET` - Secret for signing tokens (see below)
 - `PODCAST_INDEX_API_KEY` - API key for podcast search (optional)
+
+### Sécurité / variables obligatoires
+
+- `JWT_SECRET` : laissé vide, le serveur génère un secret aléatoire au premier démarrage et le conserve dans MongoDB (collection `appsettings`). Une valeur d'exemple (`change_me_in_production`, `dev_secret_key`…) ou de moins de 16 caractères est ignorée au profit de ce secret généré. Après la mise à jour, les utilisateurs doivent se reconnecter si l'ancien secret était une valeur par défaut.
+- Le proxy audio (`/api/audio/proxy`) exige un jeton court (`/api/audio/token`, réservé aux utilisateurs connectés) lié à l'URL demandée, et n'atteint que des adresses publiques (contrôle à la résolution DNS et à chaque redirection). Les flux RSS ajoutés par les utilisateurs passent par le même contrôle.
+- Connexion et inscription sont soumises à la limite de requêtes de l'API.
 
 ## 📚 Resources
 

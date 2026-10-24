@@ -32,9 +32,9 @@ cp .env.example .env
 nano .env
 ```
 
-**Change at minimum:**
+**Optional:** `JWT_SECRET` can stay empty (a random secret is generated and kept in MongoDB), or be set to a random value of at least 16 characters:
 ```env
-JWT_SECRET=your-random-secret-here
+JWT_SECRET=<output of: openssl rand -hex 32>
 ```
 
 ### Step 3: Build and Start
@@ -109,7 +109,7 @@ Add via Docker > Add Container:
 |-------|-------|
 | Repository | (build from compose) |
 | Port | 3579:3579 |
-| Variable: JWT_SECRET | your-secret |
+| Variable: JWT_SECRET | (empty = generated, or `openssl rand -hex 32`) |
 | Variable: MONGODB_URI | mongodb://podcastic-mongodb:27017/podcastic |
 | Variable: REDIS_URL | redis://podcastic-redis:6379 |
 

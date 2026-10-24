@@ -205,7 +205,7 @@ MONGODB_PASSWORD=password
 REDIS_URL=redis://host:6379
 
 # Authentication
-JWT_SECRET=your-secret-key
+JWT_SECRET=            # empty = generated and kept in MongoDB
 JWT_EXPIRES_IN=7d
 JWT_REFRESH_EXPIRES_IN=30d
 

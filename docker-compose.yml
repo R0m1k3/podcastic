@@ -41,7 +41,9 @@ services:
       PORT: 3579
       MONGODB_URI: mongodb://mongodb:27017/podcastic
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      # Empty: a random secret is generated on first start and kept in MongoDB.
+      # Set one (openssl rand -hex 32, at least 16 characters) to choose it.
+      JWT_SECRET: ${JWT_SECRET:-}
       JWT_EXPIRES_IN: 7d
       JWT_REFRESH_EXPIRES_IN: 30d
       PODCAST_INDEX_API_KEY: ${PODCAST_INDEX_API_KEY:-}
