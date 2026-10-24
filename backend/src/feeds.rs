@@ -50,6 +50,12 @@ pub async fn fetch_feed(http: &reqwest::Client, url: &str) -> anyhow::Result<Fee
 }
 
 async fn fetch_and_parse(http: &reqwest::Client, url: &str) -> anyhow::Result<FeedData> {
+    // IP literals bypass the resolver: check the URL itself (redirects are
+    // re-checked by the client's policy, host names by its resolver).
+    let parsed = reqwest::Url::parse(url).context("Invalid URL")?;
+    if !crate::netguard::url_allowed(&parsed) {
+        bail!("URL not allowed");
+    }
     let response = http
         .get(url)
         .header(ACCEPT, "application/rss+xml, application/xml, text/xml, */*")
@@ -303,7 +309,11 @@ fn decode_entities(text: &str) -> String {
 }
 
 /// Plain-text snippet of an HTML fragment (mirrors rss-parser's `contentSnippet`).
+/// Entities are decoded *before* tags are stripped, so encoded markup
+/// (`&lt;img onerror=…&gt;`) cannot come out as real markup.
 pub fn html_to_text(html: &str) -> String {
+    let decoded = decode_entities(html);
+    let html = decoded.as_str();
     const BLOCK_TAGS: &[&str] = &[
         "br", "p", "ul", "ol", "li", "blockquote", "section", "table", "tr", "div", "h1", "h2",
         "h3", "h4", "h5", "h6",
@@ -327,8 +337,11 @@ pub fn html_to_text(html: &str) -> String {
         }
         rest = &rest[start + end + 1..];
     }
-    out.push_str(rest);
-    decode_entities(&out).trim().to_owned()
+    // An unterminated tag (`<img src=x onerror=…` with no `>`) is dropped too.
+    if !rest.starts_with('<') {
+        out.push_str(rest);
+    }
+    out.trim().to_owned()
 }
 
 fn parse_item(item: &rss::Item, podcast_image: Option<&str>) -> Option<ParsedEpisode> {
@@ -709,6 +722,15 @@ mod tests {
         assert!(parse_date("2024-01-01T10:00:00Z").is_some());
         assert!(parse_date("2024-01-01").is_some());
         assert!(parse_date("not a date").is_none());
+    }
+
+    #[test]
+    fn html_to_text_never_outputs_markup() {
+        assert_eq!(html_to_text("<p>Bonjour &amp; bienvenue</p>"), "Bonjour & bienvenue");
+        let text = html_to_text("&lt;img src=x onerror=alert(1)&gt;Salut");
+        assert_eq!(text, "Salut");
+        assert!(!html_to_text("Fin <img src=x onerror=alert(1)").contains('<'));
+        assert!(!html_to_text("&#60;script&#62;alert(1)&#60;/script&#62;").contains("<script"));
     }
 
     #[test]
