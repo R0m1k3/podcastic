@@ -23,6 +23,19 @@ pub struct Claims {
     pub exp: i64,
 }
 
+/// Claims of a media token: one URL, for the audio proxy only.
+#[derive(Debug, Serialize, Deserialize)]
+struct MediaClaims {
+    sub: String,
+    url: String,
+    purpose: String,
+    exp: i64,
+}
+
+const MEDIA_PURPOSE: &str = "audio-proxy";
+/// Long enough to listen to a long episode (range requests while seeking).
+const MEDIA_TTL: i64 = 12 * 3_600;
+
 pub struct JwtConfig {
     encoding: EncodingKey,
     decoding: DecodingKey,
@@ -58,11 +71,79 @@ impl JwtConfig {
         ))
     }
 
+    /// Token allowing `user_id` to fetch `url` through the audio proxy.
+    pub fn sign_media(&self, user_id: &str, url: &str) -> jsonwebtoken::errors::Result<String> {
+        let claims = MediaClaims {
+            sub: user_id.to_owned(),
+            url: url.to_owned(),
+            purpose: MEDIA_PURPOSE.to_owned(),
+            exp: chrono::Utc::now().timestamp() + MEDIA_TTL,
+        };
+        encode(&Header::new(Algorithm::HS256), &claims, &self.encoding)
+    }
+
+    pub fn verify_media(&self, token: &str, url: &str) -> bool {
+        decode::<MediaClaims>(token, &self.decoding, &Validation::new(Algorithm::HS256))
+            .is_ok_and(|data| data.claims.purpose == MEDIA_PURPOSE && data.claims.url == url)
+    }
+
     pub fn verify(&self, token: &str) -> Option<Claims> {
         decode::<Claims>(token, &self.decoding, &Validation::new(Algorithm::HS256))
             .ok()
             .map(|data| data.claims)
     }
+}
+
+/// Example values shipped in the compose file and docs: public, never used.
+const PUBLIC_SECRETS: &[&str] = &[
+    "dev_secret_key",
+    "change_me_in_production",
+    "your_super_secret_jwt_key_change_in_production",
+    "change-this-to-random-secret-key-in-production",
+    "your-secret-key",
+    "your-random-secret-here",
+    "your-secret",
+];
+const MIN_SECRET_LEN: usize = 16;
+const SETTINGS: &str = "appsettings";
+
+/// JWT signing secret: `JWT_SECRET` when it is set to a strong, non-example
+/// value; otherwise a random secret generated once and kept in MongoDB, so a
+/// known default can never sign tokens.
+pub async fn resolve_jwt_secret(db: &mongodb::Database, configured: Option<String>) -> anyhow::Result<String> {
+    if let Some(secret) = configured.map(|s| s.trim().to_owned()).filter(|s| !s.is_empty()) {
+        if !PUBLIC_SECRETS.contains(&secret.as_str()) && secret.len() >= MIN_SECRET_LEN {
+            return Ok(secret);
+        }
+        tracing::warn!(
+            "JWT_SECRET is an example value or shorter than {MIN_SECRET_LEN} characters: ignored, \
+             using the generated secret stored in MongoDB instead"
+        );
+    }
+    let settings = coll(db, SETTINGS);
+    let stored = |doc: Option<Document>| {
+        doc.and_then(|d| d.get_str("value").ok().map(str::to_owned))
+            .filter(|v| v.len() >= MIN_SECRET_LEN)
+    };
+    if let Some(secret) = stored(settings.find_one(doc! { "_id": "jwtSecret" }, None).await?) {
+        return Ok(secret);
+    }
+    let mut bytes = [0u8; 48];
+    rand::RngCore::fill_bytes(&mut rand::thread_rng(), &mut bytes);
+    let secret: String = bytes.iter().map(|b| format!("{b:02x}")).collect();
+    if let Err(err) = settings
+        .insert_one(doc! { "_id": "jwtSecret", "value": secret.as_str(), "createdAt": db::now() }, None)
+        .await
+    {
+        // Another instance stored one first: use it.
+        if !db::is_duplicate_key(&err) {
+            return Err(err.into());
+        }
+        return stored(settings.find_one(doc! { "_id": "jwtSecret" }, None).await?)
+            .ok_or_else(|| anyhow::anyhow!("stored JWT secret unreadable"));
+    }
+    tracing::info!("Generated a random JWT secret (stored in MongoDB, collection {SETTINGS})");
+    Ok(secret)
 }
 
 /// Parses `vercel/ms`-style durations used in env vars ("7d", "12h", "30m", "3600").
@@ -292,6 +373,20 @@ mod tests {
         let claims = jwt.verify(&access).unwrap();
         assert_eq!(claims.email, "a@b.co");
         assert!(jwt.verify("garbage").is_none());
+    }
+
+    #[test]
+    fn media_tokens_are_bound_to_one_url() {
+        let jwt = JwtConfig::new("secret", "7d", "30d");
+        let token = jwt.sign_media("65f000000000000000000000", "https://cdn.example.com/a.mp3").unwrap();
+        assert!(jwt.verify_media(&token, "https://cdn.example.com/a.mp3"));
+        assert!(!jwt.verify_media(&token, "https://cdn.example.com/b.mp3"));
+        // Neither kind of token can stand in for the other
+        assert!(jwt.verify(&token).is_none());
+        let (access, _) = jwt.issue_pair("65f000000000000000000000", "a@b.co").unwrap();
+        assert!(!jwt.verify_media(&access, "https://cdn.example.com/a.mp3"));
+        let other = JwtConfig::new("other", "7d", "30d");
+        assert!(!other.verify_media(&token, "https://cdn.example.com/a.mp3"));
     }
 
     #[test]

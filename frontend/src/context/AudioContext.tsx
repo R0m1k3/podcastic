@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useRef, useEffect, ReactNode } from 'react';
 import { Episode, episodeService } from '../services/episodeService';
+import api from '../services/api';
 
 interface AudioContextType {
   currentEpisode: Episode | null;
@@ -49,6 +50,9 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const [isResuming, setIsResuming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  // Proxy URL for the analysis element, with a short-lived token bound to the
+  // episode URL (an <audio> element cannot send the Authorization header)
+  const [proxyUrl, setProxyUrl] = useState('');
 
   const currentTimeRef = useRef(0);
   const durationRef = useRef(0);
@@ -108,6 +112,20 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       setIsResuming(false);
     }).catch(() => setIsResuming(false));
   }, [currentEpisode?._id, userId]);
+
+  useEffect(() => {
+    setProxyUrl('');
+    const audioUrl = currentEpisode?.audioUrl;
+    if (!audioUrl) return;
+    let cancelled = false;
+    api.get<{ token: string }>('/audio/token', { params: { url: audioUrl } })
+      .then(({ data }) => {
+        if (cancelled) return;
+        setProxyUrl(`/api/audio/proxy?url=${encodeURIComponent(audioUrl)}&token=${encodeURIComponent(data.token)}`);
+      })
+      .catch(() => { /* no token: visualizer falls back to simulation */ });
+    return () => { cancelled = true; };
+  }, [currentEpisode?._id, currentEpisode?.audioUrl]);
 
   // Web Audio analyser — uses the hidden analysis element (proxy URL → always CORS)
   useEffect(() => {
@@ -244,9 +262,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setPlaybackSpeedState(prev => speeds[(speeds.indexOf(prev) + 1) % speeds.length]);
   };
 
-  const proxyUrl = currentEpisode
-    ? `/api/audio/proxy?url=${encodeURIComponent(currentEpisode.audioUrl)}`
-    : '';
 
   return (
     <AudioContext.Provider value={{
@@ -283,7 +298,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
           <audio
             key={`analysis-${currentEpisode._id}`}
             ref={analysisRef}
-            src={proxyUrl}
+            src={proxyUrl || undefined}
             crossOrigin="anonymous"
             preload="auto"
             onError={() => { /* proxy fail: visualizer uses simulation */ }}

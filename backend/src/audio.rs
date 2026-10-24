@@ -3,7 +3,6 @@
 
 use std::{
     collections::HashMap,
-    net::IpAddr,
     sync::Mutex,
     time::{Duration, Instant},
 };
@@ -13,10 +12,16 @@ use axum::{
     extract::{Query, State},
     http::{header, HeaderMap, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
+    Json,
 };
+use serde_json::{json, Value};
 use url::Url;
 
-use crate::{error::AppError, AppState};
+use crate::{
+    auth::AuthUser,
+    error::{internal, AppError},
+    netguard, AppState,
+};
 
 const MAX_REDIRECTS: usize = 8;
 const URL_CACHE_TTL: Duration = Duration::from_secs(10 * 60);
@@ -56,9 +61,11 @@ impl UrlCache {
 }
 
 /// Client used by the proxy: redirects are followed manually so every hop
-/// goes through [`check_url`].
+/// goes through [`check_url`], and host names only resolve to public
+/// addresses ([`netguard::PublicOnlyResolver`]).
 pub fn client() -> reqwest::Result<reqwest::Client> {
     reqwest::Client::builder()
+        .dns_resolver(std::sync::Arc::new(netguard::PublicOnlyResolver))
         .user_agent("Mozilla/5.0 (compatible; Podcastic/1.0)")
         .redirect(reqwest::redirect::Policy::none())
         .no_gzip()
@@ -69,46 +76,38 @@ pub fn client() -> reqwest::Result<reqwest::Client> {
         .build()
 }
 
-fn is_private_ip(ip: IpAddr) -> bool {
-    match ip {
-        IpAddr::V4(v4) => {
-            v4.is_private()
-                || v4.is_loopback()
-                || v4.is_link_local()
-                || v4.is_unspecified()
-                || v4.is_broadcast()
-                || v4.octets()[0] == 0
-        }
-        IpAddr::V6(v6) => {
-            v6.is_loopback()
-                || v6.is_unspecified()
-                || (v6.segments()[0] & 0xfe00) == 0xfc00
-                || (v6.segments()[0] & 0xffc0) == 0xfe80
-                || v6.to_ipv4_mapped().is_some_and(|v4| is_private_ip(IpAddr::V4(v4)))
-        }
-    }
-}
-
 /// Only public http(s) hosts may be proxied.
 fn check_url(url: &Url) -> Result<(), AppError> {
     if !matches!(url.scheme(), "http" | "https") {
         return Err(AppError::bad_request("Protocol not allowed"));
     }
-    let forbidden = || AppError::new(StatusCode::FORBIDDEN, "Forbidden");
-    match url.host() {
-        Some(url::Host::Ipv4(ip)) if is_private_ip(IpAddr::V4(ip)) => Err(forbidden()),
-        Some(url::Host::Ipv6(ip)) if is_private_ip(IpAddr::V6(ip)) => Err(forbidden()),
-        // Single-label names (localhost, docker service names...) are internal.
-        Some(url::Host::Domain(domain))
-            if !domain.trim_end_matches('.').contains('.')
-                || domain.eq_ignore_ascii_case("localhost")
-                || domain.to_ascii_lowercase().ends_with(".localhost") =>
-        {
-            Err(forbidden())
-        }
-        None => Err(AppError::bad_request("Invalid URL")),
-        _ => Ok(()),
+    if url.host().is_none() {
+        return Err(AppError::bad_request("Invalid URL"));
     }
+    if !netguard::url_allowed(url) {
+        return Err(AppError::new(StatusCode::FORBIDDEN, "Forbidden"));
+    }
+    Ok(())
+}
+
+/// Short-lived token allowing the `<audio>` element (which cannot send an
+/// `Authorization` header) to fetch one URL through the proxy.
+pub async fn token(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Query(params): Query<HashMap<String, String>>,
+) -> Result<Json<Value>, AppError> {
+    let raw = params
+        .get("url")
+        .filter(|u| !u.is_empty())
+        .ok_or_else(|| AppError::bad_request("url required"))?;
+    let url = Url::parse(raw).map_err(|_| AppError::bad_request("Invalid URL"))?;
+    check_url(&url)?;
+    let token = state
+        .jwt
+        .sign_media(&user.id.to_hex(), raw)
+        .map_err(internal("Failed to issue media token"))?;
+    Ok(Json(json!({ "token": token })))
 }
 
 pub async fn proxy(
@@ -120,6 +119,12 @@ pub async fn proxy(
         .get("url")
         .filter(|u| !u.is_empty())
         .ok_or_else(|| AppError::bad_request("url required"))?;
+    let authorized = params
+        .get("token")
+        .is_some_and(|token| state.jwt.verify_media(token, raw));
+    if !authorized {
+        return Err(AppError::unauthorized("Invalid or expired media token"));
+    }
     let original = Url::parse(raw).map_err(|_| AppError::bad_request("Invalid URL"))?;
     check_url(&original)?;
 

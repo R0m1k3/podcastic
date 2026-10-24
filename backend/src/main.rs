@@ -5,6 +5,7 @@ mod episodes;
 mod error;
 mod feeds;
 mod itunes;
+mod netguard;
 mod podcasts;
 
 use std::{
@@ -44,6 +45,8 @@ pub struct AppState {
     pub audio_http: reqwest::Client,
     pub audio_urls: Arc<audio::UrlCache>,
     limiter: Arc<RateLimiter>,
+    /// Separate budget for the audio proxy (range requests while listening).
+    audio_limiter: Arc<RateLimiter>,
 }
 
 /// Fixed-window, per-IP request limiter for the API routes.
@@ -74,12 +77,12 @@ impl RateLimiter {
 }
 
 async fn rate_limit(
-    State(state): State<AppState>,
+    State(limiter): State<Arc<RateLimiter>>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     request: Request,
     next: Next,
 ) -> Response {
-    if state.limiter.allow(addr.ip()) {
+    if limiter.allow(addr.ip()) {
         next.run(request).await
     } else {
         let body = json!({ "message": "Trop de requêtes, veuillez réessayer plus tard." });
@@ -107,13 +110,19 @@ async fn connect_redis(url: &str) -> anyhow::Result<ConnectionManager> {
 }
 
 fn api_router(state: &AppState) -> Router<AppState> {
-    let limited = || middleware::from_fn_with_state(state.clone(), rate_limit);
+    let limited = || middleware::from_fn_with_state(state.limiter.clone(), rate_limit);
 
     let auth = Router::new()
         .route("/register", post(auth::register))
         .route("/login", post(auth::login))
         .route("/me", get(auth::me))
-        .route("/logout", post(auth::logout));
+        .route("/logout", post(auth::logout))
+        .layer(limited());
+
+    let audio = Router::new()
+        .route("/token", get(audio::token))
+        .route("/proxy", get(audio::proxy))
+        .layer(middleware::from_fn_with_state(state.audio_limiter.clone(), rate_limit));
 
     let podcasts = Router::new()
         .route("/subscriptions", get(podcasts::subscriptions))
@@ -141,7 +150,7 @@ fn api_router(state: &AppState) -> Router<AppState> {
         .nest("/auth", auth)
         .nest("/podcasts", podcasts)
         .nest("/episodes", episodes)
-        .route("/audio/proxy", get(audio::proxy))
+        .nest("/audio", audio)
 }
 
 #[tokio::main]
@@ -155,19 +164,15 @@ async fn main() -> anyhow::Result<()> {
 
     let var = |key: &str, default: &str| env::var(key).unwrap_or_else(|_| default.to_owned());
     let port: u16 = var("PORT", "3579").parse()?;
-    let jwt_secret = var("JWT_SECRET", "dev_secret_key");
-    if jwt_secret == "dev_secret_key" || jwt_secret == "change_me_in_production" {
-        tracing::warn!("JWT_SECRET uses a default value — set a strong secret in production");
-    }
-
     let db = db::connect(&var("MONGODB_URI", "mongodb://localhost:27017/podcastic")).await?;
+    let jwt_secret = auth::resolve_jwt_secret(&db, env::var("JWT_SECRET").ok()).await?;
     let redis = connect_redis(&var("REDIS_URL", "redis://localhost:6379")).await?;
-    let http = reqwest::Client::builder()
+    // Fetches user-supplied RSS URLs: public hosts only, every redirect re-checked.
+    let http = netguard::guard(reqwest::Client::builder(), 10)
         .user_agent(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
         )
         .connect_timeout(Duration::from_secs(10))
-        .redirect(reqwest::redirect::Policy::limited(10))
         .build()?;
 
     let state = AppState {
@@ -180,6 +185,7 @@ async fn main() -> anyhow::Result<()> {
             &var("JWT_REFRESH_EXPIRES_IN", "30d"),
         )),
         limiter: Arc::new(RateLimiter::new(Duration::from_secs(15 * 60), 300)),
+        audio_limiter: Arc::new(RateLimiter::new(Duration::from_secs(15 * 60), 1_200)),
         audio_http: audio::client()?,
         audio_urls: Arc::new(audio::UrlCache::default()),
     };
